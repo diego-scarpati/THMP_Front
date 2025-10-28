@@ -15,11 +15,11 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
 
   // Local state for filters (before applying to URL)
   const [localFilters, setLocalFilters] = useState({
-    postDate: searchParams?.get('postDate') || 'all',
-    easyApply: searchParams?.get('easyApply') || 'all',
-    approvedByFormula: searchParams?.get('approvedByFormula') || 'all',
-    approvedByGPT: searchParams?.get('approvedByGPT') || 'all',
-    jobDescriptions: searchParams?.get('jobDescriptions') === 'true',
+    post_date: searchParams?.get('post_date') || 'all',
+    easy_apply: searchParams?.get('easy_apply') || 'all',
+    approved_by_formula: searchParams?.get('approved_by_formula') || 'all',
+    approved_by_gpt: searchParams?.get('approved_by_gpt') || 'all',
+    job_descriptions: searchParams?.get('job_descriptions') === 'true',
   })
 
   const updateQueryParams = useCallback((filters: typeof localFilters) => {
@@ -68,11 +68,11 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
 
   const handleClearFilters = () => {
     const clearedFilters = {
-      postDate: 'all',
-      easyApply: 'all',
-      approvedByFormula: 'all',
-      approvedByGPT: 'all',
-      jobDescriptions: false,
+      post_date: 'all',
+      easy_apply: 'all',
+      approved_by_formula: 'all',
+      approved_by_gpt: 'all',
+      job_descriptions: false,
     }
     
     setLocalFilters(clearedFilters)
@@ -81,7 +81,7 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+    <div className="bg-background border border-gray-200 rounded-lg p-6 mb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter Jobs</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -92,8 +92,8 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
             Post Date
           </label>
           <select
-            value={localFilters.postDate}
-            onChange={(e) => handleLocalFilterChange('postDate', e.target.value)}
+            value={localFilters.post_date}
+            onChange={(e) => handleLocalFilterChange('post_date', e.target.value)}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="all">All</option>
@@ -108,8 +108,8 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
             Easy Apply
           </label>
           <select
-            value={localFilters.easyApply}
-            onChange={(e) => handleLocalFilterChange('easyApply', e.target.value)}
+            value={localFilters.easy_apply}
+            onChange={(e) => handleLocalFilterChange('easy_apply', e.target.value)}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="all">All</option>
@@ -125,8 +125,8 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
             Approved by Formula
           </label>
           <select
-            value={localFilters.approvedByFormula}
-            onChange={(e) => handleLocalFilterChange('approvedByFormula', e.target.value)}
+            value={localFilters.approved_by_formula}
+            onChange={(e) => handleLocalFilterChange('approved_by_formula', e.target.value)}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="all">All</option>
@@ -142,8 +142,8 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
             Approved by GPT
           </label>
           <select
-            value={localFilters.approvedByGPT}
-            onChange={(e) => handleLocalFilterChange('approvedByGPT', e.target.value)}
+            value={localFilters.approved_by_gpt}
+            onChange={(e) => handleLocalFilterChange('approved_by_gpt', e.target.value)}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="all">All</option>
@@ -154,7 +154,7 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
         </div>
 
         {/* Job Descriptions Filter */}
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Job Descriptions
           </label>
@@ -162,22 +162,22 @@ export default function JobsFilter({ onFiltersChange, onSearch }: JobsFilterProp
             <input
               type="checkbox"
               id="jobDescriptions"
-              checked={localFilters.jobDescriptions}
-              onChange={(e) => handleLocalFilterChange('jobDescriptions', e.target.checked)}
+              checked={localFilters.job_descriptions}
+              onChange={(e) => handleLocalFilterChange('job_descriptions', e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="jobDescriptions" className="ml-2 text-sm text-gray-700">
               Has Job Descriptions
             </label>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Action Buttons */}
       <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
         <button
           onClick={handleClearFilters}
-          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-background hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           Clear Filters
         </button>

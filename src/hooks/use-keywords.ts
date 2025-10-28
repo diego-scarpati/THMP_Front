@@ -12,6 +12,13 @@ export const useKeywords = () => {
   })
 }
 
+export const useUserKeywords = () => {
+  return useQuery({
+    queryKey: queryKeys.keywords.lists(),
+    queryFn: () => keywordApi.getAllUserKeywords(),
+  })
+}
+
 export const useKeyword = (id: number) => {
   return useQuery({
     queryKey: queryKeys.keywords.detail(id),

@@ -53,7 +53,8 @@ export interface Job extends BaseEntity {
   benefits?: string;
   easy_apply?: "yes" | "no" | "pending";
   posted_by: string;
-  jobDescription?: JobDescription;
+  JobDescription?: JobDescription;
+  Users?: User[];
   keywords?: Keyword[];
   userJobs?: UserJob[];
 }
@@ -119,10 +120,10 @@ export interface User extends BaseEntity {
   name: string;
   last_name: string;
   email: string;
-  userJobs?: UserJob[];
-  userSkills?: UserSkill[];
-  userExclusions?: UserExclusion[];
-  userInclusions?: UserInclusion[];
+  UserJob?: UserJob;
+  UserSkills?: UserSkill[];
+  UserExclusions?: UserExclusion[];
+  UserInclusions?: UserInclusion[];
 }
 
 export interface CreateUserRequest {
@@ -164,8 +165,8 @@ export interface UserJob extends BaseEntity {
   approved_by_formula: "yes" | "no" | "pending";
   approved_by_gpt: "yes" | "no" | "pending";
   cover_letter?: string;
-  user?: User;
-  job?: Job;
+  User?: User;
+  Job?: Job;
 }
 
 export interface CreateUserJobRequest {
@@ -440,6 +441,11 @@ export interface BulkCreateJobsRequest {
 
 export interface SearchAndCreateJobsRequest {
   keywords: string;
+  locationId?: number;
+}
+
+export interface SearchAndCreateJobsMultipleKeywordsRequest {
+  keywords?: string[];
   locationId?: number;
 }
 

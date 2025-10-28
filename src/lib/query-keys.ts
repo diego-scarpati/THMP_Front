@@ -131,4 +131,12 @@ export const mutationKeys = {
     update: ['resumes', 'update'] as const,
     delete: ['resumes', 'delete'] as const,
   },
+  inclusions: {
+    create: ['inclusions', 'create'] as const,
+    delete: ['inclusions', 'delete'] as const,
+  },
+  exclusions: {
+    create: ['exclusions', 'create'] as const,
+    delete: ['exclusions', 'delete'] as const,
+  },
 } as const

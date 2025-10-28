@@ -15,7 +15,7 @@ export {
   useApproveJobByFormula,
   useApproveJobByGPT,
   useUpdateApprovedByDate,
-} from './use-jobs'
+} from "./use-jobs";
 
 // User-related hooks
 export {
@@ -26,7 +26,7 @@ export {
   useDeleteUser,
   useLoginUser,
   useLogoutUser,
-} from './use-users'
+} from "./use-users";
 
 // Job Description hooks
 export {
@@ -36,7 +36,7 @@ export {
   useUpdateJobDescription,
   useDeleteJobDescription,
   useLoopAndCreateJobDescriptions,
-} from './use-job-descriptions'
+} from "./use-job-descriptions";
 
 // Resume hooks
 export {
@@ -46,7 +46,7 @@ export {
   useCreateResume,
   useUpdateResume,
   useDeleteResume,
-} from './use-resumes'
+} from "./use-resumes";
 
 // Keyword hooks
 export {
@@ -55,7 +55,7 @@ export {
   useCreateKeyword,
   useUpdateKeyword,
   useDeleteKeyword,
-} from './use-keywords'
+} from "./use-keywords";
 
 // User Job hooks
 export {
@@ -66,4 +66,20 @@ export {
   useDeleteUserJob,
   useUpdateCoverLetter,
   useUpdateApprovalStatus,
-} from './use-user-jobs'
+} from "./use-user-jobs";
+
+// Inclusion hooks
+export {
+  useInclusions,
+  useUserInclusions,
+  useCreateInclusion,
+  useDeleteInclusion,
+} from "./use-inclusions";
+
+// Exclusion hooks
+export {
+  useExclusions,
+  useUserExclusions,
+  useCreateExclusion,
+  useDeleteExclusion,
+} from "./use-exclusions";
