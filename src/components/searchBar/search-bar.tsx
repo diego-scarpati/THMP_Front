@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import KeywordsList from "../keywords/keywords-list";
 import Add from "../../../public/icons/add.svg";
 import MagnifyingGlass from "../../../public/icons/magnifying_glass.svg";
+import ProgressActivity from "../../../public/icons/progress_activity.svg";
 import Skill from "../ui/skill";
 import { Exclusion, Inclusion } from "@/types/api";
 
@@ -42,10 +43,11 @@ const SearchBar = () => {
     }
   };
 
-  const handleSearchNewJobs = async () => {
-    if (typedKeywords.length === 0) return;
+  const handleSearchNewJobs = async (overrideKeywords?: string[]) => {
+    const keywords = overrideKeywords ?? typedKeywords;
+    if (keywords.length === 0) return;
     const newJobs = await searchAndCreateJobs.mutateAsync({
-      keywords: typedKeywords,
+      keywords,
     });
     console.log("🚀 ~ handleSearchNewJobs ~ newJobs:", newJobs);
   };
@@ -80,9 +82,10 @@ const SearchBar = () => {
           onKeyDown={(e) => {
             if (e.key === "Enter" && searchBarKeyword.trim().length > 1) {
               e.preventDefault();
-              setTypedKeywords((prev) => [...prev, searchBarKeyword.trim()]);
+              const next = [...typedKeywords, searchBarKeyword.trim()];
+              setTypedKeywords(next);
               setSearchBarKeyword("");
-              handleSearchNewJobs();
+              handleSearchNewJobs(next);
             }
           }}
           placeholder="Type keywords to search jobs..."
@@ -110,10 +113,19 @@ const SearchBar = () => {
           </div>
           <button
             type="button"
-            onClick={handleSearchNewJobs}
-            className="group flex cursor-pointer border border-transparent hover:border-congress-blue-900 p-1.5 rounded-full transition-colors duration-200 overflow-hidden"
+            onClick={() => handleSearchNewJobs()}
+            disabled={searchAndCreateJobs.isPending}
+            aria-busy={searchAndCreateJobs.isPending}
+            className={cn(
+              "group flex cursor-pointer border border-transparent hover:border-congress-blue-900 p-1.5 rounded-full transition-colors duration-200 overflow-hidden",
+              searchAndCreateJobs.isPending && "opacity-80 cursor-not-allowed"
+            )}
           >
-            <MagnifyingGlass className="h-5 w-5 text-congress-blue-900 group-hover:text-congress-blue-700 transition-colors duration-200" />
+            {searchAndCreateJobs.isPending ? (
+              <ProgressActivity className="h-5 w-5 text-congress-blue-900 animate-spin" />
+            ) : (
+              <MagnifyingGlass className="h-5 w-5 text-congress-blue-900 group-hover:text-congress-blue-700 transition-colors duration-200" />
+            )}
             <div
               className="relative ml-1 h-5 w-0 overflow-hidden transition-[width] duration-300 ease-out group-hover:w-[48px]"
               aria-hidden="true"
