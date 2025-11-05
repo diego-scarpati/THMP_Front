@@ -2,8 +2,17 @@
 
 import { useJobs } from "@/hooks";
 import type { Job } from "@/types/api";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import JobCard from "./job-card";
+import FilterList from "./filter-list";
+
+interface FilterState {
+  keyword: string;
+  dateFrom: string;
+  dateTo: string;
+  approvedByAI: string;
+  postedBy: string;
+}
 
 interface JobsListProps {
   params?: {
@@ -25,7 +34,107 @@ export default function JobsList({ params, onRefetch }: JobsListProps) {
   const { data, isLoading, error, isError, refetch, isFetching } =
     useJobs(params);
   const [jobDescriptionIndex, setJobDescriptionIndex] = useState<number>(0);
+  const [filters, setFilters] = useState<FilterState>({
+    keyword: "",
+    dateFrom: "",
+    dateTo: "",
+    approvedByAI: "",
+    postedBy: "",
+  });
   const descriptionPanelRef = useRef<HTMLDivElement | null>(null);
+
+  // Filter jobs based on current filter state
+  const filteredJobs = useMemo(() => {
+    if (!data?.jobs) return [];
+    
+    return data.jobs.filter((job: Job) => {
+      // Keyword filter - search in title, company, and description
+      if (filters.keyword) {
+        const keyword = filters.keyword.toLowerCase();
+        const searchableText = [
+          job.title,
+          job.company,
+          job.JobDescription?.description || "",
+          job.location || "",
+        ].join(" ").toLowerCase();
+        
+        if (!searchableText.includes(keyword)) {
+          return false;
+        }
+      }
+
+      // Date from filter
+      if (filters.dateFrom && job.post_date) {
+        const jobDate = new Date(job.post_date);
+        const fromDate = new Date(filters.dateFrom);
+        if (jobDate < fromDate) {
+          return false;
+        }
+      }
+
+      // Date to filter
+      if (filters.dateTo && job.post_date) {
+        const jobDate = new Date(job.post_date);
+        const toDate = new Date(filters.dateTo);
+        if (jobDate > toDate) {
+          return false;
+        }
+      }
+
+      // AI Approved filter - check UserJob relation for approval status
+      if (filters.approvedByAI) {
+        const userJob = job.userJobs?.[0]; // Assuming first userJob relation
+        if (!userJob) {
+          // If no userJob relation and filter is not empty, exclude
+          return false;
+        }
+        
+        // Check both formula and GPT approval (prioritize GPT if available)
+        const aiApproved = userJob.approved_by_gpt || userJob.approved_by_formula;
+        if (aiApproved !== filters.approvedByAI) {
+          return false;
+        }
+      }
+
+      // Posted by filter - search only in posted_by field (not company)
+      if (filters.postedBy) {
+        const postedBy = filters.postedBy.toLowerCase();
+        const jobPostedBy = (job.posted_by || "").toLowerCase();
+        
+        if (!jobPostedBy.includes(postedBy)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [data?.jobs, filters]);
+
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+  };
+
+  // Utility function to highlight keywords
+  const highlightKeywords = (text: string, keyword: string): React.ReactNode => {
+    if (!keyword || !text) return text;
+    
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <span 
+          key={index} 
+          className="bg-yellow-300 text-congress-blue-900 font-semibold px-0.5 rounded"
+          style={{ backgroundColor: '#fef08a' }} // neon yellow
+        >
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
 
   const handleDescriptionChange = (index: number) => {
     if (index === jobDescriptionIndex) return;
@@ -94,7 +203,7 @@ export default function JobsList({ params, onRefetch }: JobsListProps) {
     );
   }
 
-  const jobs = data.jobs;
+  const jobs = filteredJobs;
 
   const description =
     jobs[jobDescriptionIndex]?.JobDescription?.description || "";
@@ -131,7 +240,8 @@ export default function JobsList({ params, onRefetch }: JobsListProps) {
       )}
 
       {/* Jobs list - full width on mobile, two columns on desktop */}
-  <div className="flex flex-col max-h-screen lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full">
+      <FilterList onFiltersChange={handleFiltersChange} />
+      <div className="flex max-h-screen lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full">
         {/* LEFT: list - flex-1 so it fills remaining space */}
         <div className="flex-1 overflow-y-auto rounded-lg lg:mb-0 scrollbar-hide">
           <div className="grid gap-3">
@@ -142,6 +252,7 @@ export default function JobsList({ params, onRefetch }: JobsListProps) {
                 index={index}
                 jobDescriptionIndex={jobDescriptionIndex}
                 handleDescriptionChange={handleDescriptionChange}
+                highlightKeywords={filters.keyword ? (text: string) => highlightKeywords(text, filters.keyword) : undefined}
               />
             ))}
           </div>
@@ -153,21 +264,22 @@ export default function JobsList({ params, onRefetch }: JobsListProps) {
           className="not-last:w-full p-4 border border-congress-blue-300 bg-congress-blue-300 rounded-lg max-h-[40vh] overflow-y-auto scrollbar-hide lg:w-[40%] lg:min-w-[430px] lg:max-w-[640px] lg:max-h-[80dvh]"
         >
           <div className="mb-4">
-            <h3 className="text-lg text-congress-blue-900 text-center font-semibold">Job Description</h3>
+            <h3 className="text-lg text-congress-blue-900 text-center font-semibold">
+              Job Description
+            </h3>
           </div>
           <div className="whitespace-pre-line text-sm leading-relaxed text-congress-blue-900">
-            {description}
+            {filters.keyword ? highlightKeywords(description, filters.keyword) : description}
           </div>
         </div>
       </div>
 
       {/* Pagination Info */}
-      {data.totalPages > 1 && (
+      {data && data.totalPages > 1 && (
         <div className="flex items-center justify-center mt-8 text-sm font-semibold text-congress-blue-900">
           <span>
-            Showing {(data.currentPage - 1) * data.limit + 1} to{" "}
-            {Math.min(data.currentPage * data.limit, data.total)} of{" "}
-            {data.total} results
+            Showing {filteredJobs.length} of {data.total} jobs
+            {filteredJobs.length !== data.total && " (filtered)"}
           </span>
         </div>
       )}

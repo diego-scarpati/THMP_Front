@@ -10,6 +10,7 @@ interface JobCardProps {
   index: number;
   jobDescriptionIndex: number;
   handleDescriptionChange: (index: number) => void;
+  highlightKeywords?: (text: string) => React.ReactNode;
 }
 
 const JobCard = ({
@@ -17,6 +18,7 @@ const JobCard = ({
   index,
   jobDescriptionIndex,
   handleDescriptionChange,
+  highlightKeywords,
 }: JobCardProps) => {
   return (
     <div
@@ -35,17 +37,21 @@ const JobCard = ({
       <div className="flex flex-col justify-between min-w-0">
         <div id="job-title" className="mb-2">
           <h3 className="text-lg font-semibold min-w-0 max-w-[550px] lg:text-xl truncate">
-            {job.title}
+            {highlightKeywords ? highlightKeywords(job.title) : job.title}
           </h3>
         </div>
 
         <div id="job-meta">
           <div className="flex flex-wrap items-center gap-2 text-xs lg:text-sm lg:gap-4">
-            <span className="font-semibold">{job.company}</span>
+            <span className="font-semibold">
+              {highlightKeywords ? highlightKeywords(job.company) : job.company}
+            </span>
             {job.location && (
               <>
                 <span className="hidden lg:inline">•</span>
-                <span>{job.location}</span>
+                <span>
+                  {highlightKeywords ? highlightKeywords(job.location) : job.location}
+                </span>
               </>
             )}
           </div>
