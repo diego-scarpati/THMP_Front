@@ -10,6 +10,8 @@ import type {
   JobQueryParams,
   JobAcceptanceFilterParams,
   SearchAndCreateJobsMultipleKeywordsRequest,
+  SeekSearchRequest,
+  SeekAllKeywordsRequest,
 } from "@/types/api";
 import type { PaginatedResponse, ApiResponse } from "@/types/api";
 
@@ -215,3 +217,60 @@ export const useUpdateApprovedByDate = () => {
 //     mutationFn: () => jobApi.saveJobsToFile(),
 //   })
 // }
+
+// ===== NEW HOOKS FROM API REFERENCE =====
+
+export const useUpdateUserJobsApprovalByFormula = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.updateUserJobsApprovalByFormula,
+    mutationFn: () => jobApi.updateUserJobsApprovalByFormula(),
+    onSuccess: () => {
+      // Invalidate all job-related and userJob queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userJobs.all });
+    },
+  });
+};
+
+export const useSeekSearch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.seekSearch,
+    mutationFn: (data: { keywords: string[]; location?: string }) =>
+      jobApi.seekSearch(data),
+    onSuccess: () => {
+      // Invalidate all job lists to refresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+    },
+  });
+};
+
+export const useSeekAllKeywords = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.seekAllKeywords,
+    mutationFn: (data?: { keywordArray?: string[]; location?: string }) =>
+      jobApi.seekAllKeywords(data),
+    onSuccess: () => {
+      // Invalidate all job lists to refresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+    },
+  });
+};
+
+export const useApproveJobByLLM = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.approveByLLM,
+    mutationFn: () => jobApi.approveByLLM(),
+    onSuccess: () => {
+      // Invalidate all job-related queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
+    },
+  });
+};

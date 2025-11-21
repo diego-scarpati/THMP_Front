@@ -60,15 +60,57 @@ export const jobApi = {
   bulkCreateJobs: (data: apiTypes.BulkCreateJobsRequest): Promise<string> =>
     apiService.post("/jobs/bulkCreate", data),
 
+  // TO UPDATE: searchAndCreateJobs should use query params and return plain text
+  // Query params: keywords (required), location, datePosted, sort
+  // Response: plain text (use responseType: "text" in axios)
+  // searchAndCreateJobs: (params: {
+  //   keywords: string;
+  //   location?: string;
+  //   datePosted?: string;
+  //   sort?: string;
+  // }): Promise<string> =>
+  //   apiService.post("/jobs/searchAndCreate", undefined, {
+  //     params,
+  //     responseType: "text",
+  //   }),
+
   searchAndCreateJobs: (
     data: apiTypes.SearchAndCreateJobsRequest
   ): Promise<apiTypes.SearchAndCreateJobsResponse> =>
     apiService.post("/jobs/searchAndCreate", data),
 
+  // TO UPDATE: searchAndCreateWithAllKeywords should use query params + optional body
+  // Query params: location, datePosted, sort
+  // Body: { "keywords": string[] } (optional)
+  // Response: plain text
+  // searchAndCreateWithAllKeywords: (params: {
+  //   location?: string;
+  //   datePosted?: string;
+  //   sort?: string;
+  //   keywords?: string[];
+  // }): Promise<string> => {
+  //   const { keywords, ...queryParams } = params;
+  //   return apiService.post(
+  //     "/jobs/searchAndCreateWithAllKeywords",
+  //     keywords ? { keywords } : undefined,
+  //     {
+  //       params: queryParams,
+  //       responseType: "text",
+  //     }
+  //   );
+  // },
+
   searchAndCreateWithAllKeywords: (
     data: apiTypes.SearchAndCreateJobsMultipleKeywordsRequest
   ): Promise<apiTypes.SearchAndCreateJobsResponse> =>
     apiService.post("/jobs/searchAndCreateWithAllKeywords", data),
+
+  // TO UPDATE: approveByGPT and approveByFormula return plain text summaries
+  // Response: plain text (use responseType: "text")
+  // approveByGPT: (): Promise<string> =>
+  //   apiService.patch("/jobs/approveByGPT", undefined, { responseType: "text" }),
+  // approveByFormula: (): Promise<string> =>
+  //   apiService.patch("/jobs/approveByFormula", undefined, { responseType: "text" }),
 
   approveByGPT: (): Promise<string> => apiService.patch("/jobs/approveByGPT"),
 
@@ -79,6 +121,35 @@ export const jobApi = {
     apiService.patch("/jobs/updateApprovedByDate"),
 
   saveJobsToFile: (): Promise<string> => apiService.get("/jobs/saveJobsToFile"),
+
+  // TO UPDATE: updateApprovedByDate should return number (count of updated jobs)
+  // updateApprovedByDate: (): Promise<number> =>
+  //   apiService.patch("/jobs/updateApprovedByDate"),
+
+  // NEW ENDPOINTS FROM API REFERENCE
+  updateUserJobsApprovalByFormula:
+    (): Promise<apiTypes.UpdateUserJobsApprovalResponse> =>
+      apiService.patch("/jobs/updateUserJobsApprovalByFormula"),
+
+  seekSearch: (data: apiTypes.SeekSearchRequest): Promise<string> => {
+    const location = data.location || "sydney";
+    return apiService.post(
+      `/jobs/seek?location=${encodeURIComponent(location)}`,
+      data
+    );
+  },
+
+  seekAllKeywords: (
+    data?: apiTypes.SeekAllKeywordsRequest
+  ): Promise<string> => {
+    const url = data?.location
+      ? `/jobs/seekAllKeywords?location=${encodeURIComponent(data.location)}`
+      : "/jobs/seekAllKeywords";
+    return apiService.post(url, data);
+  },
+
+  approveByLLM: (): Promise<apiTypes.ApprovalResponse> =>
+    apiService.patch("/jobs/approveByLLM"),
 };
 
 // Job Description API functions
@@ -129,6 +200,9 @@ export const userApi = {
     apiService.delete(`/users/${id}`),
 
   getCurrentUser: (): Promise<apiTypes.User> => apiService.get("/users/me"),
+
+  // NEW ENDPOINT FROM API REFERENCE
+  getUserKeywords: (): Promise<string[]> => apiService.get("/users/keywords"),
 };
 
 // User Job API functions
@@ -222,6 +296,11 @@ export const inclusionApi = {
 
   createInclusions: (data: apiTypes.CreateInclusionsRequest): Promise<string> =>
     apiService.post("/inclusions", data),
+
+  // TO UPDATE: deleteInclusion should use query param ?inclusion=term
+  // Returns 204 on success
+  // deleteInclusion: (inclusion: string): Promise<void> =>
+  //   apiService.delete("/inclusions", { params: { inclusion } }),
 
   deleteInclusion: (id: number): Promise<{ success: boolean }> =>
     apiService.delete(`/inclusions/${id}`),

@@ -100,6 +100,11 @@ export const mutationKeys = {
     approveByGPT: ['jobs', 'approveByGPT'] as const,
     updateApprovedByDate: ['jobs', 'updateApprovedByDate'] as const,
     saveToFile: ['jobs', 'saveToFile'] as const,
+    // NEW MUTATIONS FROM API REFERENCE
+    updateUserJobsApprovalByFormula: ['jobs', 'updateUserJobsApprovalByFormula'] as const,
+    seekSearch: ['jobs', 'seekSearch'] as const,
+    seekAllKeywords: ['jobs', 'seekAllKeywords'] as const,
+    approveByLLM: ['jobs', 'approveByLLM'] as const,
   },
   jobDescriptions: {
     create: ['jobDescriptions', 'create'] as const,

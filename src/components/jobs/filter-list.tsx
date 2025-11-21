@@ -115,7 +115,7 @@ const FilterList = ({ onFiltersChange }: FilterListProps) => {
       [key]: value,
     };
     setFilters(newFilters);
-    
+
     // Notify parent component immediately for non-keyword filters
     onFiltersChange?.(newFilters);
   };
@@ -128,104 +128,109 @@ const FilterList = ({ onFiltersChange }: FilterListProps) => {
       approvedByAI: "",
       postedBy: "",
     };
-    
+
     setFilters(clearedFilters);
     setKeywordInput(""); // Clear keyword input as well
     onFiltersChange?.(clearedFilters);
   };
 
-// Debounce utility function
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): T & { cancel: () => void } {
-  let timeout: NodeJS.Timeout;
-  
-  const debounced = ((...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  }) as T & { cancel: () => void };
-  
-  debounced.cancel = () => {
-    clearTimeout(timeout);
-  };
-  
-  return debounced;
-}
+  // Debounce utility function
+  function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    wait: number
+  ): T & { cancel: () => void } {
+    let timeout: NodeJS.Timeout;
+
+    const debounced = ((...args: Parameters<T>) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    }) as T & { cancel: () => void };
+
+    debounced.cancel = () => {
+      clearTimeout(timeout);
+    };
+
+    return debounced;
+  }
 
   return (
-    <div className="w-full">
-      {/* Filter Header */}
-      <div
-        className="flex items-center gap-2 cursor-pointer"
-        onClick={handleToggleExpanded}
-      >
-        <h3 className="text-md font-semibold text-congress-blue-900">
-          Filter List
-        </h3>
-        {!isExpanded ? (
-          <Filter
-            className={cn(
-              "w-6 h-6 text-congress-blue-900 transition-transform duration-200"
-            )}
-          />
-        ) : (
-          <FilterOff
-            className={cn(
-              "w-6 h-6 text-congress-blue-900 transition-transform duration-500"
-            )}
-          />
-        )}
+    <div className="w-full px-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-md font-semibold text-congress-blue-900">
+            Showing # Jobs out of #
+          </h3>
+        </div>
+        {/* Filter Header */}
+        <div
+          className="flex items-center justify-end gap-2 cursor-pointer min-w-[300px]"
+          onClick={handleToggleExpanded}
+        >
+          <h3 className="text-md font-semibold text-congress-blue-900">
+            Filter List
+          </h3>
+          {!isExpanded ? (
+            <Filter
+              className={cn(
+                "w-6 h-6 text-congress-blue-900 transition-transform duration-200"
+              )}
+            />
+          ) : (
+            <FilterOff
+              className={cn(
+                "w-6 h-6 text-congress-blue-900 transition-transform duration-500"
+              )}
+            />
+          )}
+        </div>
       </div>
 
       {/* Expandable Filter Options */}
       <div
         className={cn(
           "overflow-hidden transition-all duration-500 ease-out",
-          isExpanded 
-            ? "max-h-96 opacity-100 mt-4" 
-            : "max-h-0 opacity-0 mt-0"
+          isExpanded ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0 mt-0"
         )}
       >
-        <div 
+        <div
           className={cn(
             "transform transition-all duration-500 ease-out",
-            isExpanded 
-              ? "translate-y-0 scale-y-100" 
+            isExpanded
+              ? "translate-y-0 scale-y-100"
               : "-translate-y-4 scale-y-0"
           )}
-          style={{ 
-            transformOrigin: 'top center'
+          style={{
+            transformOrigin: "top center",
           }}
         >
           <div className="space-y-4 mt-1">
             {/* Filter Grid - responsive layout that doesn't fill full width on large screens */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 max-w-6xl items-center pl-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 max-w-6xl items-center">
               {/* Dynamically rendered filter options */}
               {filterConfigs.map((config) => (
                 <FilterOption
                   key={config.key}
                   title={config.title}
                   type={config.type}
-                  value={config.key === "keyword" ? keywordInput : filters[config.key]}
+                  value={
+                    config.key === "keyword"
+                      ? keywordInput
+                      : filters[config.key]
+                  }
                   onChange={(value) => handleFilterChange(config.key, value)}
                   options={config.options}
                   placeholder={config.placeholder}
                   id={`filter-${config.key}`}
                 />
               ))}
-              
               {/* Clear Button */}
               <div className="min-w-0">
-                <label className="text-xs font-semibold text-congress-blue-900 mb-2 opacity-0 select-none sr-only">
-                  Clear
-                </label>
                 <button
                   type="button"
                   onClick={handleClearFilters}
-                  className="flex pr-4 pl-2 py-2 border border-congress-blue-900 text-congress-blue-300 rounded-full font-semibold bg-congress-blue-900  hover:bg-congress-blue-500 hover:border-congress-blue-500 hover:text-congress-blue-100 transition-colors items-center justify-center text-sm/[0.875rem] cursor-pointer"
+                  className="flex pr-3 pl-1.5 py-1.5 border border-congress-blue-900 text-congress-blue-300 rounded-full font-semibold bg-congress-blue-900 hover:bg-congress-blue-500 hover:border-congress-blue-500 hover:text-congress-blue-100 transition-colors items-center justify-center text-sm cursor-pointer"
                 >
-                  <Add className="w-6 h-6 inline-block rotate-45" />
+                  <Add className="w-5 h-5 inline-block rotate-45" />
                   Clear
                 </button>
               </div>

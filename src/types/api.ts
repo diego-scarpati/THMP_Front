@@ -51,6 +51,9 @@ export interface Job extends BaseEntity {
   type?: string;
   post_date?: string;
   benefits?: string;
+  // TO UPDATE: Add approved_by_formula and approved_by_gpt to Job interface
+  // approved_by_formula: "yes" | "no" | "pending";
+  // approved_by_gpt: "yes" | "no" | "pending";
   easy_apply?: "yes" | "no" | "pending";
   posted_by: string;
   JobDescription?: JobDescription;
@@ -95,6 +98,21 @@ export interface JobDescription extends BaseEntity {
 }
 
 export interface CreateJobDescriptionRequest {
+  // TO UPDATE: CreateJobDescriptionRequest should wrap in jobDescription object
+  // Body: { "jobDescription": JobDescription }
+  // export interface CreateJobDescriptionRequest {
+  //   jobDescription: {
+  //     id: string;
+  //     state: string;
+  //     description: string;
+  //     company_apply_url?: string;
+  //     easy_apply_url?: string;
+  //     work_remote_allowed?: boolean;
+  //     work_place?: string;
+  //     formatted_experience_level?: string;
+  //     skills?: string;
+  //   };
+  // }
   id: string;
   state: string;
   description: string;
@@ -190,6 +208,9 @@ export interface Keyword extends BaseEntity {
   keyword: string;
   jobs?: Job[];
 }
+
+// TO UPDATE: Keyword should use 'keyword' field, but Inclusion/Exclusion use 'title'
+// Per API_REFERENCE: "keywords use `keyword`, the others use `title`"
 
 export interface CreateKeywordRequest {
   keyword: string;
@@ -444,10 +465,29 @@ export interface SearchAndCreateJobsRequest {
   locationId?: number;
 }
 
+// TO UPDATE: SearchAndCreateJobsRequest should use query params, not body
+// Query params: keywords (required), location, datePosted, sort
+// export interface SearchAndCreateJobsRequest {
+//   keywords: string;
+//   location?: string;
+//   datePosted?: string;
+//   sort?: string;
+// }
+
 export interface SearchAndCreateJobsMultipleKeywordsRequest {
   keywords?: string[];
   locationId?: number;
 }
+
+// TO UPDATE: SearchAndCreateJobsMultipleKeywordsRequest should support query params + body
+// Query params: location, datePosted, sort
+// Body: { keywords?: string[] }
+// export interface SearchAndCreateJobsMultipleKeywordsRequest {
+//   location?: string;
+//   datePosted?: string;
+//   sort?: string;
+//   keywords?: string[];
+// }
 
 export interface SearchAndCreateJobsResponse extends ApiResponse<string> {}
 
@@ -479,6 +519,8 @@ export interface JobQueryParams extends PaginationParams {
 
   // Additional query parameters
   created?: string;
+  // TO UPDATE: Add job_descriptions instead of jobDescriptions to match API
+  // job_descriptions?: boolean;
 }
 
 export interface PaginatedManualJobsResponse {
@@ -487,4 +529,36 @@ export interface PaginatedManualJobsResponse {
   currentPage: number;
   limit: number;
   jobs: Job[];
+}
+
+// ===== NEW INTERFACES FROM API REFERENCE =====
+
+// SEEK scraping request interfaces
+export interface SeekSearchRequest {
+  keywords: string[];
+  location?: string; // defaults to 'sydney'
+}
+
+export interface SeekAllKeywordsRequest {
+  keywordArray?: string[]; // optional subset of stored keywords
+  location?: string;
+}
+
+// Approval operations response
+export interface ApprovalResponse {
+  jobsProcessed: number;
+}
+
+// User job approval update request
+export interface UpdateUserJobsApprovalRequest {
+  // No body params - updates all to pending
+}
+
+export interface UpdateUserJobsApprovalResponse {
+  updatedRows: number;
+}
+
+// Inclusion DELETE uses query param
+export interface DeleteInclusionRequest {
+  inclusion: string; // query param
 }
