@@ -2,6 +2,7 @@ import {
   useSearchAndCreateWithAllKeywords,
   useUserInclusions,
   useUserExclusions,
+  useSeekAllKeywords,
 } from "@/hooks";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ const SearchBar = () => {
     "LinkedIn" | "Seek" | "Both"
   >("LinkedIn");
   const searchAndCreateJobs = useSearchAndCreateWithAllKeywords();
+  const seekAllKeywords = useSeekAllKeywords();
   const { data: userInclusions } = useUserInclusions();
   const { data: userExclusions } = useUserExclusions();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -59,13 +61,24 @@ const SearchBar = () => {
       });
       console.log("🚀 ~ handleSearchNewJobs ~ LinkedIn jobs:", newJobs);
     } else if (selectedRadioOption === "Seek") {
-      // TODO: Implement Seek-specific search function
-      console.log("🚀 ~ handleSearchNewJobs ~ Seek search not implemented yet");
-      // const seekJobs = await searchSeekJobs.mutateAsync({ keywords });
+      const seekJobs = await seekAllKeywords.mutateAsync({
+        keywordArray: keywords,
+      });
+      console.log("🚀 ~ handleSearchNewJobs ~ Seek jobs:", seekJobs);
     } else if (selectedRadioOption === "Both") {
-      // TODO: Implement combined search function
-      console.log("🚀 ~ handleSearchNewJobs ~ Both search not implemented yet");
-      // const allJobs = await searchBothPlatforms.mutateAsync({ keywords });
+      try {
+        const [linkedInJobs, seekJobs] = await Promise.all([
+          searchAndCreateJobs.mutateAsync({ keywords }),
+          seekAllKeywords.mutateAsync({ keywordArray: keywords }),
+        ]);
+        console.log("🚀 ~ handleSearchNewJobs ~ LinkedIn jobs:", linkedInJobs);
+        console.log("🚀 ~ handleSearchNewJobs ~ Seek jobs:", seekJobs);
+      } catch (error) {
+        console.error(
+          "❌ ~ handleSearchNewJobs ~ Error searching both:",
+          error
+        );
+      }
     }
   };
 
@@ -139,15 +152,15 @@ const SearchBar = () => {
                   <button
                     type="button"
                     onClick={() => handleSearchNewJobs()}
-                    disabled={searchAndCreateJobs.isPending}
-                    aria-busy={searchAndCreateJobs.isPending}
+                    disabled={searchAndCreateJobs.isPending || seekAllKeywords.isPending}
+                    aria-busy={searchAndCreateJobs.isPending || seekAllKeywords.isPending}
                     className={cn(
                       "group flex cursor-pointer border border-transparent hover:border-congress-blue-900 p-1.5 rounded-full transition-colors duration-200 overflow-hidden",
-                      searchAndCreateJobs.isPending &&
+                      searchAndCreateJobs.isPending || seekAllKeywords.isPending &&
                         "opacity-80 cursor-not-allowed"
                     )}
                   >
-                    {searchAndCreateJobs.isPending ? (
+                    {searchAndCreateJobs.isPending || seekAllKeywords.isPending ? (
                       <ProgressActivity className="h-5 w-5 text-congress-blue-900 animate-spin" />
                     ) : (
                       <MagnifyingGlass className="h-5 w-5 text-congress-blue-900 group-hover:text-congress-blue-700 transition-colors duration-200" />

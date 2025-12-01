@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from "@/lib/utils";
+import SelectOptions from "./select-options";
 
 interface FilterOptionProps {
   title: string;
@@ -53,18 +54,12 @@ const FilterOption = ({
           />
         )}
         {type === "select" && options && (
-          <select
+          <SelectOptions
             id={inputId}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full text-sm outline-none bg-transparent text-congress-blue-900"
-          >
-            {options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={options}
+            onChange={onChange}
+          />
         )}
       </div>
     </div>
