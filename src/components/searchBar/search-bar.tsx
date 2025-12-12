@@ -12,6 +12,8 @@ import MagnifyingGlass from "../../../public/icons/magnifying_glass.svg";
 import ProgressActivity from "../../../public/icons/progress_activity.svg";
 import Skill from "../ui/skill";
 import { Exclusion, Inclusion } from "@/types/api";
+import SelectOptions from "../jobs/select-options";
+import LocationSelectOptions from "../jobs/location-select-options";
 
 const SearchBar = () => {
   const [searchBarKeyword, setSearchBarKeyword] = useState<string>("");
@@ -19,6 +21,7 @@ const SearchBar = () => {
   const [selectedRadioOption, setSelectedRadioOption] = useState<
     "LinkedIn" | "Seek" | "Both"
   >("LinkedIn");
+  const [selectedLocation, setSelectedLocation] = useState<"sydney" | "melbourne" | "oceania" | "APAC">("sydney");
   const searchAndCreateJobs = useSearchAndCreateWithAllKeywords();
   const seekAllKeywords = useSeekAllKeywords();
   const { data: userInclusions } = useUserInclusions();
@@ -26,6 +29,8 @@ const SearchBar = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const radioOptions = ["LinkedIn", "Seek", "Both"];
+
+  const locationOptions = ["sydney", "melbourne", "oceania", "APAC"];
 
   const handleAddingKeywordsInput = () => {
     const value = searchBarKeyword.trim();
@@ -59,20 +64,20 @@ const SearchBar = () => {
       const newJobs = await searchAndCreateJobs.mutateAsync({
         keywords,
       });
-      console.log("🚀 ~ handleSearchNewJobs ~ LinkedIn jobs:", newJobs);
+      // console.log("🚀 ~ handleSearchNewJobs ~ LinkedIn jobs:", newJobs);
     } else if (selectedRadioOption === "Seek") {
       const seekJobs = await seekAllKeywords.mutateAsync({
         keywordArray: keywords,
       });
-      console.log("🚀 ~ handleSearchNewJobs ~ Seek jobs:", seekJobs);
+      // console.log("🚀 ~ handleSearchNewJobs ~ Seek jobs:", seekJobs);
     } else if (selectedRadioOption === "Both") {
       try {
         const [linkedInJobs, seekJobs] = await Promise.all([
           searchAndCreateJobs.mutateAsync({ keywords }),
           seekAllKeywords.mutateAsync({ keywordArray: keywords }),
         ]);
-        console.log("🚀 ~ handleSearchNewJobs ~ LinkedIn jobs:", linkedInJobs);
-        console.log("🚀 ~ handleSearchNewJobs ~ Seek jobs:", seekJobs);
+        // console.log("🚀 ~ handleSearchNewJobs ~ LinkedIn jobs:", linkedInJobs);
+        // console.log("🚀 ~ handleSearchNewJobs ~ Seek jobs:", seekJobs);
       } catch (error) {
         console.error(
           "❌ ~ handleSearchNewJobs ~ Error searching both:",
@@ -86,9 +91,9 @@ const SearchBar = () => {
     setTypedKeywords((prev) => prev.filter((keyword) => keyword !== target));
   };
 
-  // const handleIsEditable = () => {
-  //   setIsEditable((prev) => !prev);
-  // };
+  const handleSelectedLocation = (location: string) => {
+    setSelectedLocation(location as "sydney" | "melbourne" | "oceania" | "APAC");
+  }
 
   // show add button only when more than 1 character has been typed
   const showAdd = searchBarKeyword.trim().length > 1;
@@ -100,11 +105,11 @@ const SearchBar = () => {
           <div className="flex flex-col items-end mx-auto p-4">
             {/* Search Bar */}
             <div
-              className="flex justify-between w-full max-w-full sm:w-[600px] md:w-[700px] lg:w-[800px] xl:w-[900px] 2xl:w-[1000px] p-4 bg-congress-blue-900 rounded-full rounded-br-none"
+              className="flex justify-between w-full max-w-full sm:w-[600px] md:w-[700px] lg:w-[800px] xl:w-[900px] 2xl:w-[1000px] p-4 bg-congress-blue-900 rounded-[calc(2rem+1rem)] rounded-br-none"
               id="search_bar"
               onClick={() => inputRef.current?.focus()}
             >
-              <div className="flex justify-between w-full bg-background px-4 py-2 rounded-full">
+              <div className="flex justify-between w-full bg-background px-4 py-2 rounded-4xl">
                 <label htmlFor="search" className="sr-only">
                   Search jobs
                 </label>
@@ -127,7 +132,7 @@ const SearchBar = () => {
                     }
                   }}
                   placeholder="Type keywords to search jobs..."
-                  className="w-[65%] text-base/[1rem] outline-none"
+                  className="w-[57%] text-base/[1rem] outline-none"
                 />
                 <div className="flex items-center">
                   <button
@@ -144,23 +149,35 @@ const SearchBar = () => {
                     <span className="">Add</span>
                     <Add className="h-5 w-5" />
                   </button>
-                  <div className="flex items-center justify-center mr-2 rounded-full bg-congress-blue-300 py-1.5 px-2 h-8">
+                  <div className="flex items-center justify-center mr-2 rounded-full bg-congress-blue-300 border border-congress-blue-300 py-1.5 px-2 max-w-[4.25rem] h-8">
                     <p className="text-congress-blue-900 text-sm/[1rem] font-semibold px-2 h-5 leading-[20px]">
                       #: <span>{typedKeywords.length}</span>
                     </p>
                   </div>
+                  <LocationSelectOptions
+                    value={selectedLocation}
+                    locations={locationOptions}
+                    onChange={handleSelectedLocation}
+                    className="mr-2 "
+                  />
                   <button
                     type="button"
                     onClick={() => handleSearchNewJobs()}
-                    disabled={searchAndCreateJobs.isPending || seekAllKeywords.isPending}
-                    aria-busy={searchAndCreateJobs.isPending || seekAllKeywords.isPending}
+                    disabled={
+                      searchAndCreateJobs.isPending || seekAllKeywords.isPending
+                    }
+                    aria-busy={
+                      searchAndCreateJobs.isPending || seekAllKeywords.isPending
+                    }
                     className={cn(
                       "group flex cursor-pointer border border-transparent hover:border-congress-blue-900 p-1.5 rounded-full transition-colors duration-200 overflow-hidden",
-                      searchAndCreateJobs.isPending || seekAllKeywords.isPending &&
-                        "opacity-80 cursor-not-allowed"
+                      searchAndCreateJobs.isPending ||
+                        (seekAllKeywords.isPending &&
+                          "opacity-80 cursor-not-allowed")
                     )}
                   >
-                    {searchAndCreateJobs.isPending || seekAllKeywords.isPending ? (
+                    {searchAndCreateJobs.isPending ||
+                    seekAllKeywords.isPending ? (
                       <ProgressActivity className="h-5 w-5 text-congress-blue-900 animate-spin" />
                     ) : (
                       <MagnifyingGlass className="h-5 w-5 text-congress-blue-900 group-hover:text-congress-blue-700 transition-colors duration-200" />

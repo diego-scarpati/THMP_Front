@@ -26,7 +26,7 @@ const FilterOption = ({
   const inputId = id || `filter-${title.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
-    <div className={cn("min-w-0 relative", className)}>
+    <div className={cn("min-w-0 relative max-w-[9.375rem] sm:max-w-[12rem] md:max-w-[14rem] lg:max-w-[16rem]", className)}>
       <div className="relative border border-congress-blue-900 rounded-full px-3 py-1.5">
         <label 
           htmlFor={inputId} 

@@ -2,38 +2,36 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
-export interface SelectOptionItem {
-  label: string;
-  value: string;
-}
-
-interface SelectOptionsProps {
+interface LocationSelectOptionsProps {
   id?: string;
   value: string;
-  options: SelectOptionItem[];
+  locations: string[];
   onChange: (value: string) => void;
   className?: string;
 }
 
-export default function SelectOptions({
+export default function LocationSelectOptions({
   id,
   value,
-  options,
+  locations,
   onChange,
   className,
-}: SelectOptionsProps) {
+}: LocationSelectOptionsProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
-  const [menuRect, setMenuRect] = useState<{ left: number; top: number; width: number } | null>(null);
-  const selected = options.find((o) => o.value === value) || options[0];
+  const [menuRect, setMenuRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
+  const selected = value || locations[0] || "";
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!containerRef.current) return;
       const target = e.target as Node;
-      // If click is outside of container AND outside of the portal menu, close
       if (
         !containerRef.current.contains(target) &&
         !(menuRef.current && menuRef.current.contains(target))
@@ -41,18 +39,15 @@ export default function SelectOptions({
         setOpen(false);
       }
     };
-    // Use 'click' instead of 'mousedown' to allow option onClick to run first
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // Calculate dropdown position in viewport to escape ancestor overflow hidden
   const updateMenuRect = () => {
-    // Use the outer container (with border/padding) so width matches FilterOption
     const host = containerRef.current ?? buttonRef.current;
     if (!host) return;
     const rect = host.getBoundingClientRect();
-    setMenuRect({ left: rect.left, top: rect.bottom + 8, width: rect.width });
+    setMenuRect({ left: rect.left, top: rect.bottom + 2, width: rect.width });
   };
 
   useEffect(() => {
@@ -78,42 +73,45 @@ export default function SelectOptions({
   };
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
-      <button
-        id={id}
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((prev) => !prev)}
-        onKeyDown={handleKeyDown}
-        ref={buttonRef}
-        className={cn(
-          "w-full text-sm outline-none bg-transparent text-congress-blue-900",
-          "flex items-center justify-between pr-8"
-        )}
-      >
-        <span className="truncate">{selected?.label}</span>
-        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-congress-blue-900">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="opacity-80"
-          >
-            <path
-              d="M7 10l5 5 5-5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-      </button>
+    <div ref={containerRef} className={cn("relative w-[8.5rem] sm:max-w-[5.75rem] md:max-w-[7.5rem] lg:max-w-[8.5rem]", className)}>
+      <div className="relative border border-congress-blue-900 rounded-full px-3 py-1.5">
+        <button
+          id={id}
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((prev) => !prev)}
+          onKeyDown={handleKeyDown}
+          ref={buttonRef}
+          className={cn(
+            "w-full text-sm font-semibold outline-none bg-transparent text-congress-blue-900",
+            "flex items-center justify-between pr-8"
+          )}
+        >
+          <span className="truncate capitalize">{selected}</span>
+          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-congress-blue-900">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="opacity-80"
+            >
+              <path
+                d="M7 10l5 5 5-5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
 
-      {open && menuRect &&
+      {open &&
+        menuRect &&
         createPortal(
           <ul
             role="listbox"
@@ -127,36 +125,36 @@ export default function SelectOptions({
             ref={menuRef}
             className={cn(
               "z-[1000]",
-              "bg-background border border-congress-blue-900 rounded-[1.1rem] overflow-hidden min-w-0"
+              "bg-background border border-congress-blue-900 rounded-[1.1rem] overflow-hidden max-w-[8.5rem] sm:max-w-[5.75rem] md:max-w-[7.5rem] lg:max-w-[8.5rem]"
             )}
           >
-            {options.map((opt) => {
-              const isSelected = opt.value === value;
+            {locations.map((loc) => {
+              const isSelected = loc === selected;
               return (
                 <li
-                  key={opt.value}
+                  key={loc}
                   role="option"
                   aria-selected={isSelected}
                   tabIndex={0}
                   className={cn(
-                    "px-3 py-2 text-sm cursor-pointer rounded-[1.05rem]",
+                    "px-3 py-2 text-sm cursor-pointer rounded-[1.05rem] capitalize font-semibold",
                     isSelected
                       ? "bg-congress-blue-600 text-white"
                       : "text-congress-blue-900 hover:bg-congress-blue-200"
                   )}
                   onClick={() => {
-                    onChange(opt.value);
+                    onChange(loc);
                     setOpen(false);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      onChange(opt.value);
+                      onChange(loc);
                       setOpen(false);
                     }
                   }}
                 >
-                  {opt.label}
+                  {loc}
                 </li>
               );
             })}

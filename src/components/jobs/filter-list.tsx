@@ -23,10 +23,12 @@ interface FilterState {
 }
 
 interface FilterListProps {
+  totalJobs?: number;
+  filteredJobs?: number;
   onFiltersChange?: (filters: FilterState) => void;
 }
 
-const FilterList = ({ onFiltersChange }: FilterListProps) => {
+const FilterList = ({ totalJobs, filteredJobs, onFiltersChange }: FilterListProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     keyword: "",
@@ -158,7 +160,7 @@ const FilterList = ({ onFiltersChange }: FilterListProps) => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-md font-semibold text-congress-blue-900">
-            Showing # Jobs out of #
+            Showing {filteredJobs} Jobs out of {totalJobs}
           </h3>
         </div>
         {/* Filter Header */}

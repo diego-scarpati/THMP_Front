@@ -28,7 +28,7 @@ const JobCard = ({
           ? "bg-congress-blue-300 border-congress-blue-300"
           : "bg-congress-blue-200 border-congress-blue-200",
         // switch to grid with left column (fluid) and right column (auto)
-        "border rounded-lg p-3 lg:p-4 hover:shadow-md hover:transition-shadow text-congress-blue-900 transition-colors duration-300",
+        "border rounded-2xl p-3 lg:p-4 hover:shadow-md hover:transition-shadow text-congress-blue-900 transition-colors duration-300",
         "grid grid-cols-[1fr_auto] gap-4 items-start"
       )}
       onClick={() => handleDescriptionChange(index)}
