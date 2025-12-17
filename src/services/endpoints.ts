@@ -1,29 +1,27 @@
 import { apiService } from "./api";
 import * as apiTypes from "@/types/api";
 
+// Helper to build query string
+const buildQueryString = (params: Record<string, any>): string => {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      searchParams.append(key, String(value));
+    }
+  });
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : "";
+};
+
 // Job API functions
 export const jobApi = {
   getAllJobs: (
     params?: apiTypes.JobQueryParams
-  ): Promise<apiTypes.PaginatedManualJobsResponse> => {
-    // Should check if params is defined and is not null
-    // If params is defined, it will be included in the request
-    // Otherwise, it will be omitted
-    // This allows for optional parameters in the API call
-    let queryParams = "";
-    if (params && Object.keys(params).length > 0) {
-      queryParams = new URLSearchParams(
-        params as Record<string, string>
-      ).toString();
-    }
-
-    return apiService.get(
-      `/jobs/getAll${queryParams ? `?${queryParams}` : ""}`,
-      {
-        headers: { "Cache-Control": "no-cache" },
-        ...(params ? { params } : {}),
-      }
-    );
+  ): Promise<apiTypes.PaginatedJobsResponse> => {
+    const queryString = params ? buildQueryString(params) : "";
+    return apiService.get(`/jobs/getAll${queryString}`, {
+      headers: { "Cache-Control": "no-cache" },
+    });
   },
 
   getJobById: (id: string): Promise<apiTypes.Job> =>
@@ -34,11 +32,12 @@ export const jobApi = {
 
   getAllByAcceptance: (
     params: apiTypes.JobAcceptanceFilterParams
-  ): Promise<apiTypes.Job[]> =>
-    apiService.get("/jobs/getAllByAccepetance", {
+  ): Promise<apiTypes.Job[]> => {
+    const queryString = buildQueryString(params);
+    return apiService.get(`/jobs/getAllByAccepetance${queryString}`, {
       headers: { "Cache-Control": "no-cache" },
-      ...(params ? { params } : {}),
-    }),
+    });
+  },
 
   getAllApplied: (): Promise<apiTypes.Job[]> =>
     apiService.get("/jobs/getAllApplied"),
@@ -60,73 +59,35 @@ export const jobApi = {
   bulkCreateJobs: (data: apiTypes.BulkCreateJobsRequest): Promise<string> =>
     apiService.post("/jobs/bulkCreate", data),
 
-  // TO UPDATE: searchAndCreateJobs should use query params and return plain text
-  // Query params: keywords (required), location, datePosted, sort
-  // Response: plain text (use responseType: "text" in axios)
-  // searchAndCreateJobs: (params: {
-  //   keywords: string;
-  //   location?: string;
-  //   datePosted?: string;
-  //   sort?: string;
-  // }): Promise<string> =>
-  //   apiService.post("/jobs/searchAndCreate", undefined, {
-  //     params,
-  //     responseType: "text",
-  //   }),
-
   searchAndCreateJobs: (
-    data: apiTypes.SearchAndCreateJobsRequest
-  ): Promise<apiTypes.SearchAndCreateJobsResponse> =>
-    apiService.post("/jobs/searchAndCreate", data),
-
-  // TO UPDATE: searchAndCreateWithAllKeywords should use query params + optional body
-  // Query params: location, datePosted, sort
-  // Body: { "keywords": string[] } (optional)
-  // Response: plain text
-  // searchAndCreateWithAllKeywords: (params: {
-  //   location?: string;
-  //   datePosted?: string;
-  //   sort?: string;
-  //   keywords?: string[];
-  // }): Promise<string> => {
-  //   const { keywords, ...queryParams } = params;
-  //   return apiService.post(
-  //     "/jobs/searchAndCreateWithAllKeywords",
-  //     keywords ? { keywords } : undefined,
-  //     {
-  //       params: queryParams,
-  //       responseType: "text",
-  //     }
-  //   );
-  // },
+    params: apiTypes.SearchAndCreateJobsRequest
+  ): Promise<string> => {
+    const queryString = buildQueryString(params);
+    return apiService.post(`/jobs/searchAndCreate${queryString}`);
+  },
 
   searchAndCreateWithAllKeywords: (
-    data: apiTypes.SearchAndCreateJobsMultipleKeywordsRequest
-  ): Promise<apiTypes.SearchAndCreateJobsResponse> =>
-    apiService.post("/jobs/searchAndCreateWithAllKeywords", data),
+    params: apiTypes.SearchAndCreateJobsMultipleKeywordsRequest
+  ): Promise<string> => {
+    const { keywords, ...queryParams } = params;
+    const queryString = buildQueryString(queryParams);
+    return apiService.post(
+      `/jobs/searchAndCreateWithAllKeywords${queryString}`,
+      keywords ? { keywords } : undefined
+    );
+  },
 
-  // TO UPDATE: approveByGPT and approveByFormula return plain text summaries
-  // Response: plain text (use responseType: "text")
-  // approveByGPT: (): Promise<string> =>
-  //   apiService.patch("/jobs/approveByGPT", undefined, { responseType: "text" }),
-  // approveByFormula: (): Promise<string> =>
-  //   apiService.patch("/jobs/approveByFormula", undefined, { responseType: "text" }),
-
-  approveByGPT: (): Promise<string> => apiService.patch("/jobs/approveByGPT"),
+  approveByGPT: (): Promise<string> =>
+    apiService.patch("/jobs/approveByGPT"),
 
   approveByFormula: (): Promise<string> =>
     apiService.patch("/jobs/approveByFormula"),
 
-  updateApprovedByDate: (): Promise<string> =>
+  updateApprovedByDate: (): Promise<number> =>
     apiService.patch("/jobs/updateApprovedByDate"),
 
   saveJobsToFile: (): Promise<string> => apiService.get("/jobs/saveJobsToFile"),
 
-  // TO UPDATE: updateApprovedByDate should return number (count of updated jobs)
-  // updateApprovedByDate: (): Promise<number> =>
-  //   apiService.patch("/jobs/updateApprovedByDate"),
-
-  // NEW ENDPOINTS FROM API REFERENCE
   updateUserJobsApprovalByFormula:
     (): Promise<apiTypes.UpdateUserJobsApprovalResponse> =>
       apiService.patch("/jobs/updateUserJobsApprovalByFormula"),
@@ -135,17 +96,18 @@ export const jobApi = {
     const location = data.location || "sydney";
     return apiService.post(
       `/jobs/seek?location=${encodeURIComponent(location)}`,
-      data
+      { keywords: data.keywords }
     );
   },
 
-  seekAllKeywords: (
-    data?: apiTypes.SeekAllKeywordsRequest
-  ): Promise<string> => {
+  seekAllKeywords: (data?: apiTypes.SeekAllKeywordsRequest): Promise<string> => {
     const url = data?.location
       ? `/jobs/seekAllKeywords?location=${encodeURIComponent(data.location)}`
       : "/jobs/seekAllKeywords";
-    return apiService.post(url, data);
+    return apiService.post(
+      url,
+      data?.keywordArray ? { keywordArray: data.keywordArray } : undefined
+    );
   },
 
   approveByLLM: (): Promise<apiTypes.ApprovalResponse> =>
@@ -201,7 +163,6 @@ export const userApi = {
 
   getCurrentUser: (): Promise<apiTypes.User> => apiService.get("/users/me"),
 
-  // NEW ENDPOINT FROM API REFERENCE
   getUserKeywords: (): Promise<string[]> => apiService.get("/users/keywords"),
 };
 
@@ -269,21 +230,13 @@ export const keywordApi = {
 // Skill API functions
 export const skillApi = {
   getAllSkills: (): Promise<apiTypes.Skill[]> =>
-    apiService.get("/skills/getAll"),
+    apiService.get("/skills"),
 
-  getSkillById: (id: number): Promise<apiTypes.Skill> =>
-    apiService.get(`/skills/getById/${id}`),
+  createSkill: (data: apiTypes.CreateSkillRequest): Promise<{ message: string }> =>
+    apiService.post("/skills", data),
 
-  createSkill: (data: apiTypes.CreateSkillRequest): Promise<apiTypes.Skill> =>
-    apiService.post("/skills/create", data),
-
-  updateSkill: (
-    id: number,
-    data: apiTypes.UpdateSkillRequest
-  ): Promise<apiTypes.Skill> => apiService.put(`/skills/update/${id}`, data),
-
-  deleteSkill: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/skills/delete/${id}`),
+  deleteSkill: (skill: string): Promise<void> =>
+    apiService.delete(`/skills/${skill}`),
 };
 
 // Inclusion API functions
@@ -291,19 +244,11 @@ export const inclusionApi = {
   getAllInclusions: (): Promise<apiTypes.Inclusion[]> =>
     apiService.get("/inclusions"),
 
-  getAllUserInclusions: (): Promise<apiTypes.Inclusion[]> =>
-    apiService.get("/inclusions"),
-
-  createInclusions: (data: apiTypes.CreateInclusionsRequest): Promise<string> =>
+  createInclusions: (data: apiTypes.CreateInclusionsRequest): Promise<{ message: string }> =>
     apiService.post("/inclusions", data),
 
-  // TO UPDATE: deleteInclusion should use query param ?inclusion=term
-  // Returns 204 on success
-  // deleteInclusion: (inclusion: string): Promise<void> =>
-  //   apiService.delete("/inclusions", { params: { inclusion } }),
-
-  deleteInclusion: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/inclusions/${id}`),
+  deleteInclusion: (inclusion: string): Promise<void> =>
+    apiService.delete(`/inclusions?inclusion=${encodeURIComponent(inclusion)}`),
 };
 
 // Exclusion API functions
@@ -311,119 +256,36 @@ export const exclusionApi = {
   getAllExclusions: (): Promise<apiTypes.Exclusion[]> =>
     apiService.get("/exclusions"),
 
-  getAllUserExclusions: (): Promise<apiTypes.Exclusion[]> =>
-    apiService.get("/exclusions"),
-
-  createExclusions: (data: apiTypes.CreateExclusionsRequest): Promise<string> =>
+  createExclusions: (data: apiTypes.CreateExclusionsRequest): Promise<{ message: string }> =>
     apiService.post("/exclusions", data),
 
-  deleteExclusion: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/exclusions/${id}`),
+  deleteExclusion: (exclusion: string): Promise<void> =>
+    apiService.delete(`/exclusions?exclusion=${encodeURIComponent(exclusion)}`),
 };
 
-// User Skill API functions
-export const userSkillApi = {
-  getUserSkills: (userId: string): Promise<apiTypes.UserSkill[]> =>
-    apiService.get(`/userSkills/user/${userId}`),
+// Filter API functions
+export const filterApi = {
+  toggleActive: (data: apiTypes.ToggleActiveRequest): Promise<void> =>
+    apiService.patch("/filters/active", data),
 
-  createUserSkill: (
-    data: apiTypes.CreateUserSkillRequest
-  ): Promise<apiTypes.UserSkill> => apiService.post("/userSkills/create", data),
+  setInclusionsActive: (data: apiTypes.SetActiveRequest): Promise<void> =>
+    apiService.patch("/filters/inclusions", data),
 
-  updateUserSkill: (
-    id: number,
-    data: Partial<apiTypes.CreateUserSkillRequest>
-  ): Promise<apiTypes.UserSkill> =>
-    apiService.put(`/userSkills/update/${id}`, data),
-
-  deleteUserSkill: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/userSkills/delete/${id}`),
-};
-
-// User Exclusion API functions
-export const userExclusionApi = {
-  getUserExclusions: (userId: string): Promise<apiTypes.UserExclusion[]> =>
-    apiService.get(`/userExclusions/user/${userId}`),
-
-  createUserExclusion: (
-    data: apiTypes.CreateUserExclusionRequest
-  ): Promise<apiTypes.UserExclusion> =>
-    apiService.post("/userExclusions/create", data),
-
-  deleteUserExclusion: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/userExclusions/delete/${id}`),
-};
-
-// User Inclusion API functions
-export const userInclusionApi = {
-  getUserInclusions: (userId: string): Promise<apiTypes.UserInclusion[]> =>
-    apiService.get(`/userInclusions/user/${userId}`),
-
-  createUserInclusion: (
-    data: apiTypes.CreateUserInclusionRequest
-  ): Promise<apiTypes.UserInclusion> =>
-    apiService.post("/userInclusions/create", data),
-
-  deleteUserInclusion: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/userInclusions/delete/${id}`),
+  setExclusionsActive: (data: apiTypes.SetActiveRequest): Promise<void> =>
+    apiService.patch("/filters/exclusions", data),
 };
 
 // Resume API functions
 export const resumeApi = {
-  getAllResumes: (): Promise<apiTypes.Resume[]> => apiService.get("/resumes"),
+  getResume: (): Promise<apiTypes.Resume> => apiService.get("/resumes"),
 
-  getResumeById: (id: number): Promise<apiTypes.Resume> =>
-    apiService.get(`/resumes/${id}`),
+  createResume: (data: apiTypes.CreateResumeRequest): Promise<apiTypes.Resume> =>
+    apiService.post("/resumes", data),
 
-  getResumesByUser: (userId: string): Promise<apiTypes.Resume[]> =>
-    apiService.get(`/resumes/user/${userId}`),
+  updateResume: (data: apiTypes.UpdateResumeRequest): Promise<apiTypes.Resume> =>
+    apiService.put("/resumes", data),
 
-  createResume: (
-    data: apiTypes.CreateResumeRequest
-  ): Promise<apiTypes.Resume> => apiService.post("/resumes/create", data),
-
-  updateResume: (
-    id: number,
-    data: apiTypes.UpdateResumeRequest
-  ): Promise<apiTypes.Resume> => apiService.put(`/resumes/update/${id}`, data),
-
-  deleteResume: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/resumes/delete/${id}`),
-};
-
-// Education API functions
-export const educationApi = {
-  getEducationsByResume: (resumeId: number): Promise<apiTypes.Education[]> =>
-    apiService.get(`/education/resume/${resumeId}`),
-
-  createEducation: (data: any): Promise<apiTypes.Education> =>
-    apiService.post("/education/create", data),
-
-  updateEducation: (id: number, data: any): Promise<apiTypes.Education> =>
-    apiService.put(`/education/update/${id}`, data),
-
-  deleteEducation: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/education/delete/${id}`),
-};
-
-// Work Experience API functions
-export const workExperienceApi = {
-  getWorkExperiencesByResume: (
-    resumeId: number
-  ): Promise<apiTypes.WorkExperience[]> =>
-    apiService.get(`/workExperience/resume/${resumeId}`),
-
-  createWorkExperience: (data: any): Promise<apiTypes.WorkExperience> =>
-    apiService.post("/workExperience/create", data),
-
-  updateWorkExperience: (
-    id: number,
-    data: any
-  ): Promise<apiTypes.WorkExperience> =>
-    apiService.put(`/workExperience/update/${id}`, data),
-
-  deleteWorkExperience: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/workExperience/delete/${id}`),
+  deleteResume: (): Promise<void> => apiService.delete("/resumes"),
 };
 
 // Combined export for easy access
@@ -436,12 +298,8 @@ export const api = {
   skills: skillApi,
   inclusions: inclusionApi,
   exclusions: exclusionApi,
-  userSkills: userSkillApi,
-  userExclusions: userExclusionApi,
-  userInclusions: userInclusionApi,
+  filters: filterApi,
   resumes: resumeApi,
-  education: educationApi,
-  workExperience: workExperienceApi,
 };
 
 // Default export

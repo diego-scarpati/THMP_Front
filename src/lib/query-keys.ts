@@ -41,6 +41,7 @@ export const queryKeys = {
     details: () => [...queryKeys.users.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.users.details(), id] as const,
     current: () => [...queryKeys.users.all, 'current'] as const,
+    keywords: () => [...queryKeys.users.all, 'keywords'] as const,
   },
   inclusions: {
     all: ['inclusions'] as const,
@@ -143,5 +144,14 @@ export const mutationKeys = {
   exclusions: {
     create: ['exclusions', 'create'] as const,
     delete: ['exclusions', 'delete'] as const,
+  },
+  skills: {
+    create: ['skills', 'create'] as const,
+    delete: ['skills', 'delete'] as const,
+  },
+  filters: {
+    toggleActive: ['filters', 'toggleActive'] as const,
+    setInclusionsActive: ['filters', 'setInclusionsActive'] as const,
+    setExclusionsActive: ['filters', 'setExclusionsActive'] as const,
   },
 } as const

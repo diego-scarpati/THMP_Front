@@ -20,6 +20,13 @@ export const useCurrentUser = () => {
   })
 }
 
+export const useUserKeywords = () => {
+  return useQuery({
+    queryKey: queryKeys.users.keywords(),
+    queryFn: () => userApi.getUserKeywords(),
+  })
+}
+
 // Mutation hooks for users
 export const useCreateUser = () => {
   const queryClient = useQueryClient()
@@ -107,11 +114,3 @@ export const useLogoutUser = () => {
   })
 }
 
-// ===== NEW HOOK FROM API REFERENCE =====
-
-export const useUserKeywords = () => {
-  return useQuery({
-    queryKey: [...queryKeys.users.all, 'keywords'] as const,
-    queryFn: () => userApi.getUserKeywords(),
-  })
-}

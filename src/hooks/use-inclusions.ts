@@ -5,18 +5,10 @@ import type { ApiResponse, CreateInclusionsRequest, Inclusion } from '@/types/ap
 
 
 // Query hooks for inclusions
-export const useInclusions = (params?: Record<string, any>) => {
+export const useInclusions = () => {
   return useQuery({
-    queryKey: queryKeys.inclusions.list(params),
+    queryKey: queryKeys.inclusions.all,
     queryFn: () => inclusionApi.getAllInclusions(),
-  })
-}
-
-// Query hooks for inclusions
-export const useUserInclusions = () => {
-  return useQuery({
-    queryKey: queryKeys.inclusions.lists(),
-    queryFn: () => inclusionApi.getAllUserInclusions(),
   })
 }
 
@@ -39,7 +31,7 @@ export const useDeleteInclusion = () => {
 
   return useMutation({
     mutationKey: mutationKeys.inclusions.delete,
-    mutationFn: (id: number) => inclusionApi.deleteInclusion(id),
+    mutationFn: (inclusion: string) => inclusionApi.deleteInclusion(inclusion),
     onSuccess: () => {
       // Invalidate inclusions list to refresh
       queryClient.invalidateQueries({ queryKey: queryKeys.inclusions.all })

@@ -5,17 +5,10 @@ import type { ApiResponse, CreateExclusionsRequest, Exclusion } from '@/types/ap
 
 
 // Query hooks for exclusions
-export const useExclusions = (params?: Record<string, any>) => {
+export const useExclusions = () => {
   return useQuery({
-    queryKey: queryKeys.exclusions.list(params),
+    queryKey: queryKeys.exclusions.all,
     queryFn: () => exclusionApi.getAllExclusions(),
-  })
-}
-
-export const useUserExclusions = () => {
-  return useQuery({
-    queryKey: queryKeys.exclusions.lists(),
-    queryFn: () => exclusionApi.getAllUserExclusions(),
   })
 }
 
@@ -38,7 +31,7 @@ export const useDeleteExclusion = () => {
 
   return useMutation({
     mutationKey: mutationKeys.exclusions.delete,
-    mutationFn: (id: number) => exclusionApi.deleteExclusion(id),
+    mutationFn: (exclusion: string) => exclusionApi.deleteExclusion(exclusion),
     onSuccess: () => {
       // Invalidate exclusions list to refresh
       queryClient.invalidateQueries({ queryKey: queryKeys.exclusions.all })

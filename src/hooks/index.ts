@@ -16,6 +16,9 @@ export {
   useApproveJobByGPT,
   useUpdateApprovedByDate,
   useSeekAllKeywords,
+  useUpdateUserJobsApprovalByFormula,
+  useSeekSearch,
+  useApproveJobByLLM,
 } from "./use-jobs";
 
 // User-related hooks
@@ -27,6 +30,7 @@ export {
   useDeleteUser,
   useLoginUser,
   useLogoutUser,
+  useUserKeywords,
 } from "./use-users";
 
 // Job Description hooks
@@ -41,16 +45,29 @@ export {
 
 // Resume hooks
 export {
-  useResumes,
   useResume,
-  useResumesByUser,
   useCreateResume,
   useUpdateResume,
   useDeleteResume,
 } from "./use-resumes";
 
+// Skill hooks
+export {
+  useSkills,
+  useCreateSkill,
+  useDeleteSkill,
+} from "./use-skills";
+
+// Filter hooks
+export {
+  useToggleFilterActive,
+  useSetInclusionsActive,
+  useSetExclusionsActive,
+} from "./use-filters";
+
 // Keyword hooks
 export {
+  useUserKeywords as useAllUserKeywords, // Alias to avoid conflict if needed, but use-users has useUserKeywords too?
   useKeywords,
   useKeyword,
   useCreateKeyword,
@@ -72,7 +89,6 @@ export {
 // Inclusion hooks
 export {
   useInclusions,
-  useUserInclusions,
   useCreateInclusion,
   useDeleteInclusion,
 } from "./use-inclusions";
@@ -80,7 +96,6 @@ export {
 // Exclusion hooks
 export {
   useExclusions,
-  useUserExclusions,
   useCreateExclusion,
   useDeleteExclusion,
 } from "./use-exclusions";

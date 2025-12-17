@@ -1,8 +1,8 @@
 // Base types for API responses
 export interface BaseEntity {
   id: string | number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PaginationParams {
@@ -40,7 +40,7 @@ export interface ApiErrorResponse {
 
 // ===== JOB INTERFACES =====
 
-export interface Job extends BaseEntity {
+export interface Job {
   id: string;
   title: string;
   url: string;
@@ -51,14 +51,14 @@ export interface Job extends BaseEntity {
   type?: string;
   post_date?: string;
   benefits?: string;
-  // TO UPDATE: Add approved_by_formula and approved_by_gpt to Job interface
-  // approved_by_formula: "yes" | "no" | "pending";
-  // approved_by_gpt: "yes" | "no" | "pending";
-  easy_apply?: "yes" | "no" | "pending";
+  approved_by_formula: "yes" | "no" | "pending";
+  approved_by_gpt: "yes" | "no" | "pending";
+  easy_apply: "yes" | "no" | "pending";
   posted_by: string;
-  JobDescription?: JobDescription;
+  JobDescription: JobDescription | null;
+  Keywords: Keyword[];
+  // Relations not explicitly in shared schema but likely returned or used in frontend
   Users?: User[];
-  keywords?: Keyword[];
   userJobs?: UserJob[];
 }
 
@@ -80,12 +80,18 @@ export interface UpdateJobRequest extends Partial<CreateJobRequest> {}
 
 export interface JobResponse extends ApiResponse<Job> {}
 export interface JobsResponse extends ApiResponse<Job[]> {}
-export interface PaginatedJobsResponse extends PaginatedResponse<Job> {}
+export interface PaginatedJobsResponse {
+  total: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  jobs: Job[];
+}
 
 // ===== JOB DESCRIPTION INTERFACES =====
 
-export interface JobDescription extends BaseEntity {
-  id: string;
+export interface JobDescription {
+  id: string; // job id
   state: string;
   description: string;
   company_apply_url?: string;
@@ -98,34 +104,11 @@ export interface JobDescription extends BaseEntity {
 }
 
 export interface CreateJobDescriptionRequest {
-  // TO UPDATE: CreateJobDescriptionRequest should wrap in jobDescription object
-  // Body: { "jobDescription": JobDescription }
-  // export interface CreateJobDescriptionRequest {
-  //   jobDescription: {
-  //     id: string;
-  //     state: string;
-  //     description: string;
-  //     company_apply_url?: string;
-  //     easy_apply_url?: string;
-  //     work_remote_allowed?: boolean;
-  //     work_place?: string;
-  //     formatted_experience_level?: string;
-  //     skills?: string;
-  //   };
-  // }
-  id: string;
-  state: string;
-  description: string;
-  company_apply_url?: string;
-  easy_apply_url?: string;
-  work_remote_allowed?: boolean;
-  work_place?: string;
-  formatted_experience_level?: string;
-  skills?: string;
+  jobDescription: JobDescription;
 }
 
 export interface UpdateJobDescriptionRequest
-  extends Partial<Omit<CreateJobDescriptionRequest, "id">> {}
+  extends Partial<Omit<JobDescription, "id">> {}
 
 export interface JobDescriptionResponse extends ApiResponse<JobDescription> {}
 export interface JobDescriptionsResponse
@@ -133,11 +116,12 @@ export interface JobDescriptionsResponse
 
 // ===== USER INTERFACES =====
 
-export interface User extends BaseEntity {
-  id: string;
+export interface User {
+  id: string; // uuid
   name: string;
   last_name: string;
   email: string;
+  // Relations
   UserJob?: UserJob;
   UserSkills?: UserSkill[];
   UserExclusions?: UserExclusion[];
@@ -203,14 +187,10 @@ export interface UserJobsResponse extends ApiResponse<UserJob[]> {}
 
 // ===== KEYWORD INTERFACES =====
 
-export interface Keyword extends BaseEntity {
+export interface Keyword {
   id: number;
   keyword: string;
-  jobs?: Job[];
 }
-
-// TO UPDATE: Keyword should use 'keyword' field, but Inclusion/Exclusion use 'title'
-// Per API_REFERENCE: "keywords use `keyword`, the others use `title`"
 
 export interface CreateKeywordRequest {
   keyword: string;
@@ -223,14 +203,14 @@ export interface KeywordsResponse extends ApiResponse<Keyword[]> {}
 
 // ===== SKILL INTERFACES =====
 
-export interface Skill extends BaseEntity {
+export interface Skill {
   id: number;
-  name: string;
-  users?: User[];
+  title: string;
+  active: boolean;
 }
 
 export interface CreateSkillRequest {
-  name: string;
+  skills: string[];
 }
 
 export interface UpdateSkillRequest extends Partial<CreateSkillRequest> {}
@@ -240,10 +220,10 @@ export interface SkillsResponse extends ApiResponse<Skill[]> {}
 
 // ===== INCLUSION INTERFACES =====
 
-export interface Inclusion extends BaseEntity {
+export interface Inclusion {
   id: number;
   title: string;
-  users?: User[];
+  active: boolean;
 }
 
 export interface CreateInclusionsRequest {
@@ -255,10 +235,10 @@ export interface InclusionsResponse extends ApiResponse<Inclusion[]> {}
 
 // ===== EXCLUSION INTERFACES =====
 
-export interface Exclusion extends BaseEntity {
+export interface Exclusion {
   id: number;
   title: string;
-  users?: User[];
+  active: boolean;
 }
 
 export interface CreateExclusionsRequest {
@@ -324,8 +304,9 @@ export interface UserInclusionsResponse extends ApiResponse<UserInclusion[]> {}
 
 // ===== RESUME INTERFACES =====
 
-export interface Resume extends BaseEntity {
+export interface Resume {
   id: number;
+  user_id: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -333,8 +314,8 @@ export interface Resume extends BaseEntity {
   address: string;
   summary?: string;
   educations?: Education[];
-  workExperiences?: WorkExperience[];
-  skills?: ResumeSkill[];
+  work_experiences?: WorkExperience[];
+  resume_skills?: ResumeSkill[];
   certifications?: Certification[];
   projects?: Project[];
   hobbies?: Hobby[];
@@ -342,23 +323,7 @@ export interface Resume extends BaseEntity {
   references?: Reference[];
 }
 
-export interface CreateResumeRequest {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  address: string;
-  summary?: string;
-}
-
-export interface UpdateResumeRequest extends Partial<CreateResumeRequest> {}
-
-export interface ResumeResponse extends ApiResponse<Resume> {}
-export interface ResumesResponse extends ApiResponse<Resume[]> {}
-
-// ===== EDUCATION INTERFACES =====
-
-export interface Education extends BaseEntity {
+export interface Education {
   id: number;
   resume_id: number;
   institution: string;
@@ -366,35 +331,10 @@ export interface Education extends BaseEntity {
   field_of_study: string;
   start_date: string;
   end_date: string;
-  resume?: Resume;
 }
 
-export interface CreateEducationRequest {
-  resume_id: number;
-  institution: string;
-  degree: string;
-  field_of_study: string;
-  start_date: string;
-  end_date: string;
-}
-
-export interface UpdateEducationRequest
-  extends Partial<Omit<CreateEducationRequest, "resume_id">> {}
-
-// ===== WORK EXPERIENCE INTERFACES =====
-
-export interface WorkExperience extends BaseEntity {
+export interface WorkExperience {
   id: number;
-  resume_id: number;
-  company: string;
-  position: string;
-  start_date: string;
-  end_date: string;
-  responsibilities: string[];
-  resume?: Resume;
-}
-
-export interface CreateWorkExperienceRequest {
   resume_id: number;
   company: string;
   position: string;
@@ -403,18 +343,14 @@ export interface CreateWorkExperienceRequest {
   responsibilities: string[];
 }
 
-export interface UpdateWorkExperienceRequest
-  extends Partial<Omit<CreateWorkExperienceRequest, "resume_id">> {}
-
-// ===== OTHER RESUME RELATED INTERFACES =====
-
-export interface ResumeSkill extends BaseEntity {
+export interface ResumeSkill {
   id: number;
   resume_id: number;
-  skill: string;
+  skill_id: number;
+  Skill?: Skill;
 }
 
-export interface Certification extends BaseEntity {
+export interface Certification {
   id: number;
   resume_id: number;
   name: string;
@@ -423,7 +359,7 @@ export interface Certification extends BaseEntity {
   expiration_date?: string;
 }
 
-export interface Project extends BaseEntity {
+export interface Project {
   id: number;
   resume_id: number;
   name: string;
@@ -432,26 +368,31 @@ export interface Project extends BaseEntity {
   end_date?: string;
 }
 
-export interface Hobby extends BaseEntity {
+export interface Hobby {
   id: number;
   resume_id: number;
   hobby: string;
 }
 
-export interface Language extends BaseEntity {
+export interface Language {
   id: number;
   resume_id: number;
   language: string;
   proficiency: string;
 }
 
-export interface Reference extends BaseEntity {
+export interface Reference {
   id: number;
   resume_id: number;
   name: string;
   relationship: string;
   contact: string;
 }
+
+export interface CreateResumeRequest extends Omit<Resume, "id" | "user_id"> {}
+export interface UpdateResumeRequest extends Partial<CreateResumeRequest> {}
+
+export interface ResumeResponse extends ApiResponse<Resume> {}
 
 // ===== SPECIALIZED REQUEST/RESPONSE INTERFACES =====
 
@@ -462,32 +403,17 @@ export interface BulkCreateJobsRequest {
 
 export interface SearchAndCreateJobsRequest {
   keywords: string;
-  locationId?: number;
+  location?: string;
+  datePosted?: string;
+  sort?: string;
 }
-
-// TO UPDATE: SearchAndCreateJobsRequest should use query params, not body
-// Query params: keywords (required), location, datePosted, sort
-// export interface SearchAndCreateJobsRequest {
-//   keywords: string;
-//   location?: string;
-//   datePosted?: string;
-//   sort?: string;
-// }
 
 export interface SearchAndCreateJobsMultipleKeywordsRequest {
   keywords?: string[];
-  locationId?: number;
+  location?: string;
+  datePosted?: string;
+  sort?: string;
 }
-
-// TO UPDATE: SearchAndCreateJobsMultipleKeywordsRequest should support query params + body
-// Query params: location, datePosted, sort
-// Body: { keywords?: string[] }
-// export interface SearchAndCreateJobsMultipleKeywordsRequest {
-//   location?: string;
-//   datePosted?: string;
-//   sort?: string;
-//   keywords?: string[];
-// }
 
 export interface SearchAndCreateJobsResponse extends ApiResponse<string> {}
 
@@ -496,39 +422,21 @@ export interface JobAcceptanceFilterParams {
   gptAcceptance?: "yes" | "no" | "pending";
 }
 
-export interface JobQueryParams extends PaginationParams {
-  // Job model parameters
-  id?: string;
-  title?: string;
-  url?: string;
-  reference_id?: string;
-  poster_id?: string;
-  company?: string;
-  location?: string;
-  type?: string;
+export interface JobQueryParams {
+  page?: number;
+  limit?: number;
+  created?: string;
   post_date?: string;
-  benefits?: string;
+  job_descriptions?: boolean;
+  skills?: boolean;
+  keywords?: boolean;
   approved_by_formula?: "yes" | "no" | "pending";
   approved_by_gpt?: "yes" | "no" | "pending";
   easy_apply?: "yes" | "no" | "pending";
-
-  // Include parameters
-  keywords?: boolean;
-  jobDescriptions?: boolean;
-  skills?: boolean;
-
-  // Additional query parameters
-  created?: string;
-  // TO UPDATE: Add job_descriptions instead of jobDescriptions to match API
-  // job_descriptions?: boolean;
-}
-
-export interface PaginatedManualJobsResponse {
-  total: number;
-  totalPages: number;
-  currentPage: number;
-  limit: number;
-  jobs: Job[];
+  company?: string;
+  title?: string;
+  location?: string;
+  type?: string;
 }
 
 // ===== NEW INTERFACES FROM API REFERENCE =====
@@ -561,4 +469,15 @@ export interface UpdateUserJobsApprovalResponse {
 // Inclusion DELETE uses query param
 export interface DeleteInclusionRequest {
   inclusion: string; // query param
+}
+
+// Filter API interfaces
+export interface ToggleActiveRequest {
+  includes?: string[];
+  excludes?: string[];
+}
+
+export interface SetActiveRequest {
+  titles: string[];
+  active: boolean;
 }
