@@ -30,9 +30,13 @@ export default function LoginPage() {
     try {
       await loginMutation.mutateAsync(formData);
       router.push('/jobs'); // Redirect to jobs page after login
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Invalid email or password');
+      const message =
+        typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Invalid email or password';
+      setError(message);
     }
   };
 
@@ -97,7 +101,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center text-sm">
-          <span className="text-gray-600">Don't have an account? </span>
+          <span className="text-gray-600">Don&apos;t have an account? </span>
           <Link 
             href="/register" 
             className="font-medium text-congress-blue-600 hover:text-congress-blue-500"

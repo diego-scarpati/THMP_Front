@@ -11,6 +11,7 @@ interface FilterOptionProps {
   placeholder?: string; // For text inputs
   id?: string; // For accessibility
   className?: string; // For custom styling
+  labelBackground?: string; // For label background color
 }
 
 const FilterOption = ({ 
@@ -21,7 +22,8 @@ const FilterOption = ({
   options, 
   placeholder,
   id,
-  className 
+  className,
+  labelBackground
 }: FilterOptionProps) => {
   const inputId = id || `filter-${title.toLowerCase().replace(/\s+/g, '-')}`;
 
@@ -30,7 +32,7 @@ const FilterOption = ({
       <div className="relative border border-congress-blue-900 rounded-full px-3 py-1.5">
         <label 
           htmlFor={inputId} 
-          className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 bg-background z-10"
+          className={cn("absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 z-10", labelBackground ? labelBackground : "bg-background")}
         >
           {title}
         </label>

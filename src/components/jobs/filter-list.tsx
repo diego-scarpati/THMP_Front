@@ -137,16 +137,16 @@ const FilterList = ({ totalJobs, filteredJobs, onFiltersChange }: FilterListProp
   };
 
   // Debounce utility function
-  function debounce<T extends (...args: any[]) => any>(
-    func: T,
+  function debounce<TArgs extends unknown[], TReturn>(
+    func: (...args: TArgs) => TReturn,
     wait: number
-  ): T & { cancel: () => void } {
+  ): ((...args: TArgs) => void) & { cancel: () => void } {
     let timeout: NodeJS.Timeout;
 
-    const debounced = ((...args: Parameters<T>) => {
+    const debounced = ((...args: TArgs) => {
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
-    }) as T & { cancel: () => void };
+    }) as ((...args: TArgs) => void) & { cancel: () => void };
 
     debounced.cancel = () => {
       clearTimeout(timeout);

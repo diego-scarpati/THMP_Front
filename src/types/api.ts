@@ -76,10 +76,10 @@ export interface CreateJobRequest {
   posted_by?: string;
 }
 
-export interface UpdateJobRequest extends Partial<CreateJobRequest> {}
+export type UpdateJobRequest = Partial<CreateJobRequest>
 
-export interface JobResponse extends ApiResponse<Job> {}
-export interface JobsResponse extends ApiResponse<Job[]> {}
+export type JobResponse = ApiResponse<Job>
+export type JobsResponse = ApiResponse<Job[]>
 export interface PaginatedJobsResponse {
   total: number;
   totalPages: number;
@@ -107,12 +107,10 @@ export interface CreateJobDescriptionRequest {
   jobDescription: JobDescription;
 }
 
-export interface UpdateJobDescriptionRequest
-  extends Partial<Omit<JobDescription, "id">> {}
+export type UpdateJobDescriptionRequest = Partial<Omit<JobDescription, "id">>
 
-export interface JobDescriptionResponse extends ApiResponse<JobDescription> {}
-export interface JobDescriptionsResponse
-  extends ApiResponse<JobDescription[]> {}
+export type JobDescriptionResponse = ApiResponse<JobDescription>
+export type JobDescriptionsResponse = ApiResponse<JobDescription[]>
 
 // ===== USER INTERFACES =====
 
@@ -149,14 +147,13 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse
-  extends ApiResponse<{
-    user: Omit<User, "password">;
-    accessToken: string;
-  }> {}
+export type LoginResponse = ApiResponse<{
+  user: Omit<User, "password">;
+  accessToken: string;
+}>
 
-export interface UserResponse extends ApiResponse<User> {}
-export interface UsersResponse extends ApiResponse<User[]> {}
+export type UserResponse = ApiResponse<User>
+export type UsersResponse = ApiResponse<User[]>
 
 // ===== USER JOB INTERFACES =====
 
@@ -179,11 +176,10 @@ export interface CreateUserJobRequest {
   cover_letter?: string;
 }
 
-export interface UpdateUserJobRequest
-  extends Partial<Omit<CreateUserJobRequest, "user_id" | "job_id">> {}
+export type UpdateUserJobRequest = Partial<Omit<CreateUserJobRequest, "user_id" | "job_id">>
 
-export interface UserJobResponse extends ApiResponse<UserJob> {}
-export interface UserJobsResponse extends ApiResponse<UserJob[]> {}
+export type UserJobResponse = ApiResponse<UserJob>
+export type UserJobsResponse = ApiResponse<UserJob[]>
 
 // ===== KEYWORD INTERFACES =====
 
@@ -196,10 +192,10 @@ export interface CreateKeywordRequest {
   keyword: string;
 }
 
-export interface UpdateKeywordRequest extends Partial<CreateKeywordRequest> {}
+export type UpdateKeywordRequest = Partial<CreateKeywordRequest>
 
-export interface KeywordResponse extends ApiResponse<Keyword> {}
-export interface KeywordsResponse extends ApiResponse<Keyword[]> {}
+export type KeywordResponse = ApiResponse<Keyword>
+export type KeywordsResponse = ApiResponse<Keyword[]>
 
 // ===== SKILL INTERFACES =====
 
@@ -213,40 +209,40 @@ export interface CreateSkillRequest {
   skills: string[];
 }
 
-export interface UpdateSkillRequest extends Partial<CreateSkillRequest> {}
+export type UpdateSkillRequest = Partial<CreateSkillRequest>
 
-export interface SkillResponse extends ApiResponse<Skill> {}
-export interface SkillsResponse extends ApiResponse<Skill[]> {}
+export type SkillResponse = ApiResponse<Skill>
+export type SkillsResponse = ApiResponse<Skill[]>
 
 // ===== INCLUSION INTERFACES =====
 
 export interface Inclusion {
   id: number;
   title: string;
-  active: boolean;
+  Users: { id: string, UserInclusion: { active: boolean, id: number } }[];
 }
 
 export interface CreateInclusionsRequest {
   inclusions: string[];
 }
 
-export interface InclusionResponse extends ApiResponse<Inclusion> {}
-export interface InclusionsResponse extends ApiResponse<Inclusion[]> {}
+export type InclusionResponse = ApiResponse<Inclusion>
+export type InclusionsResponse = ApiResponse<Inclusion[]>
 
 // ===== EXCLUSION INTERFACES =====
 
 export interface Exclusion {
   id: number;
   title: string;
-  active: boolean;
+  Users: { id: string, UserExclusion: { active: boolean, id: number } }[];
 }
 
 export interface CreateExclusionsRequest {
   exclusions: string[];
 }
 
-export interface ExclusionResponse extends ApiResponse<Exclusion> {}
-export interface ExclusionsResponse extends ApiResponse<Exclusion[]> {}
+export type ExclusionResponse = ApiResponse<Exclusion>
+export type ExclusionsResponse = ApiResponse<Exclusion[]>
 
 // ===== USER SKILL INTERFACES =====
 
@@ -263,8 +259,8 @@ export interface CreateUserSkillRequest {
   skill_id: number;
 }
 
-export interface UserSkillResponse extends ApiResponse<UserSkill> {}
-export interface UserSkillsResponse extends ApiResponse<UserSkill[]> {}
+export type UserSkillResponse = ApiResponse<UserSkill>
+export type UserSkillsResponse = ApiResponse<UserSkill[]>
 
 // ===== USER EXCLUSION INTERFACES =====
 
@@ -281,8 +277,8 @@ export interface CreateUserExclusionRequest {
   exclusion_id: number;
 }
 
-export interface UserExclusionResponse extends ApiResponse<UserExclusion> {}
-export interface UserExclusionsResponse extends ApiResponse<UserExclusion[]> {}
+export type UserExclusionResponse = ApiResponse<UserExclusion>
+export type UserExclusionsResponse = ApiResponse<UserExclusion[]>
 
 // ===== USER INCLUSION INTERFACES =====
 
@@ -299,8 +295,8 @@ export interface CreateUserInclusionRequest {
   inclusion_id: number;
 }
 
-export interface UserInclusionResponse extends ApiResponse<UserInclusion> {}
-export interface UserInclusionsResponse extends ApiResponse<UserInclusion[]> {}
+export type UserInclusionResponse = ApiResponse<UserInclusion>
+export type UserInclusionsResponse = ApiResponse<UserInclusion[]>
 
 // ===== RESUME INTERFACES =====
 
@@ -389,10 +385,10 @@ export interface Reference {
   contact: string;
 }
 
-export interface CreateResumeRequest extends Omit<Resume, "id" | "user_id"> {}
-export interface UpdateResumeRequest extends Partial<CreateResumeRequest> {}
+export type CreateResumeRequest = Omit<Resume, "id" | "user_id">
+export type UpdateResumeRequest = Partial<CreateResumeRequest>
 
-export interface ResumeResponse extends ApiResponse<Resume> {}
+export type ResumeResponse = ApiResponse<Resume>
 
 // ===== SPECIALIZED REQUEST/RESPONSE INTERFACES =====
 
@@ -415,7 +411,7 @@ export interface SearchAndCreateJobsMultipleKeywordsRequest {
   sort?: string;
 }
 
-export interface SearchAndCreateJobsResponse extends ApiResponse<string> {}
+export type SearchAndCreateJobsResponse = ApiResponse<string>
 
 export interface JobAcceptanceFilterParams {
   formulaAcceptance?: "yes" | "no" | "pending";
@@ -458,9 +454,7 @@ export interface ApprovalResponse {
 }
 
 // User job approval update request
-export interface UpdateUserJobsApprovalRequest {
-  // No body params - updates all to pending
-}
+export type UpdateUserJobsApprovalRequest = Record<string, never>
 
 export interface UpdateUserJobsApprovalResponse {
   updatedRows: number;
@@ -473,8 +467,8 @@ export interface DeleteInclusionRequest {
 
 // Filter API interfaces
 export interface ToggleActiveRequest {
-  includes?: string[];
-  excludes?: string[];
+  id: number;
+  active: boolean;
 }
 
 export interface SetActiveRequest {

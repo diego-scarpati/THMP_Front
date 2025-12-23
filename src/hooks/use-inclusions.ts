@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { inclusionApi } from '@/services/endpoints'
-import type { ApiResponse, CreateInclusionsRequest, Inclusion } from '@/types/api'
+import type { CreateInclusionsRequest } from '@/types/api'
 
 
 // Query hooks for inclusions
@@ -38,3 +38,6 @@ export const useDeleteInclusion = () => {
     },
   })
 }
+
+// Back-compat alias (older components still import these)
+export const useUserInclusions = useInclusions

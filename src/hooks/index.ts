@@ -91,6 +91,7 @@ export {
   useInclusions,
   useCreateInclusion,
   useDeleteInclusion,
+  useUserInclusions,
 } from "./use-inclusions";
 
 // Exclusion hooks
@@ -98,4 +99,5 @@ export {
   useExclusions,
   useCreateExclusion,
   useDeleteExclusion,
+  useUserExclusions,
 } from "./use-exclusions";

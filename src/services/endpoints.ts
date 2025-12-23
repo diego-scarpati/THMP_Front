@@ -2,9 +2,9 @@ import { apiService } from "./api";
 import * as apiTypes from "@/types/api";
 
 // Helper to build query string
-const buildQueryString = (params: Record<string, any>): string => {
+const buildQueryString = (params: Record<string, unknown> | unknown): string => {
   const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
+  Object.entries(params as Record<string, unknown>).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       searchParams.append(key, String(value));
     }
@@ -265,8 +265,11 @@ export const exclusionApi = {
 
 // Filter API functions
 export const filterApi = {
-  toggleActive: (data: apiTypes.ToggleActiveRequest): Promise<void> =>
-    apiService.patch("/filters/active", data),
+  toggleUserInclusionActive: (data: apiTypes.ToggleActiveRequest): Promise<void> =>
+    apiService.patch("/filters/user-inclusions/active", data),
+
+  toggleUserExclusionActive: (data: apiTypes.ToggleActiveRequest): Promise<void> =>
+    apiService.patch("/filters/user-exclusions/active", data),
 
   setInclusionsActive: (data: apiTypes.SetActiveRequest): Promise<void> =>
     apiService.patch("/filters/inclusions", data),

@@ -46,9 +46,13 @@ export default function RegisterPage() {
       });
       // After successful registration, redirect to login
       router.push('/login');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.message || 'Failed to create account');
+      const message =
+        typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to create account';
+      setError(message);
     }
   };
 

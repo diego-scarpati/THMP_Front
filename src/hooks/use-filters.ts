@@ -3,15 +3,20 @@ import { mutationKeys, queryKeys } from "@/lib/query-keys";
 import { filterApi } from "@/services/endpoints";
 import type { ToggleActiveRequest, SetActiveRequest } from "@/types/api";
 
-export const useToggleFilterActive = () => {
+export const useToggleFilterActive = (kind: "inclusion" | "exclusion") => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: mutationKeys.filters.toggleActive,
-    mutationFn: (data: ToggleActiveRequest) => filterApi.toggleActive(data),
+    mutationFn: (data: ToggleActiveRequest) =>
+      kind === "inclusion"
+        ? filterApi.toggleUserInclusionActive(data)
+        : filterApi.toggleUserExclusionActive(data),
     onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.inclusions.all });
+      if (kind === "inclusion") {
+        queryClient.invalidateQueries({ queryKey: queryKeys.inclusions.all });
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.exclusions.all });
     },
   });
