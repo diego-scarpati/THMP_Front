@@ -1,5 +1,5 @@
 import React from "react";
-import Done from "/public/icons/Done.svg";
+import Done from "@/icons/Done.svg";
 import { cn } from "@/lib/utils";
 
 interface AiApprovedPillProps {

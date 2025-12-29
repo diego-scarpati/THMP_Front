@@ -3,15 +3,9 @@ import { queryKeys, mutationKeys } from "@/lib/query-keys";
 import { jobApi } from "@/services/endpoints";
 import type {
   Job,
-  CreateJobRequest,
-  UpdateJobRequest,
-  BulkCreateJobsRequest,
   SearchAndCreateJobsRequest,
   JobQueryParams,
-  JobAcceptanceFilterParams,
   SearchAndCreateJobsMultipleKeywordsRequest,
-  SeekSearchRequest,
-  SeekAllKeywordsRequest,
 } from "@/types/api";
 import type { PaginatedResponse, ApiResponse } from "@/types/api";
 
@@ -46,9 +40,9 @@ export const useJobsByAcceptance = (
   return useQuery({
     queryKey: queryKeys.jobs.byAcceptance(formulaAcceptance, gptAcceptance),
     queryFn: () =>
-      jobApi.getAllByAcceptance({
-        formulaAcceptance: formulaAcceptance as "yes" | "no" | "pending",
-        gptAcceptance: gptAcceptance as "yes" | "no" | "pending",
+      jobApi.getAllJobs({
+        approved_by_formula: formulaAcceptance as "yes" | "no" | "pending",
+        approved_by_gpt: gptAcceptance as "yes" | "no" | "pending",
       }),
     enabled: !!formulaAcceptance || !!gptAcceptance,
   });
@@ -77,72 +71,6 @@ export const useRejectedJobs = () => {
 // }
 
 // Mutation hooks for jobs
-export const useCreateJob = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationKey: mutationKeys.jobs.create,
-    mutationFn: (jobData: CreateJobRequest) => jobApi.createJob(jobData),
-    onSuccess: () => {
-      // Invalidate all job lists to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
-    },
-  });
-};
-
-export const useUpdateJob = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationKey: mutationKeys.jobs.update,
-    mutationFn: ({ id, data }: { id: string; data: UpdateJobRequest }) =>
-      jobApi.updateJob(id, data),
-    onSuccess: (data, variables) => {
-      // Update the specific job in cache
-      queryClient.setQueryData(
-        queryKeys.jobs.detail(variables.id),
-        (oldData: ApiResponse<Job> | undefined) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            data: { ...oldData.data, ...variables.data },
-          };
-        }
-      );
-      // Invalidate job lists to refresh
-      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
-    },
-  });
-};
-
-export const useDeleteJob = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationKey: mutationKeys.jobs.delete,
-    mutationFn: (id: string) => jobApi.deleteJob(id),
-    onSuccess: (data, id) => {
-      // Remove the job from cache
-      queryClient.removeQueries({ queryKey: queryKeys.jobs.detail(id) });
-      // Invalidate job lists to refresh
-      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
-    },
-  });
-};
-
-export const useBulkCreateJobs = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationKey: mutationKeys.jobs.bulkCreate,
-    mutationFn: (jobsData: BulkCreateJobsRequest) =>
-      jobApi.bulkCreateJobs(jobsData),
-    onSuccess: () => {
-      // Invalidate all job lists to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
-    },
-  });
-};
 
 export const useSearchAndCreateJobs = () => {
   const queryClient = useQueryClient();

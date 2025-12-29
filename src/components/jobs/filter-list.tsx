@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import Filter from "../../../public/icons/filter.svg";
-import FilterOff from "../../../public/icons/filter_off.svg";
-import Add from "../../../public/icons/add.svg";
+import Filter from "@/icons/filter.svg";
+import FilterOff from "@/icons/filter_off.svg";
+import Add from "@/icons/add.svg";
 import FilterOption from "./filter-option";
 
 // Enhanced interface for better type safety and cleaner configuration
@@ -28,7 +28,11 @@ interface FilterListProps {
   onFiltersChange?: (filters: FilterState) => void;
 }
 
-const FilterList = ({ totalJobs, filteredJobs, onFiltersChange }: FilterListProps) => {
+const FilterList = ({
+  totalJobs,
+  filteredJobs,
+  onFiltersChange,
+}: FilterListProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     keyword: "",

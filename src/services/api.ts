@@ -66,13 +66,14 @@ class ApiService {
   }
 
   async post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...options?.headers,
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? (isFormData ? (data as FormData) : JSON.stringify(data)) : undefined,
       ...options,
     })
 
@@ -80,13 +81,14 @@ class ApiService {
   }
 
   async put<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...options?.headers,
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? (isFormData ? (data as FormData) : JSON.stringify(data)) : undefined,
       ...options,
     })
 
@@ -107,13 +109,14 @@ class ApiService {
   }
 
   async patch<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...options?.headers,
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? (isFormData ? (data as FormData) : JSON.stringify(data)) : undefined,
       ...options,
     })
 

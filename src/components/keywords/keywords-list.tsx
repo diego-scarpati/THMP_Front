@@ -1,6 +1,6 @@
 import { useUserKeywords } from "@/hooks/use-keywords";
 import Skill from "../ui/skill";
-import Add from "../../../public/icons/add.svg";
+import Add from "@/icons/add.svg";
 import { cn } from "@/lib/utils";
 
 interface KeywordsListProps {
@@ -9,7 +9,11 @@ interface KeywordsListProps {
   keywords?: string[]; // typed keywords
 }
 
-const KeywordsList = ({ onClickFunction, onAddFunction, keywords }: KeywordsListProps) => {
+const KeywordsList = ({
+  onClickFunction,
+  onAddFunction,
+  keywords,
+}: KeywordsListProps) => {
   let keywordList;
   if (keywords && keywords.length > 0) {
     keywordList = keywords;
@@ -56,7 +60,8 @@ const KeywordsList = ({ onClickFunction, onAddFunction, keywords }: KeywordsList
                     : "bg-congress-blue-200 border-congress-blue-300 text-congress-blue-900 hover:bg-congress-blue-300"
                 )}
               >
-                <Add className="h-3 w-3" />
+                {/* <Add className="h-3 w-3" /> */}
+                <img src="/icons/add.svg" alt="Add" className="h-3 w-3" />
               </button>
             </div>
           );

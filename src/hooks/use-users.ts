@@ -1,22 +1,44 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { userApi } from '@/services/endpoints'
-import type { User, CreateUserRequest, UpdateUserRequest, LoginRequest } from '@/types/api'
-import type { ApiResponse } from '@/types/api'
+import type { User, CreateUserRequest, LoginRequest } from '@/types/api'
 
-// Query hooks for users
-export const useUser = (id: string) => {
-  return useQuery({
-    queryKey: queryKeys.users.detail(id),
-    queryFn: () => userApi.getUserById(id),
-    enabled: !!id,
-  })
+const CURRENT_USER_STORAGE_KEY = 'thmp.currentUser'
+
+function readStoredUser(): User | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(CURRENT_USER_STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as User
+  } catch {
+    return null
+  }
+}
+
+function writeStoredUser(user: User | null) {
+  if (typeof window === 'undefined') return
+  try {
+    if (!user) {
+      window.localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
+      return
+    }
+    window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(user))
+  } catch {
+    // ignore storage failures
+  }
 }
 
 export const useCurrentUser = () => {
+  const queryClient = useQueryClient()
   return useQuery({
     queryKey: queryKeys.users.current(),
-    queryFn: () => userApi.getCurrentUser(),
+    queryFn: async () => {
+      const cached = queryClient.getQueryData<User | null>(queryKeys.users.current())
+      if (cached !== undefined) return cached
+      return readStoredUser()
+    },
+    staleTime: Infinity,
   })
 }
 
@@ -35,47 +57,7 @@ export const useCreateUser = () => {
     mutationKey: mutationKeys.users.create,
     mutationFn: (userData: CreateUserRequest) => userApi.createUser(userData),
     onSuccess: () => {
-      // Invalidate current user query to refresh
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.current() })
-    },
-  })
-}
-
-export const useUpdateUser = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationKey: mutationKeys.users.update,
-    mutationFn: ({ id, data }: { id: string; data: UpdateUserRequest }) =>
-      userApi.updateUser(id, data),
-    onSuccess: (data, variables) => {
-      // Update the specific user in cache
-      queryClient.setQueryData(
-        queryKeys.users.detail(variables.id),
-        (oldData: ApiResponse<User> | undefined) => {
-          if (!oldData) return oldData
-          return {
-            ...oldData,
-            data: { ...oldData.data, ...variables.data },
-          }
-        }
-      )
-      // If updating current user, invalidate current user query
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.current() })
-    },
-  })
-}
-
-export const useDeleteUser = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationKey: mutationKeys.users.delete,
-    mutationFn: (id: string) => userApi.deleteUser(id),
-    onSuccess: (data, id) => {
-      // Remove the user from cache
-      queryClient.removeQueries({ queryKey: queryKeys.users.detail(id) })
-      // Invalidate current user query
+      // No documented /users/me endpoint; current user is set on login.
       queryClient.invalidateQueries({ queryKey: queryKeys.users.current() })
     },
   })
@@ -89,14 +71,14 @@ export const useLoginUser = () => {
     mutationFn: (credentials: LoginRequest) =>
       userApi.loginUser(credentials),
     onSuccess: (data) => {
-      // Set the current user data in cache
-      queryClient.setQueryData(queryKeys.users.current(), { data: data.data.user })
-      // Invalidate all user-related data to ensure fresh state
+      const user = data.data.user
+      writeStoredUser(user)
+      queryClient.setQueryData<User | null>(queryKeys.users.current(), user)
+      // Invalidate user-scoped lists that depend on the configured user
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.userJobs.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.userSkills.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.userInclusions.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.userExclusions.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.skills.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.inclusions.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.exclusions.all })
     },
   })
 }
@@ -108,6 +90,7 @@ export const useLogoutUser = () => {
     mutationKey: mutationKeys.users.logout,
     mutationFn: () => Promise.resolve(), // No API endpoint for logout, just clear cache
     onSuccess: () => {
+      writeStoredUser(null)
       // Clear all cached data on logout
       queryClient.clear()
     },

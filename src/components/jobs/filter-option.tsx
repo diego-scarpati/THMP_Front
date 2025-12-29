@@ -12,6 +12,7 @@ interface FilterOptionProps {
   id?: string; // For accessibility
   className?: string; // For custom styling
   labelBackground?: string; // For label background color
+  disabled?: boolean;
 }
 
 const FilterOption = ({ 
@@ -23,7 +24,8 @@ const FilterOption = ({
   placeholder,
   id,
   className,
-  labelBackground
+  labelBackground,
+  disabled
 }: FilterOptionProps) => {
   const inputId = id || `filter-${title.toLowerCase().replace(/\s+/g, '-')}`;
 
@@ -43,7 +45,8 @@ const FilterOption = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full text-sm outline-none bg-transparent text-congress-blue-900"
+            disabled={disabled}
+            className="w-full text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
           />
         )}
         {type === "date" && (
@@ -52,7 +55,8 @@ const FilterOption = ({
             id={inputId}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full text-sm outline-none bg-transparent text-congress-blue-900"
+            disabled={disabled}
+            className="w-full text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
           />
         )}
         {type === "select" && options && (

@@ -219,7 +219,9 @@ export type SkillsResponse = ApiResponse<Skill[]>
 export interface Inclusion {
   id: number;
   title: string;
-  Users: { id: string, UserInclusion: { active: boolean, id: number } }[];
+  active?: boolean;
+  // Back-compat (older backend responses returned a join table payload)
+  Users?: { id: string; UserInclusion: { active: boolean; id: number } }[];
 }
 
 export interface CreateInclusionsRequest {
@@ -234,7 +236,9 @@ export type InclusionsResponse = ApiResponse<Inclusion[]>
 export interface Exclusion {
   id: number;
   title: string;
-  Users: { id: string, UserExclusion: { active: boolean, id: number } }[];
+  active?: boolean;
+  // Back-compat (older backend responses returned a join table payload)
+  Users?: { id: string; UserExclusion: { active: boolean; id: number } }[];
 }
 
 export interface CreateExclusionsRequest {
@@ -317,6 +321,20 @@ export interface Resume {
   hobbies?: Hobby[];
   languages?: Language[];
   references?: Reference[];
+}
+
+// ===== PARSED RESUME (ExpandedResume) =====
+
+export interface ParsedSkill {
+  title: string;
+}
+
+export interface ExpandedResume extends Resume {
+  portfolio_url?: string | null;
+  github_url?: string | null;
+  linkedin_url?: string | null;
+  skills?: ParsedSkill[];
+  // Parser output may omit empty arrays and use nulls for unknown values.
 }
 
 export interface Education {
@@ -467,8 +485,8 @@ export interface DeleteInclusionRequest {
 
 // Filter API interfaces
 export interface ToggleActiveRequest {
-  id: number;
-  active: boolean;
+  includes?: string[];
+  excludes?: string[];
 }
 
 export interface SetActiveRequest {

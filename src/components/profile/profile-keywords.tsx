@@ -47,8 +47,7 @@ export function ProfileKeywords() {
   const createExclusion = useCreateExclusion();
   const deleteExclusion = useDeleteExclusion();
 
-  const toggleInclusionActive = useToggleFilterActive("inclusion");
-  const toggleExclusionActive = useToggleFilterActive("exclusion");
+  const toggleActive = useToggleFilterActive();
   const setInclusionsActive = useSetInclusionsActive();
   const setExclusionsActive = useSetExclusionsActive();
 
@@ -89,14 +88,17 @@ export function ProfileKeywords() {
         const users = Array.isArray(record.Users)
           ? (record.Users as Array<Record<string, unknown>>)
           : [];
+
         const relActive = getActiveFromRelation(users[0]?.UserInclusion);
         const directActive =
           typeof record.active === "boolean" ? record.active : undefined;
+        const active = directActive ?? relActive ?? false;
+
         return {
           kind: "includes",
-          id: x.Users[0].UserInclusion.id,
+          id: x.id,
           title: x.title,
-          active: x.Users[0].UserInclusion.active,
+          active,
         };
       }),
     [inclusions]
@@ -109,14 +111,17 @@ export function ProfileKeywords() {
         const users = Array.isArray(record.Users)
           ? (record.Users as Array<Record<string, unknown>>)
           : [];
+
         const relActive = getActiveFromRelation(users[0]?.UserExclusion);
         const directActive =
           typeof record.active === "boolean" ? record.active : undefined;
+        const active = directActive ?? relActive ?? false;
+
         return {
           kind: "excludes",
-          id: x.Users[0].UserExclusion.id,
+          id: x.id,
           title: x.title,
-          active: x.Users[0].UserExclusion.active,
+          active,
         };
       }),
     [exclusions]
@@ -153,8 +158,7 @@ export function ProfileKeywords() {
     deleteInclusion.isPending ||
     createExclusion.isPending ||
     deleteExclusion.isPending ||
-    toggleInclusionActive.isPending ||
-    toggleExclusionActive.isPending ||
+    toggleActive.isPending ||
     setInclusionsActive.isPending ||
     setExclusionsActive.isPending;
 
@@ -183,22 +187,14 @@ export function ProfileKeywords() {
   };
 
   const toggleOne = async (item: KeywordItem) => {
-    const next = !item.active;
-
     if (item.kind === "skills") return;
 
     if (item.kind === "includes") {
-      await toggleInclusionActive.mutateAsync({
-        id: item.id,
-        active: item.active,
-      });
+      await toggleActive.mutateAsync({ includes: [item.title] });
       return;
     }
 
-    await toggleExclusionActive.mutateAsync({
-      id: item.id,
-      active: item.active,
-    });
+    await toggleActive.mutateAsync({ excludes: [item.title] });
   };
 
   const removeOne = async (item: KeywordItem) => {

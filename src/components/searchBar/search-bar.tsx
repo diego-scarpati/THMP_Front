@@ -1,18 +1,10 @@
-import {
-  useSearchAndCreateWithAllKeywords,
-  useUserInclusions,
-  useUserExclusions,
-  useSeekAllKeywords,
-} from "@/hooks";
+import { useSearchAndCreateWithAllKeywords, useSeekAllKeywords } from "@/hooks";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import KeywordsList from "../keywords/keywords-list";
-import Add from "../../../public/icons/add.svg";
-import MagnifyingGlass from "../../../public/icons/magnifying_glass.svg";
-import ProgressActivity from "../../../public/icons/progress_activity.svg";
-import Skill from "../ui/skill";
-import { Exclusion, Inclusion } from "@/types/api";
-import SelectOptions from "../jobs/select-options";
+import Add from "@/icons/add.svg";
+import MagnifyingGlass from "@/icons/magnifying_glass.svg";
+import ProgressActivity from "@/icons/progress_activity.svg";
 import LocationSelectOptions from "../jobs/location-select-options";
 
 const SearchBar = () => {
@@ -21,11 +13,11 @@ const SearchBar = () => {
   const [selectedRadioOption, setSelectedRadioOption] = useState<
     "LinkedIn" | "Seek" | "Both"
   >("LinkedIn");
-  const [selectedLocation, setSelectedLocation] = useState<"sydney" | "melbourne" | "oceania" | "APAC">("sydney");
+  const [selectedLocation, setSelectedLocation] = useState<
+    "sydney" | "melbourne" | "oceania" | "APAC"
+  >("sydney");
   const searchAndCreateJobs = useSearchAndCreateWithAllKeywords();
   const seekAllKeywords = useSeekAllKeywords();
-  const { data: userInclusions } = useUserInclusions();
-  const { data: userExclusions } = useUserExclusions();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const radioOptions = ["LinkedIn", "Seek", "Both"];
@@ -92,8 +84,10 @@ const SearchBar = () => {
   };
 
   const handleSelectedLocation = (location: string) => {
-    setSelectedLocation(location as "sydney" | "melbourne" | "oceania" | "APAC");
-  }
+    setSelectedLocation(
+      location as "sydney" | "melbourne" | "oceania" | "APAC"
+    );
+  };
 
   // show add button only when more than 1 character has been typed
   const showAdd = searchBarKeyword.trim().length > 1;
@@ -147,7 +141,8 @@ const SearchBar = () => {
                     )}
                   >
                     <span className="">Add</span>
-                    <Add className="h-5 w-5" />
+                    {/* <Add className="h-5 w-5" /> */}
+                    <img src="/icons/add.svg" alt="Add" className="h-5 w-5" />
                   </button>
                   <div className="flex items-center justify-center mr-2 rounded-full bg-congress-blue-300 border border-congress-blue-300 py-1.5 px-2 max-w-[4.25rem] h-8">
                     <p className="text-congress-blue-900 text-sm/[1rem] font-semibold px-2 h-5 leading-[20px]">
@@ -236,26 +231,6 @@ const SearchBar = () => {
         onAddFunction={handleAddingUserKeywords}
         keywords={typedKeywords}
       />
-      {/* <div className="flex flex-wrap mt-2 px-4 gap-2">
-        <div>
-          <p className="text-md font-semibold">Inclusions: {userInclusions ? userInclusions.length : 0}</p>
-          <div className="flex gap-1 flex-wrap mt-2">
-            {userInclusions &&
-              userInclusions?.map((inclusion: Inclusion) => (
-                <Skill key={inclusion.id} skill={inclusion.title} size="sm" />
-              ))}
-          </div>
-        </div>
-        <div>
-          <p className="text-md font-semibold">Exclusions: {userExclusions ? userExclusions.length : 0}</p>
-          <div className="flex gap-1 flex-wrap mt-2">
-            {userExclusions &&
-              userExclusions?.map((exclusion: Exclusion) => (
-                <Skill key={exclusion.id} skill={exclusion.title} size="sm" />
-              ))}
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 };

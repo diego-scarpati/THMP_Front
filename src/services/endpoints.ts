@@ -30,34 +30,11 @@ export const jobApi = {
   getJobsByCompanyName: (companyName: string): Promise<apiTypes.Job[]> =>
     apiService.get(`/jobs/getJobsByCompanyName/${companyName}`),
 
-  getAllByAcceptance: (
-    params: apiTypes.JobAcceptanceFilterParams
-  ): Promise<apiTypes.Job[]> => {
-    const queryString = buildQueryString(params);
-    return apiService.get(`/jobs/getAllByAccepetance${queryString}`, {
-      headers: { "Cache-Control": "no-cache" },
-    });
-  },
-
   getAllApplied: (): Promise<apiTypes.Job[]> =>
     apiService.get("/jobs/getAllApplied"),
 
   getAllRejected: (): Promise<apiTypes.Job[]> =>
     apiService.get("/jobs/getAllRejected"),
-
-  createJob: (jobData: apiTypes.CreateJobRequest): Promise<apiTypes.Job> =>
-    apiService.post("/jobs/create", jobData),
-
-  updateJob: (
-    id: string,
-    jobData: apiTypes.UpdateJobRequest
-  ): Promise<apiTypes.Job> => apiService.put(`/jobs/update/${id}`, jobData),
-
-  deleteJob: (id: string): Promise<{ success: boolean }> =>
-    apiService.delete(`/jobs/delete/${id}`),
-
-  bulkCreateJobs: (data: apiTypes.BulkCreateJobsRequest): Promise<string> =>
-    apiService.post("/jobs/bulkCreate", data),
 
   searchAndCreateJobs: (
     params: apiTypes.SearchAndCreateJobsRequest
@@ -85,8 +62,6 @@ export const jobApi = {
 
   updateApprovedByDate: (): Promise<number> =>
     apiService.patch("/jobs/updateApprovedByDate"),
-
-  saveJobsToFile: (): Promise<string> => apiService.get("/jobs/saveJobsToFile"),
 
   updateUserJobsApprovalByFormula:
     (): Promise<apiTypes.UpdateUserJobsApprovalResponse> =>
@@ -126,18 +101,6 @@ export const jobDescriptionApi = {
     data: apiTypes.CreateJobDescriptionRequest
   ): Promise<apiTypes.JobDescription> =>
     apiService.post("/jobDescriptions/create", data),
-
-  updateJobDescription: (
-    id: string,
-    data: apiTypes.UpdateJobDescriptionRequest
-  ): Promise<apiTypes.JobDescription> =>
-    apiService.put(`/jobDescriptions/update/${id}`, data),
-
-  deleteJobDescription: (id: string): Promise<{ success: boolean }> =>
-    apiService.delete(`/jobDescriptions/delete/${id}`),
-
-  loopAndCreateJobDescription: (): Promise<string> =>
-    apiService.post("/jobDescriptions/loopAndCreate"),
 };
 
 // User API functions
@@ -150,56 +113,7 @@ export const userApi = {
   ): Promise<apiTypes.LoginResponse> =>
     apiService.post("/users/loginUser", credentials),
 
-  getUserById: (id: string): Promise<apiTypes.User> =>
-    apiService.get(`/users/${id}`),
-
-  updateUser: (
-    id: string,
-    userData: apiTypes.UpdateUserRequest
-  ): Promise<apiTypes.User> => apiService.put(`/users/${id}`, userData),
-
-  deleteUser: (id: string): Promise<{ success: boolean }> =>
-    apiService.delete(`/users/${id}`),
-
-  getCurrentUser: (): Promise<apiTypes.User> => apiService.get("/users/me"),
-
   getUserKeywords: (): Promise<string[]> => apiService.get("/users/keywords"),
-};
-
-// User Job API functions
-export const userJobApi = {
-  getUserJobs: (userId: string): Promise<apiTypes.UserJob[]> =>
-    apiService.get(`/userJobs/user/${userId}`),
-
-  getJobUsers: (jobId: string): Promise<apiTypes.UserJob[]> =>
-    apiService.get(`/userJobs/job/${jobId}`),
-
-  createUserJob: (
-    data: apiTypes.CreateUserJobRequest
-  ): Promise<apiTypes.UserJob> => apiService.post("/userJobs/create", data),
-
-  updateUserJob: (
-    id: number,
-    data: apiTypes.UpdateUserJobRequest
-  ): Promise<apiTypes.UserJob> =>
-    apiService.put(`/userJobs/update/${id}`, data),
-
-  deleteUserJob: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/userJobs/delete/${id}`),
-
-  updateCoverLetter: (
-    id: number,
-    coverLetter: string
-  ): Promise<apiTypes.UserJob> =>
-    apiService.patch(`/userJobs/updateCoverLetter/${id}`, {
-      cover_letter: coverLetter,
-    }),
-
-  updateApprovalStatus: (
-    id: number,
-    data: { approved_by_formula?: string; approved_by_gpt?: string }
-  ): Promise<apiTypes.UserJob> =>
-    apiService.patch(`/userJobs/updateApprovalStatus/${id}`, data),
 };
 
 // Keyword API functions
@@ -265,11 +179,8 @@ export const exclusionApi = {
 
 // Filter API functions
 export const filterApi = {
-  toggleUserInclusionActive: (data: apiTypes.ToggleActiveRequest): Promise<void> =>
-    apiService.patch("/filters/user-inclusions/active", data),
-
-  toggleUserExclusionActive: (data: apiTypes.ToggleActiveRequest): Promise<void> =>
-    apiService.patch("/filters/user-exclusions/active", data),
+  toggleActive: (data: apiTypes.ToggleActiveRequest): Promise<void> =>
+    apiService.patch("/filters/active", data),
 
   setInclusionsActive: (data: apiTypes.SetActiveRequest): Promise<void> =>
     apiService.patch("/filters/inclusions", data),
@@ -289,6 +200,9 @@ export const resumeApi = {
     apiService.put("/resumes", data),
 
   deleteResume: (): Promise<void> => apiService.delete("/resumes"),
+
+  parseResume: (formData: FormData): Promise<apiTypes.ExpandedResume> =>
+    apiService.post("/resumes/parseResume", formData),
 };
 
 // Combined export for easy access
@@ -296,7 +210,6 @@ export const api = {
   jobs: jobApi,
   jobDescriptions: jobDescriptionApi,
   users: userApi,
-  userJobs: userJobApi,
   keywords: keywordApi,
   skills: skillApi,
   inclusions: inclusionApi,

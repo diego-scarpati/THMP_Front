@@ -1,9 +1,10 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import Done from "/public/icons/done.svg";
-import Cancel from "/public/icons/cancel.svg";
-import Pending from "/public/icons/pending.svg";
-import OpenInNew from "/public/icons/open_in_new.svg";
+import Image from "next/image";
+import Done from "@/icons/done.svg";
+import Cancel from "@/icons/cancel.svg";
+import Pending from "@/icons/pending.svg";
+import OpenInNew from "@/icons/open_in_new.svg";
 
 interface AiApprovedPillProps {
   url: string;

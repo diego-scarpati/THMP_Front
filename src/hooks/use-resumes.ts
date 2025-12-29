@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { resumeApi } from '@/services/endpoints'
-import type { CreateResumeRequest, UpdateResumeRequest } from '@/types/api'
+import type { CreateResumeRequest, UpdateResumeRequest, ExpandedResume } from '@/types/api'
 
 // Query hooks for resumes
 export const useResume = () => {
@@ -46,5 +46,13 @@ export const useDeleteResume = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.resumes.all })
     },
+  })
+}
+
+export const useParseResume = () => {
+  return useMutation({
+    mutationKey: ['resumes', 'parseResume'] as const,
+    mutationFn: (formData: FormData): Promise<ExpandedResume> =>
+      resumeApi.parseResume(formData),
   })
 }

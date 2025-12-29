@@ -91,16 +91,11 @@ export const queryKeys = {
 // Mutation keys for consistency
 export const mutationKeys = {
   jobs: {
-    create: ['jobs', 'create'] as const,
-    update: ['jobs', 'update'] as const,
-    delete: ['jobs', 'delete'] as const,
-    bulkCreate: ['jobs', 'bulkCreate'] as const,
     searchAndCreate: ['jobs', 'searchAndCreate'] as const,
     searchAndCreateWithAllKeywords: ['jobs', 'searchAndCreateWithAllKeywords'] as const,
     approveByFormula: ['jobs', 'approveByFormula'] as const,
     approveByGPT: ['jobs', 'approveByGPT'] as const,
     updateApprovedByDate: ['jobs', 'updateApprovedByDate'] as const,
-    saveToFile: ['jobs', 'saveToFile'] as const,
     // NEW MUTATIONS FROM API REFERENCE
     updateUserJobsApprovalByFormula: ['jobs', 'updateUserJobsApprovalByFormula'] as const,
     seekSearch: ['jobs', 'seekSearch'] as const,
@@ -109,23 +104,11 @@ export const mutationKeys = {
   },
   jobDescriptions: {
     create: ['jobDescriptions', 'create'] as const,
-    update: ['jobDescriptions', 'update'] as const,
-    delete: ['jobDescriptions', 'delete'] as const,
-    loopAndCreate: ['jobDescriptions', 'loopAndCreate'] as const,
   },
   users: {
     create: ['users', 'create'] as const,
-    update: ['users', 'update'] as const,
-    delete: ['users', 'delete'] as const,
     login: ['users', 'login'] as const,
     logout: ['users', 'logout'] as const,
-  },
-  userJobs: {
-    create: ['userJobs', 'create'] as const,
-    update: ['userJobs', 'update'] as const,
-    delete: ['userJobs', 'delete'] as const,
-    updateCoverLetter: ['userJobs', 'updateCoverLetter'] as const,
-    updateApprovalStatus: ['userJobs', 'updateApprovalStatus'] as const,
   },
   keywords: {
     create: ['keywords', 'create'] as const,

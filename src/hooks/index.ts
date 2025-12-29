@@ -6,10 +6,6 @@ export {
   useJobsByAcceptance,
   useAppliedJobs,
   useRejectedJobs,
-  useCreateJob,
-  useUpdateJob,
-  useDeleteJob,
-  useBulkCreateJobs,
   useSearchAndCreateJobs,
   useSearchAndCreateWithAllKeywords,
   useApproveJobByFormula,
@@ -23,11 +19,8 @@ export {
 
 // User-related hooks
 export {
-  useUser,
   useCurrentUser,
   useCreateUser,
-  useUpdateUser,
-  useDeleteUser,
   useLoginUser,
   useLogoutUser,
   useUserKeywords,
@@ -38,9 +31,6 @@ export {
   useJobDescriptions,
   useJobDescription,
   useCreateJobDescription,
-  useUpdateJobDescription,
-  useDeleteJobDescription,
-  useLoopAndCreateJobDescriptions,
 } from "./use-job-descriptions";
 
 // Resume hooks
@@ -49,6 +39,7 @@ export {
   useCreateResume,
   useUpdateResume,
   useDeleteResume,
+  useParseResume,
 } from "./use-resumes";
 
 // Skill hooks
@@ -74,17 +65,6 @@ export {
   useUpdateKeyword,
   useDeleteKeyword,
 } from "./use-keywords";
-
-// User Job hooks
-export {
-  useUserJobs,
-  useJobUsers,
-  useCreateUserJob,
-  useUpdateUserJob,
-  useDeleteUserJob,
-  useUpdateCoverLetter,
-  useUpdateApprovalStatus,
-} from "./use-user-jobs";
 
 // Inclusion hooks
 export {

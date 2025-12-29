@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import FilterOption from "@/components/jobs/filter-option";
 import { cn } from "@/lib/utils";
 import {
@@ -8,6 +9,7 @@ import {
   useDeleteResume,
   useResume,
   useUpdateResume,
+  useParseResume,
 } from "@/hooks";
 import type {
   CreateResumeRequest,
@@ -16,6 +18,8 @@ import type {
 } from "@/types/api";
 
 type Mode = "create" | "update";
+
+const PRESENT_SENTINEL = "__PRESENT__";
 
 const emptyResumeDraft: CreateResumeRequest = {
   first_name: "",
@@ -34,10 +38,165 @@ const emptyResumeDraft: CreateResumeRequest = {
   resume_skills: [],
 };
 
+function isAllowedResumeFile(file: File) {
+  const name = file.name.toLowerCase();
+  return (
+    name.endsWith(".pdf") || name.endsWith(".doc") || name.endsWith(".docx")
+  );
+}
+
+function ResumePreviewPortal({
+  open,
+  file,
+  url,
+  onClose,
+}: {
+  open: boolean;
+  file: File | null;
+  url: string | null;
+  onClose: () => void;
+}) {
+  const docxContainerRef = useRef<HTMLDivElement | null>(null);
+  const [docxBusy, setDocxBusy] = useState(false);
+  const [docxError, setDocxError] = useState<string | null>(null);
+
+  const ext = (file?.name ?? "").toLowerCase();
+  const isPdf = ext.endsWith(".pdf");
+  const isDocx = ext.endsWith(".docx");
+  const isDoc = ext.endsWith(".doc");
+
+  useEffect(() => {
+    if (!open) return;
+    if (!file) return;
+    if (!isDocx) return;
+
+    let cancelled = false;
+    setDocxError(null);
+    setDocxBusy(true);
+
+    (async () => {
+      const mod = await import("docx-preview");
+      if (cancelled) return;
+      if (!docxContainerRef.current) return;
+      docxContainerRef.current.innerHTML = "";
+      await mod.renderAsync(file, docxContainerRef.current);
+    })()
+      .catch((e) => {
+        if (cancelled) return;
+        setDocxError(e instanceof Error ? e.message : "Failed to render DOCX");
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setDocxBusy(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, file, isDocx]);
+
+  if (!open) return null;
+  if (!file) return null;
+  if (!url) return null;
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-congress-blue-900/30 p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="w-full max-w-5xl rounded-3xl bg-white border border-congress-blue-900/15 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-congress-blue-900/10">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-congress-blue-900/70">
+              Preview
+            </div>
+            <div className="truncate text-sm font-semibold text-congress-blue-900">
+              {file.name}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-congress-blue-900/20 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="p-4">
+          {isPdf ? (
+            <iframe
+              src={url}
+              className="h-[70vh] w-full rounded-2xl border border-congress-blue-900/10"
+              title="Resume preview"
+            />
+          ) : isDocx ? (
+            <div className="h-[70vh] overflow-auto rounded-2xl border border-congress-blue-900/10 p-4">
+              {docxBusy ? (
+                <div className="text-sm text-congress-blue-900/70">
+                  Rendering document…
+                </div>
+              ) : null}
+              {docxError ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                  <span className="font-semibold">Could not render DOCX</span>
+                  <span className="opacity-80"> — {docxError}</span>
+                </div>
+              ) : null}
+              <div ref={docxContainerRef} />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <div className="text-sm text-congress-blue-900/70">
+                In-browser preview for .doc files may be limited.
+              </div>
+              <iframe
+                src={url}
+                className="h-[70vh] w-full rounded-2xl border border-congress-blue-900/10"
+                title="Resume preview"
+              />
+            </div>
+          )}
+
+          {isDoc ? (
+            <div className="mt-3 text-xs text-congress-blue-900/60">
+              If the preview is blank, try uploading a .pdf or .docx.
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function toDateInput(value?: string) {
   if (!value) return "";
+  if (value === PRESENT_SENTINEL) return "";
   // If the API returns an ISO date time, normalize.
   return value.length >= 10 ? value.slice(0, 10) : value;
+}
+
+function PresentToggle({
+  checked,
+  onCheckedChange,
+}: {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 pl-1 text-xs font-semibold text-congress-blue-900/80 select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onCheckedChange(e.target.checked)}
+        className="h-4 w-4 accent-congress-blue-900"
+      />
+      Present
+    </label>
+  );
 }
 
 export function ResumeForm() {
@@ -45,8 +204,14 @@ export function ResumeForm() {
   const createResume = useCreateResume();
   const updateResume = useUpdateResume();
   const deleteResume = useDeleteResume();
+  const parseResume = useParseResume();
 
   const [draft, setDraft] = useState<CreateResumeRequest>(emptyResumeDraft);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
+  const [dropActive, setDropActive] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const mode: Mode = useMemo(() => {
     return resumeQuery.data ? "update" : "create";
@@ -66,10 +231,19 @@ export function ResumeForm() {
       phone: r.phone ?? "",
       address: r.address ?? "",
       summary: r.summary ?? "",
-      educations: r.educations ?? [],
-      work_experiences: r.work_experiences ?? [],
+      educations: (r.educations ?? []).map((e) => ({
+        ...e,
+        end_date: e.end_date ? e.end_date : PRESENT_SENTINEL,
+      })),
+      work_experiences: (r.work_experiences ?? []).map((w) => ({
+        ...w,
+        end_date: w.end_date ? w.end_date : PRESENT_SENTINEL,
+      })),
       certifications: r.certifications ?? [],
-      projects: r.projects ?? [],
+      projects: (r.projects ?? []).map((p) => ({
+        ...p,
+        end_date: p.end_date ? p.end_date : PRESENT_SENTINEL,
+      })),
       hobbies: r.hobbies ?? [],
       languages: r.languages ?? [],
       references: r.references ?? [],
@@ -77,20 +251,92 @@ export function ResumeForm() {
     });
   }, [resumeQuery.data]);
 
+  useEffect(() => {
+    if (!resumeFile) {
+      setResumePreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(resumeFile);
+    setResumePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [resumeFile]);
+
   const busy =
     resumeQuery.isLoading ||
     createResume.isPending ||
     updateResume.isPending ||
-    deleteResume.isPending;
+    deleteResume.isPending ||
+    parseResume.isPending;
+
+  const handleSelectedResumeFile = (file: File) => {
+    if (!isAllowedResumeFile(file)) {
+      setResumeFile(null);
+      return;
+    }
+
+    setResumeFile(file);
+    parseResume.reset?.();
+  };
+
+  const analyseByAI = async () => {
+    if (!resumeFile) return;
+    const formData = new FormData();
+    formData.append("resume", resumeFile);
+
+    const parsed = await parseResume.mutateAsync(formData);
+    setDraft((d) => ({
+      ...d,
+      first_name: parsed.first_name ?? d.first_name ?? "",
+      last_name: parsed.last_name ?? d.last_name ?? "",
+      email: parsed.email ?? d.email ?? "",
+      phone: parsed.phone ?? d.phone ?? "",
+      address: parsed.address ?? d.address ?? "",
+      summary: parsed.summary ?? d.summary ?? "",
+      educations: (parsed.educations ?? []).map((e) => ({
+        ...e,
+        end_date: e.end_date ? e.end_date : PRESENT_SENTINEL,
+      })),
+      work_experiences: (parsed.work_experiences ?? []).map((w) => ({
+        ...w,
+        end_date: w.end_date ? w.end_date : PRESENT_SENTINEL,
+      })),
+      certifications: parsed.certifications ?? [],
+      projects: (parsed.projects ?? []).map((p) => ({
+        ...p,
+        end_date: p.end_date ? p.end_date : PRESENT_SENTINEL,
+      })),
+      hobbies: parsed.hobbies ?? [],
+      languages: parsed.languages ?? [],
+      references: parsed.references ?? [],
+      resume_skills: parsed.resume_skills ?? d.resume_skills ?? [],
+    }));
+  };
 
   const onSave = async () => {
+    const normalized: CreateResumeRequest = {
+      ...draft,
+      educations: (draft.educations ?? []).map((e) => ({
+        ...e,
+        end_date: e.end_date === PRESENT_SENTINEL ? "" : e.end_date,
+      })),
+      work_experiences: (draft.work_experiences ?? []).map((w) => ({
+        ...w,
+        end_date: w.end_date === PRESENT_SENTINEL ? "" : w.end_date,
+      })),
+      projects: (draft.projects ?? []).map((p) => ({
+        ...p,
+        end_date: p.end_date === PRESENT_SENTINEL ? "" : p.end_date,
+      })),
+    };
+
     if (mode === "create") {
-      await createResume.mutateAsync(draft);
+      await createResume.mutateAsync(normalized);
       return;
     }
 
     const payload: UpdateResumeRequest = {
-      ...draft,
+      ...normalized,
     };
     await updateResume.mutateAsync(payload);
   };
@@ -113,7 +359,7 @@ export function ResumeForm() {
       ) : null}
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-congress-blue-900/70">
+        <p className="text-[14px]/[14px] text-congress-blue-900/70">
           {resumeQuery.isLoading
             ? "Loading resume…"
             : mode === "create"
@@ -121,7 +367,7 @@ export function ResumeForm() {
             : "Resume loaded — edit and save your changes."}
         </p>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" id="creationButtos">
           <button
             type="button"
             onClick={onSave}
@@ -147,6 +393,139 @@ export function ResumeForm() {
           </button>
         </div>
       </div>
+
+      <div className="flex items-center justify-center p-4">
+        <div className="w-4/5">
+          <div
+            className={cn(
+              "rounded-2xl border border-congress-blue-900/20 bg-congress-blue-100 p-4 flex items-center flex-col gap-2 text-center",
+              dropActive && "bg-congress-blue-50"
+            )}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDropActive(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDropActive(false);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDropActive(false);
+              const file = e.dataTransfer.files?.[0];
+              if (!file) return;
+              handleSelectedResumeFile(file);
+            }}
+          >
+            <div className="flex flex-col gap-1">
+              <div className="text-sm font-semibold text-congress-blue-900">
+                Drag and drop your resume here
+              </div>
+              <div className="text-xs text-congress-blue-900/70">
+                Formats accepted: .pdf, .doc, .docx
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  handleSelectedResumeFile(file);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <div className="flex flex-col items-center gap-3">
+
+              <div className="flex flex-col items-center gap-3">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
+                    busy && "opacity-60 cursor-not-allowed"
+                  )}
+                >
+                  Search files
+                </button>
+
+                {resumeFile ? (
+                  <div className="min-w-0 flex items-start justify-center gap-1">
+                    <div className="text-xs/[14px] font-semibold text-congress-blue-900/70">
+                      Attached:
+                    </div>
+                    <div className="truncate text-sm/[14px] text-congress-blue-900/70">
+                      {resumeFile.name}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-3">
+                {resumeFile && resumePreviewUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewOpen(true)}
+                    className="rounded-full border border-congress-blue-900/20 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+                    title="Preview the attached file"
+                  >
+                    Preview
+                  </button>
+                ) : null}
+
+                {resumeFile ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={analyseByAI}
+                    className={cn(
+                      "rounded-full border border-congress-blue-900 bg-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500",
+                      busy && "opacity-60 cursor-not-allowed"
+                    )}
+                  >
+                    Analyse by AI
+                  </button>
+                ) : null}
+              </div>
+            </div>
+              </div>
+
+            {parseResume.isPending ? (
+              <div className="mt-3 text-sm text-congress-blue-900/70">
+                Parsing resume…
+              </div>
+            ) : null}
+            {parseResume.isError ? (
+              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                <span className="font-semibold">Could not parse resume</span>
+                <span className="opacity-80">
+                  {" "}
+                  — please try a different file.
+                </span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <ResumePreviewPortal
+        open={previewOpen}
+        file={resumeFile}
+        url={resumePreviewUrl}
+        onClose={() => setPreviewOpen(false)}
+      />
 
       <Section title="Contact">
         <div className="flex flex-wrap gap-3">
@@ -312,6 +691,7 @@ export function ResumeForm() {
                 title="End"
                 type="date"
                 value={toDateInput(item.end_date)}
+                disabled={item.end_date === PRESENT_SENTINEL}
                 onChange={(v) =>
                   setDraft((d) => ({
                     ...d,
@@ -322,6 +702,20 @@ export function ResumeForm() {
                 }
                 className="max-w-none"
                 labelBackground="bg-white"
+              />
+
+              <PresentToggle
+                checked={item.end_date === PRESENT_SENTINEL}
+                onCheckedChange={(checked) =>
+                  setDraft((d) => ({
+                    ...d,
+                    educations: (d.educations ?? []).map((e, i) =>
+                      i === index
+                        ? { ...e, end_date: checked ? PRESENT_SENTINEL : "" }
+                        : e
+                    ),
+                  }))
+                }
               />
             </div>
           )}
@@ -411,6 +805,7 @@ export function ResumeForm() {
                   title="End"
                   type="date"
                   value={toDateInput(item.end_date)}
+                  disabled={item.end_date === PRESENT_SENTINEL}
                   onChange={(v) =>
                     setDraft((d) => ({
                       ...d,
@@ -421,6 +816,20 @@ export function ResumeForm() {
                   }
                   className="max-w-none"
                   labelBackground="bg-white"
+                />
+
+                <PresentToggle
+                  checked={item.end_date === PRESENT_SENTINEL}
+                  onCheckedChange={(checked) =>
+                    setDraft((d) => ({
+                      ...d,
+                      work_experiences: (d.work_experiences ?? []).map((w, i) =>
+                        i === index
+                          ? { ...w, end_date: checked ? PRESENT_SENTINEL : "" }
+                          : w
+                      ),
+                    }))
+                  }
                 />
               </div>
 
@@ -603,6 +1012,7 @@ export function ResumeForm() {
                   title="End"
                   type="date"
                   value={toDateInput(item.end_date)}
+                  disabled={item.end_date === PRESENT_SENTINEL}
                   onChange={(v) =>
                     setDraft((d) => ({
                       ...d,
@@ -613,6 +1023,20 @@ export function ResumeForm() {
                   }
                   className="max-w-none"
                   labelBackground="bg-white"
+                />
+
+                <PresentToggle
+                  checked={item.end_date === PRESENT_SENTINEL}
+                  onCheckedChange={(checked) =>
+                    setDraft((d) => ({
+                      ...d,
+                      projects: (d.projects ?? []).map((p, i) =>
+                        i === index
+                          ? { ...p, end_date: checked ? PRESENT_SENTINEL : "" }
+                          : p
+                      ),
+                    }))
+                  }
                 />
               </div>
               <div className="relative border border-congress-blue-900 rounded-2xl px-3 py-2">
