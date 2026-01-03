@@ -16,6 +16,7 @@ import type {
   Resume,
   UpdateResumeRequest,
 } from "@/types/api";
+import { normalizeOptionalISODate } from "@/utils/normalizeDates";
 
 type Mode = "create" | "update";
 
@@ -43,6 +44,25 @@ function isAllowedResumeFile(file: File) {
   return (
     name.endsWith(".pdf") || name.endsWith(".doc") || name.endsWith(".docx")
   );
+}
+
+function normalizeIncomingDate(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const s = String(value).trim();
+  if (!s) return "";
+  // Accept both YYYY-MM-DD and full ISO timestamps; keep the date part.
+  if (s.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  return s;
+}
+
+function pickArray<T = any>(source: unknown, keys: string[]): T[] {
+  if (!source || typeof source !== "object") return [];
+  const obj = source as Record<string, unknown>;
+  for (const key of keys) {
+    const value = obj[key];
+    if (Array.isArray(value)) return value as T[];
+  }
+  return [];
 }
 
 function ResumePreviewPortal({
@@ -107,7 +127,7 @@ function ResumePreviewPortal({
       aria-modal="true"
     >
       <div className="w-full max-w-5xl rounded-3xl bg-white border border-congress-blue-900/15 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-congress-blue-900/10">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-congress-blue-900/15">
           <div className="min-w-0">
             <div className="text-xs font-semibold text-congress-blue-900/70">
               Preview
@@ -119,7 +139,7 @@ function ResumePreviewPortal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-congress-blue-900/20 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+            className="rounded-full border border-congress-blue-900/15 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
           >
             Close
           </button>
@@ -129,11 +149,11 @@ function ResumePreviewPortal({
           {isPdf ? (
             <iframe
               src={url}
-              className="h-[70vh] w-full rounded-2xl border border-congress-blue-900/10"
+              className="h-[70vh] w-full rounded-2xl border border-congress-blue-900/15"
               title="Resume preview"
             />
           ) : isDocx ? (
-            <div className="h-[70vh] overflow-auto rounded-2xl border border-congress-blue-900/10 p-4">
+            <div className="h-[70vh] overflow-auto rounded-2xl border border-congress-blue-900/15 p-4">
               {docxBusy ? (
                 <div className="text-sm text-congress-blue-900/70">
                   Rendering document…
@@ -154,7 +174,7 @@ function ResumePreviewPortal({
               </div>
               <iframe
                 src={url}
-                className="h-[70vh] w-full rounded-2xl border border-congress-blue-900/10"
+                className="h-[70vh] w-full rounded-2xl border border-congress-blue-900/15"
                 title="Resume preview"
               />
             </div>
@@ -182,9 +202,11 @@ function toDateInput(value?: string) {
 function PresentToggle({
   checked,
   onCheckedChange,
+  disabled,
 }: {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <label className="flex items-center gap-2 pl-1 text-xs font-semibold text-congress-blue-900/80 select-none">
@@ -192,6 +214,7 @@ function PresentToggle({
         type="checkbox"
         checked={checked}
         onChange={(e) => onCheckedChange(e.target.checked)}
+        disabled={disabled}
         className="h-4 w-4 accent-congress-blue-900"
       />
       Present
@@ -207,6 +230,7 @@ export function ResumeForm() {
   const parseResume = useParseResume();
 
   const [draft, setDraft] = useState<CreateResumeRequest>(emptyResumeDraft);
+  const [isEditing, setIsEditing] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
   const [dropActive, setDropActive] = useState(false);
@@ -217,12 +241,28 @@ export function ResumeForm() {
     return resumeQuery.data ? "update" : "create";
   }, [resumeQuery.data]);
 
-  useEffect(() => {
-    const r = resumeQuery.data as Resume | undefined;
-    if (!r) {
-      setDraft(emptyResumeDraft);
-      return;
-    }
+  const readOnly = mode === "update" && !isEditing;
+  const canEdit = mode === "create" || isEditing;
+
+  const hydrateDraftFromResume = (r: Resume) => {
+    const legacyResumeSkills = (r as unknown as { resume_skills?: any[] })
+      .resume_skills;
+    const resumeSkills = (r as Resume).resumeSkills ?? legacyResumeSkills ?? [];
+
+    const educationsRaw = pickArray<any>(r, ["educations", "Education"]);
+    const workExperiencesRaw = pickArray<any>(r, [
+      "work_experiences",
+      "workExperiences",
+      "WorkExperiences",
+    ]);
+    const certificationsRaw = pickArray<any>(r, [
+      "certifications",
+      "Certifications",
+    ]);
+    const projectsRaw = pickArray<any>(r, ["projects", "Projects"]);
+    const hobbiesRaw = pickArray<any>(r, ["hobbies", "Hobbies"]);
+    const languagesRaw = pickArray<any>(r, ["languages", "Languages"]);
+    const referencesRaw = pickArray<any>(r, ["references", "References"]);
 
     setDraft({
       first_name: r.first_name ?? "",
@@ -231,24 +271,74 @@ export function ResumeForm() {
       phone: r.phone ?? "",
       address: r.address ?? "",
       summary: r.summary ?? "",
-      educations: (r.educations ?? []).map((e) => ({
-        ...e,
-        end_date: e.end_date ? e.end_date : PRESENT_SENTINEL,
-      })),
-      work_experiences: (r.work_experiences ?? []).map((w) => ({
-        ...w,
-        end_date: w.end_date ? w.end_date : PRESENT_SENTINEL,
-      })),
-      certifications: r.certifications ?? [],
-      projects: (r.projects ?? []).map((p) => ({
-        ...p,
-        end_date: p.end_date ? p.end_date : PRESENT_SENTINEL,
-      })),
-      hobbies: r.hobbies ?? [],
-      languages: r.languages ?? [],
-      references: r.references ?? [],
-      resume_skills: r.resume_skills ?? [],
+      educations: educationsRaw.map((e) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = e;
+        return {
+          ...rest,
+          start_date: normalizeIncomingDate(rest.start_date),
+          end_date: rest.end_date
+            ? normalizeIncomingDate(rest.end_date)
+            : PRESENT_SENTINEL,
+        };
+      }),
+      work_experiences: workExperiencesRaw.map((w) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = w;
+        return {
+          ...rest,
+          start_date: normalizeIncomingDate(rest.start_date),
+          end_date: rest.end_date
+            ? normalizeIncomingDate(rest.end_date)
+            : PRESENT_SENTINEL,
+          responsibilities: rest.responsibilities ?? [],
+        };
+      }),
+      certifications: certificationsRaw.map((c) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = c;
+        return {
+          ...rest,
+          issue_date: normalizeIncomingDate(rest.issue_date),
+          expiration_date: normalizeIncomingDate(rest.expiration_date),
+        };
+      }),
+      projects: projectsRaw.map((p) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = p;
+        return {
+          ...rest,
+          start_date: normalizeIncomingDate(rest.start_date),
+          end_date: rest.end_date
+            ? normalizeIncomingDate(rest.end_date)
+            : PRESENT_SENTINEL,
+        };
+      }),
+      hobbies: hobbiesRaw.map((h) => ({ hobby: h?.hobby ?? String(h ?? "") })),
+      languages: languagesRaw.map((l) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = l;
+        return {
+          ...rest,
+        };
+      }),
+      references: referencesRaw.map((ref) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = ref;
+        return rest;
+      }),
+      resume_skills: Array.isArray(resumeSkills)
+        ? resumeSkills.map((rs: any) => ({
+            skill_id: rs?.skill_id,
+            title: rs?.skill?.title ?? rs?.Skill?.title ?? rs?.title,
+          }))
+        : [],
     });
+  };
+
+  useEffect(() => {
+    const r = resumeQuery.data as Resume | undefined;
+    if (!r) {
+      setDraft(emptyResumeDraft);
+      setIsEditing(true);
+      return;
+    }
+    setIsEditing(false);
+    hydrateDraftFromResume(r);
   }, [resumeQuery.data]);
 
   useEffect(() => {
@@ -269,6 +359,17 @@ export function ResumeForm() {
     deleteResume.isPending ||
     parseResume.isPending;
 
+  const toggleEdit = () => {
+    if (busy) return;
+    if (mode !== "update") return;
+
+    if (isEditing) {
+      const r = resumeQuery.data as Resume | undefined;
+      if (r) hydrateDraftFromResume(r);
+    }
+    setIsEditing((v) => !v);
+  };
+
   const handleSelectedResumeFile = (file: File) => {
     if (!isAllowedResumeFile(file)) {
       setResumeFile(null);
@@ -280,11 +381,33 @@ export function ResumeForm() {
   };
 
   const analyseByAI = async () => {
+    if (!canEdit) return;
     if (!resumeFile) return;
     const formData = new FormData();
     formData.append("resume", resumeFile);
 
     const parsed = await parseResume.mutateAsync(formData);
+
+    const legacyResumeSkills = (parsed as unknown as { resume_skills?: any[] })
+      .resume_skills;
+    const resumeSkills =
+      (parsed as Resume).resumeSkills ?? legacyResumeSkills ?? [];
+
+    const educationsRaw = pickArray<any>(parsed, ["educations", "Education"]);
+    const workExperiencesRaw = pickArray<any>(parsed, [
+      "work_experiences",
+      "workExperiences",
+      "WorkExperiences",
+    ]);
+    const certificationsRaw = pickArray<any>(parsed, [
+      "certifications",
+      "Certifications",
+    ]);
+    const projectsRaw = pickArray<any>(parsed, ["projects", "Projects"]);
+    const hobbiesRaw = pickArray<any>(parsed, ["hobbies", "Hobbies"]);
+    const languagesRaw = pickArray<any>(parsed, ["languages", "Languages"]);
+    const referencesRaw = pickArray<any>(parsed, ["references", "References"]);
+
     setDraft((d) => ({
       ...d,
       first_name: parsed.first_name ?? d.first_name ?? "",
@@ -293,23 +416,62 @@ export function ResumeForm() {
       phone: parsed.phone ?? d.phone ?? "",
       address: parsed.address ?? d.address ?? "",
       summary: parsed.summary ?? d.summary ?? "",
-      educations: (parsed.educations ?? []).map((e) => ({
-        ...e,
-        end_date: e.end_date ? e.end_date : PRESENT_SENTINEL,
-      })),
-      work_experiences: (parsed.work_experiences ?? []).map((w) => ({
-        ...w,
-        end_date: w.end_date ? w.end_date : PRESENT_SENTINEL,
-      })),
-      certifications: parsed.certifications ?? [],
-      projects: (parsed.projects ?? []).map((p) => ({
-        ...p,
-        end_date: p.end_date ? p.end_date : PRESENT_SENTINEL,
-      })),
-      hobbies: parsed.hobbies ?? [],
-      languages: parsed.languages ?? [],
-      references: parsed.references ?? [],
-      resume_skills: parsed.resume_skills ?? d.resume_skills ?? [],
+      educations: educationsRaw.map((e) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = e;
+        return {
+          ...rest,
+          start_date: normalizeIncomingDate(rest.start_date),
+          end_date: rest.end_date
+            ? normalizeIncomingDate(rest.end_date)
+            : PRESENT_SENTINEL,
+        };
+      }),
+      work_experiences: workExperiencesRaw.map((w) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = w;
+        return {
+          ...rest,
+          start_date: normalizeIncomingDate(rest.start_date),
+          end_date: rest.end_date
+            ? normalizeIncomingDate(rest.end_date)
+            : PRESENT_SENTINEL,
+          responsibilities: rest.responsibilities ?? [],
+        };
+      }),
+      certifications: certificationsRaw.map((c) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = c;
+        return {
+          ...rest,
+          issue_date: normalizeIncomingDate(rest.issue_date),
+          expiration_date: normalizeIncomingDate(rest.expiration_date),
+        };
+      }),
+      projects: projectsRaw.map((p) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = p;
+        return {
+          ...rest,
+          start_date: normalizeIncomingDate(rest.start_date),
+          end_date: rest.end_date
+            ? normalizeIncomingDate(rest.end_date)
+            : PRESENT_SENTINEL,
+        };
+      }),
+      hobbies: hobbiesRaw.map((h) => ({ hobby: h?.hobby ?? String(h ?? "") })),
+      languages: languagesRaw.map((l) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = l;
+        return {
+          ...rest,
+        };
+      }),
+      references: referencesRaw.map((ref) => {
+        const { id: _id, resume_id: _resumeId, ...rest } = ref;
+        return rest;
+      }),
+      resume_skills: Array.isArray(resumeSkills)
+        ? resumeSkills.map((rs: any) => ({
+            skill_id: rs?.skill_id,
+            title: rs?.skill?.title ?? rs?.Skill?.title ?? rs?.title,
+          }))
+        : d.resume_skills ?? [],
     }));
   };
 
@@ -318,15 +480,34 @@ export function ResumeForm() {
       ...draft,
       educations: (draft.educations ?? []).map((e) => ({
         ...e,
-        end_date: e.end_date === PRESENT_SENTINEL ? "" : e.end_date,
+        start_date: normalizeOptionalISODate(e.start_date) ?? "",
+        end_date:
+          e.end_date === PRESENT_SENTINEL
+            ? ""
+            : normalizeOptionalISODate(e.end_date) ?? "",
       })),
       work_experiences: (draft.work_experiences ?? []).map((w) => ({
         ...w,
-        end_date: w.end_date === PRESENT_SENTINEL ? "" : w.end_date,
+        start_date: normalizeOptionalISODate(w.start_date) ?? "",
+        end_date:
+          w.end_date === PRESENT_SENTINEL
+            ? ""
+            : normalizeOptionalISODate(w.end_date) ?? "",
+        responsibilities: w.responsibilities ?? [],
+      })),
+      certifications: (draft.certifications ?? []).map((c) => ({
+        ...c,
+        issue_date: normalizeOptionalISODate(c.issue_date) ?? "",
+        expiration_date:
+          normalizeOptionalISODate(c.expiration_date) ?? undefined,
       })),
       projects: (draft.projects ?? []).map((p) => ({
         ...p,
-        end_date: p.end_date === PRESENT_SENTINEL ? "" : p.end_date,
+        start_date: normalizeOptionalISODate(p.start_date) ?? undefined,
+        end_date:
+          p.end_date === PRESENT_SENTINEL
+            ? undefined
+            : normalizeOptionalISODate(p.end_date) ?? undefined,
       })),
     };
 
@@ -368,157 +549,188 @@ export function ResumeForm() {
         </p>
 
         <div className="flex items-center gap-2" id="creationButtos">
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={busy}
-            className={cn(
-              "rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
-              busy && "opacity-60 cursor-not-allowed"
-            )}
-          >
-            {mode === "create" ? "Create" : "Save"}
-          </button>
-
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={busy || mode === "create"}
-            className={cn(
-              "rounded-full border border-red-300 px-4 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50",
-              (busy || mode === "create") && "opacity-60 cursor-not-allowed"
-            )}
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center p-4">
-        <div className="w-4/5">
-          <div
-            className={cn(
-              "rounded-2xl border border-congress-blue-900/20 bg-congress-blue-100 p-4 flex items-center flex-col gap-2 text-center",
-              dropActive && "bg-congress-blue-50"
-            )}
-            onDragEnter={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setDropActive(true);
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setDropActive(false);
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setDropActive(false);
-              const file = e.dataTransfer.files?.[0];
-              if (!file) return;
-              handleSelectedResumeFile(file);
-            }}
-          >
-            <div className="flex flex-col gap-1">
-              <div className="text-sm font-semibold text-congress-blue-900">
-                Drag and drop your resume here
-              </div>
-              <div className="text-xs text-congress-blue-900/70">
-                Formats accepted: .pdf, .doc, .docx
-              </div>
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  handleSelectedResumeFile(file);
-                  e.currentTarget.value = "";
-                }}
-              />
-              <div className="flex flex-col items-center gap-3">
-
-              <div className="flex flex-col items-center gap-3">
+          {mode === "create" ? (
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={busy}
+              className={cn(
+                "rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
+                busy && "opacity-60 cursor-not-allowed"
+              )}
+            >
+              Create
+            </button>
+          ) : (
+            <>
+              {isEditing ? (
                 <button
                   type="button"
+                  onClick={onSave}
                   disabled={busy}
-                  onClick={() => fileInputRef.current?.click()}
                   className={cn(
                     "rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
                     busy && "opacity-60 cursor-not-allowed"
                   )}
                 >
-                  Search files
+                  Save
                 </button>
+              ) : null}
 
-                {resumeFile ? (
-                  <div className="min-w-0 flex items-start justify-center gap-1">
-                    <div className="text-xs/[14px] font-semibold text-congress-blue-900/70">
-                      Attached:
-                    </div>
-                    <div className="truncate text-sm/[14px] text-congress-blue-900/70">
-                      {resumeFile.name}
-                    </div>
-                  </div>
-                ) : null}
+              {isEditing ? (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  disabled={busy}
+                  className={cn(
+                    "rounded-full border border-red-300 px-4 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50",
+                    busy && "opacity-60 cursor-not-allowed"
+                  )}
+                >
+                  Delete
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={toggleEdit}
+                disabled={busy}
+                className={cn(
+                  "rounded-full border border-congress-blue-900/15 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
+                  busy && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                {isEditing ? "Cancel" : "Edit"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {canEdit ? (
+        <div className="flex items-center justify-center p-4">
+          <div className="w-4/5">
+            <div
+              className={cn(
+                "rounded-2xl border border-congress-blue-900/15 bg-congress-blue-100 p-4 flex items-center flex-col gap-2 text-center",
+                dropActive && "bg-congress-blue-50"
+              )}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDropActive(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDropActive(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDropActive(false);
+                const file = e.dataTransfer.files?.[0];
+                if (!file) return;
+                handleSelectedResumeFile(file);
+              }}
+            >
+              <div className="flex flex-col gap-1">
+                <div className="text-sm font-semibold text-congress-blue-900">
+                  Drag and drop your resume here
+                </div>
+                <div className="text-xs text-congress-blue-900/70">
+                  Formats accepted: .pdf, .doc, .docx
+                </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                {resumeFile && resumePreviewUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => setPreviewOpen(true)}
-                    className="rounded-full border border-congress-blue-900/20 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
-                    title="Preview the attached file"
-                  >
-                    Preview
-                  </button>
-                ) : null}
-
-                {resumeFile ? (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    handleSelectedResumeFile(file);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                <div className="flex flex-col items-center gap-3">
                   <button
                     type="button"
                     disabled={busy}
-                    onClick={analyseByAI}
+                    onClick={() => fileInputRef.current?.click()}
                     className={cn(
-                      "rounded-full border border-congress-blue-900 bg-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500",
+                      "rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
                       busy && "opacity-60 cursor-not-allowed"
                     )}
                   >
-                    Analyse by AI
+                    Search files
                   </button>
-                ) : null}
-              </div>
-            </div>
+
+                  {resumeFile ? (
+                    <div className="min-w-0 flex items-start justify-center gap-1">
+                      <div className="text-xs/[14px] font-semibold text-congress-blue-900/70">
+                        Attached:
+                      </div>
+                      <div className="truncate text-sm/[14px] text-congress-blue-900/70">
+                        {resumeFile.name}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="flex items-center gap-3">
+                    {resumeFile && resumePreviewUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewOpen(true)}
+                        className="rounded-full border border-congress-blue-900/15 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+                        title="Preview the attached file"
+                      >
+                        Preview
+                      </button>
+                    ) : null}
+
+                    {resumeFile ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={analyseByAI}
+                        className={cn(
+                          "rounded-full border border-congress-blue-900 bg-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500",
+                          busy && "opacity-60 cursor-not-allowed"
+                        )}
+                      >
+                        Autocomplete with AI
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
 
-            {parseResume.isPending ? (
-              <div className="mt-3 text-sm text-congress-blue-900/70">
-                Parsing resume…
-              </div>
-            ) : null}
-            {parseResume.isError ? (
-              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                <span className="font-semibold">Could not parse resume</span>
-                <span className="opacity-80">
-                  {" "}
-                  — please try a different file.
-                </span>
-              </div>
-            ) : null}
+              {parseResume.isPending ? (
+                <div className="mt-3 text-sm text-congress-blue-900/70">
+                  Parsing resume…
+                </div>
+              ) : null}
+              {parseResume.isError ? (
+                <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                  <span className="font-semibold">Could not parse resume</span>
+                  <span className="opacity-80">
+                    {" "}
+                    — please try a different file.
+                  </span>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       <ResumePreviewPortal
         open={previewOpen}
@@ -537,6 +749,7 @@ export function ResumeForm() {
             placeholder="John"
             className="max-w-none"
             labelBackground="bg-white"
+            disabled={readOnly}
           />
           <FilterOption
             title="Last Name"
@@ -546,6 +759,7 @@ export function ResumeForm() {
             placeholder="Doe"
             className="max-w-none"
             labelBackground="bg-white"
+            disabled={readOnly}
           />
           <FilterOption
             title="Email"
@@ -555,6 +769,7 @@ export function ResumeForm() {
             placeholder="john@doe.com"
             className="max-w-none"
             labelBackground="bg-white"
+            disabled={readOnly}
           />
           <FilterOption
             title="Phone"
@@ -564,6 +779,7 @@ export function ResumeForm() {
             placeholder="+61 400 000 000"
             className="max-w-none"
             labelBackground="bg-white"
+            disabled={readOnly}
           />
           <div className="w-full">
             <FilterOption
@@ -574,6 +790,7 @@ export function ResumeForm() {
               placeholder="Sydney, NSW"
               className="max-w-none"
               labelBackground="bg-white"
+              disabled={readOnly}
             />
           </div>
         </div>
@@ -586,6 +803,7 @@ export function ResumeForm() {
           </label>
           <textarea
             value={draft.summary ?? ""}
+            readOnly={readOnly}
             onChange={(e) =>
               setDraft((d) => ({ ...d, summary: e.target.value }))
             }
@@ -595,145 +813,17 @@ export function ResumeForm() {
         </div>
       </Section>
 
-      <Section title="Education">
-        <ListEditor
-          items={draft.educations ?? []}
-          emptyLabel="No education entries"
-          onAdd={() =>
-            setDraft((d) => ({
-              ...d,
-              educations: [
-                ...(d.educations ?? []),
-                {
-                  id: -Date.now(),
-                  resume_id: 0,
-                  institution: "",
-                  degree: "",
-                  field_of_study: "",
-                  start_date: "",
-                  end_date: "",
-                },
-              ],
-            }))
-          }
-          onRemove={(index) =>
-            setDraft((d) => ({
-              ...d,
-              educations: (d.educations ?? []).filter((_, i) => i !== index),
-            }))
-          }
-          render={(item, index) => (
-            <div className="flex flex-wrap gap-3">
-              <FilterOption
-                title="Institution"
-                type="text"
-                value={item.institution}
-                onChange={(v) =>
-                  setDraft((d) => ({
-                    ...d,
-                    educations: (d.educations ?? []).map((e, i) =>
-                      i === index ? { ...e, institution: v } : e
-                    ),
-                  }))
-                }
-                placeholder="University"
-                className="max-w-none"
-                labelBackground="bg-white"
-              />
-              <FilterOption
-                title="Degree"
-                type="text"
-                value={item.degree}
-                onChange={(v) =>
-                  setDraft((d) => ({
-                    ...d,
-                    educations: (d.educations ?? []).map((e, i) =>
-                      i === index ? { ...e, degree: v } : e
-                    ),
-                  }))
-                }
-                placeholder="BSc"
-                className="max-w-none"
-                labelBackground="bg-white"
-              />
-              <FilterOption
-                title="Field"
-                type="text"
-                value={item.field_of_study}
-                onChange={(v) =>
-                  setDraft((d) => ({
-                    ...d,
-                    educations: (d.educations ?? []).map((e, i) =>
-                      i === index ? { ...e, field_of_study: v } : e
-                    ),
-                  }))
-                }
-                placeholder="Computer Science"
-                className="max-w-none"
-                labelBackground="bg-white"
-              />
-              <FilterOption
-                title="Start"
-                type="date"
-                value={toDateInput(item.start_date)}
-                onChange={(v) =>
-                  setDraft((d) => ({
-                    ...d,
-                    educations: (d.educations ?? []).map((e, i) =>
-                      i === index ? { ...e, start_date: v } : e
-                    ),
-                  }))
-                }
-                className="max-w-none"
-                labelBackground="bg-white"
-              />
-              <FilterOption
-                title="End"
-                type="date"
-                value={toDateInput(item.end_date)}
-                disabled={item.end_date === PRESENT_SENTINEL}
-                onChange={(v) =>
-                  setDraft((d) => ({
-                    ...d,
-                    educations: (d.educations ?? []).map((e, i) =>
-                      i === index ? { ...e, end_date: v } : e
-                    ),
-                  }))
-                }
-                className="max-w-none"
-                labelBackground="bg-white"
-              />
-
-              <PresentToggle
-                checked={item.end_date === PRESENT_SENTINEL}
-                onCheckedChange={(checked) =>
-                  setDraft((d) => ({
-                    ...d,
-                    educations: (d.educations ?? []).map((e, i) =>
-                      i === index
-                        ? { ...e, end_date: checked ? PRESENT_SENTINEL : "" }
-                        : e
-                    ),
-                  }))
-                }
-              />
-            </div>
-          )}
-        />
-      </Section>
-
       <Section title="Work Experience">
         <ListEditor
           items={draft.work_experiences ?? []}
           emptyLabel="No work experiences"
+          readOnly={readOnly}
           onAdd={() =>
             setDraft((d) => ({
               ...d,
               work_experiences: [
                 ...(d.work_experiences ?? []),
                 {
-                  id: -Date.now(),
-                  resume_id: 0,
                   company: "",
                   position: "",
                   start_date: "",
@@ -769,6 +859,7 @@ export function ResumeForm() {
                   placeholder="Company"
                   className="max-w-none"
                   labelBackground="bg-white"
+                  disabled={readOnly}
                 />
                 <FilterOption
                   title="Position"
@@ -785,6 +876,7 @@ export function ResumeForm() {
                   placeholder="Role"
                   className="max-w-none"
                   labelBackground="bg-white"
+                  disabled={readOnly}
                 />
                 <FilterOption
                   title="Start"
@@ -800,12 +892,13 @@ export function ResumeForm() {
                   }
                   className="max-w-none"
                   labelBackground="bg-white"
+                  disabled={readOnly}
                 />
                 <FilterOption
                   title="End"
                   type="date"
                   value={toDateInput(item.end_date)}
-                  disabled={item.end_date === PRESENT_SENTINEL}
+                  disabled={readOnly || item.end_date === PRESENT_SENTINEL}
                   onChange={(v) =>
                     setDraft((d) => ({
                       ...d,
@@ -820,6 +913,7 @@ export function ResumeForm() {
 
                 <PresentToggle
                   checked={item.end_date === PRESENT_SENTINEL}
+                  disabled={readOnly}
                   onCheckedChange={(checked) =>
                     setDraft((d) => ({
                       ...d,
@@ -837,6 +931,8 @@ export function ResumeForm() {
                 title="Responsibilities"
                 placeholder="Add responsibility"
                 items={item.responsibilities ?? []}
+                readOnly={readOnly}
+                bgColor="bg-white"
                 onChange={(next) =>
                   setDraft((d) => ({
                     ...d,
@@ -851,18 +947,148 @@ export function ResumeForm() {
         />
       </Section>
 
+      <Section title="Education">
+        <ListEditor
+          items={draft.educations ?? []}
+          emptyLabel="No education entries"
+          readOnly={readOnly}
+          onAdd={() =>
+            setDraft((d) => ({
+              ...d,
+              educations: [
+                ...(d.educations ?? []),
+                {
+                  institution: "",
+                  degree: "",
+                  field_of_study: "",
+                  start_date: "",
+                  end_date: "",
+                },
+              ],
+            }))
+          }
+          onRemove={(index) =>
+            setDraft((d) => ({
+              ...d,
+              educations: (d.educations ?? []).filter((_, i) => i !== index),
+            }))
+          }
+          render={(item, index) => (
+            <div className="flex flex-wrap gap-3">
+              <FilterOption
+                title="Institution"
+                type="text"
+                value={item.institution}
+                onChange={(v) =>
+                  setDraft((d) => ({
+                    ...d,
+                    educations: (d.educations ?? []).map((e, i) =>
+                      i === index ? { ...e, institution: v } : e
+                    ),
+                  }))
+                }
+                placeholder="University"
+                className="max-w-none"
+                labelBackground="bg-white"
+                disabled={readOnly}
+              />
+              <FilterOption
+                title="Degree"
+                type="text"
+                value={item.degree}
+                onChange={(v) =>
+                  setDraft((d) => ({
+                    ...d,
+                    educations: (d.educations ?? []).map((e, i) =>
+                      i === index ? { ...e, degree: v } : e
+                    ),
+                  }))
+                }
+                placeholder="BSc"
+                className="max-w-none"
+                labelBackground="bg-white"
+                disabled={readOnly}
+              />
+              <FilterOption
+                title="Field"
+                type="text"
+                value={item.field_of_study}
+                onChange={(v) =>
+                  setDraft((d) => ({
+                    ...d,
+                    educations: (d.educations ?? []).map((e, i) =>
+                      i === index ? { ...e, field_of_study: v } : e
+                    ),
+                  }))
+                }
+                placeholder="Computer Science"
+                className="max-w-none"
+                labelBackground="bg-white"
+                disabled={readOnly}
+              />
+              <FilterOption
+                title="Start"
+                type="date"
+                value={toDateInput(item.start_date)}
+                onChange={(v) =>
+                  setDraft((d) => ({
+                    ...d,
+                    educations: (d.educations ?? []).map((e, i) =>
+                      i === index ? { ...e, start_date: v } : e
+                    ),
+                  }))
+                }
+                className="max-w-none"
+                labelBackground="bg-white"
+                disabled={readOnly}
+              />
+              <FilterOption
+                title="End"
+                type="date"
+                value={toDateInput(item.end_date)}
+                disabled={readOnly || item.end_date === PRESENT_SENTINEL}
+                onChange={(v) =>
+                  setDraft((d) => ({
+                    ...d,
+                    educations: (d.educations ?? []).map((e, i) =>
+                      i === index ? { ...e, end_date: v } : e
+                    ),
+                  }))
+                }
+                className="max-w-none"
+                labelBackground="bg-white"
+              />
+
+              <PresentToggle
+                checked={item.end_date === PRESENT_SENTINEL}
+                disabled={readOnly}
+                onCheckedChange={(checked) =>
+                  setDraft((d) => ({
+                    ...d,
+                    educations: (d.educations ?? []).map((e, i) =>
+                      i === index
+                        ? { ...e, end_date: checked ? PRESENT_SENTINEL : "" }
+                        : e
+                    ),
+                  }))
+                }
+              />
+            </div>
+          )}
+        />
+      </Section>
+
       <Section title="Certifications">
         <ListEditor
           items={draft.certifications ?? []}
           emptyLabel="No certifications"
+          readOnly={readOnly}
           onAdd={() =>
             setDraft((d) => ({
               ...d,
               certifications: [
                 ...(d.certifications ?? []),
                 {
-                  id: -Date.now(),
-                  resume_id: 0,
                   name: "",
                   issuing_organization: "",
                   issue_date: "",
@@ -896,6 +1122,7 @@ export function ResumeForm() {
                 placeholder="AWS Solutions Architect"
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
               <FilterOption
                 title="Issuer"
@@ -912,6 +1139,7 @@ export function ResumeForm() {
                 placeholder="Amazon"
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
               <FilterOption
                 title="Issue"
@@ -927,6 +1155,7 @@ export function ResumeForm() {
                 }
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
               <FilterOption
                 title="Expires"
@@ -942,6 +1171,7 @@ export function ResumeForm() {
                 }
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
             </div>
           )}
@@ -952,14 +1182,13 @@ export function ResumeForm() {
         <ListEditor
           items={draft.projects ?? []}
           emptyLabel="No projects"
+          readOnly={readOnly}
           onAdd={() =>
             setDraft((d) => ({
               ...d,
               projects: [
                 ...(d.projects ?? []),
                 {
-                  id: -Date.now(),
-                  resume_id: 0,
                   name: "",
                   description: "",
                   start_date: "",
@@ -992,6 +1221,7 @@ export function ResumeForm() {
                   placeholder="Project name"
                   className="max-w-none"
                   labelBackground="bg-white"
+                  disabled={readOnly}
                 />
                 <FilterOption
                   title="Start"
@@ -1007,12 +1237,13 @@ export function ResumeForm() {
                   }
                   className="max-w-none"
                   labelBackground="bg-white"
+                  disabled={readOnly}
                 />
                 <FilterOption
                   title="End"
                   type="date"
                   value={toDateInput(item.end_date)}
-                  disabled={item.end_date === PRESENT_SENTINEL}
+                  disabled={readOnly || item.end_date === PRESENT_SENTINEL}
                   onChange={(v) =>
                     setDraft((d) => ({
                       ...d,
@@ -1027,6 +1258,7 @@ export function ResumeForm() {
 
                 <PresentToggle
                   checked={item.end_date === PRESENT_SENTINEL}
+                  disabled={readOnly}
                   onCheckedChange={(checked) =>
                     setDraft((d) => ({
                       ...d,
@@ -1045,6 +1277,7 @@ export function ResumeForm() {
                 </label>
                 <textarea
                   value={item.description ?? ""}
+                  readOnly={readOnly}
                   onChange={(e) =>
                     setDraft((d) => ({
                       ...d,
@@ -1067,14 +1300,12 @@ export function ResumeForm() {
           title="Hobbies"
           placeholder="Add hobby"
           items={(draft.hobbies ?? []).map((h) => h.hobby)}
+          readOnly={readOnly}
+          bgColor="bg-white"
           onChange={(next) =>
             setDraft((d) => ({
               ...d,
-              hobbies: next.map((hobby) => ({
-                id: -Date.now(),
-                resume_id: 0,
-                hobby,
-              })),
+              hobbies: next.map((hobby) => ({ hobby })),
             }))
           }
         />
@@ -1084,14 +1315,13 @@ export function ResumeForm() {
         <ListEditor
           items={draft.languages ?? []}
           emptyLabel="No languages"
+          readOnly={readOnly}
           onAdd={() =>
             setDraft((d) => ({
               ...d,
               languages: [
                 ...(d.languages ?? []),
                 {
-                  id: -Date.now(),
-                  resume_id: 0,
                   language: "",
                   proficiency: "",
                 },
@@ -1121,6 +1351,7 @@ export function ResumeForm() {
                 placeholder="English"
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
               <FilterOption
                 title="Proficiency"
@@ -1137,6 +1368,7 @@ export function ResumeForm() {
                 placeholder="Native"
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
             </div>
           )}
@@ -1147,14 +1379,13 @@ export function ResumeForm() {
         <ListEditor
           items={draft.references ?? []}
           emptyLabel="No references"
+          readOnly={readOnly}
           onAdd={() =>
             setDraft((d) => ({
               ...d,
               references: [
                 ...(d.references ?? []),
                 {
-                  id: -Date.now(),
-                  resume_id: 0,
                   name: "",
                   relationship: "",
                   contact: "",
@@ -1185,6 +1416,7 @@ export function ResumeForm() {
                 placeholder="Jane Doe"
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
               <FilterOption
                 title="Relationship"
@@ -1201,6 +1433,7 @@ export function ResumeForm() {
                 placeholder="Manager"
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
               <FilterOption
                 title="Contact"
@@ -1217,6 +1450,7 @@ export function ResumeForm() {
                 placeholder="email/phone"
                 className="max-w-none"
                 labelBackground="bg-white"
+                disabled={readOnly}
               />
             </div>
           )}
@@ -1258,7 +1492,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 rounded-[calc(1rem)] border border-congress-blue-900 bg-white p-3">
       <div className="text-xs font-semibold text-congress-blue-900/80">
         {title}
       </div>
@@ -1273,12 +1507,14 @@ function ListEditor<T>({
   onAdd,
   onRemove,
   render,
+  readOnly = false,
 }: {
   items: T[];
   emptyLabel: string;
   onAdd: () => void;
   onRemove: (index: number) => void;
   render: (item: T, index: number) => React.ReactNode;
+  readOnly?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -1296,28 +1532,32 @@ function ListEditor<T>({
               <div className="text-xs font-semibold text-congress-blue-900/70">
                 Entry {index + 1}
               </div>
-              <button
-                type="button"
-                onClick={() => onRemove(index)}
-                className="rounded-full border border-congress-blue-900/20 px-3 py-1 text-[0.6875rem] font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
-              >
-                Remove
-              </button>
+              {!readOnly ? (
+                <button
+                  type="button"
+                  onClick={() => onRemove(index)}
+                  className="rounded-full border border-congress-blue-900/15 px-3 py-1 text-[0.6875rem] font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+                >
+                  Remove
+                </button>
+              ) : null}
             </div>
             {render(item, index)}
           </div>
         ))}
       </div>
 
-      <div>
-        <button
-          type="button"
-          onClick={onAdd}
-          className="rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
-        >
-          Add {items.length === 0 ? "first" : "another"}
-        </button>
-      </div>
+      {!readOnly ? (
+        <div>
+          <button
+            type="button"
+            onClick={onAdd}
+            className="rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+          >
+            Add {items.length === 0 ? "first" : "another"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1327,11 +1567,15 @@ function TagListEditor({
   placeholder,
   items,
   onChange,
+  readOnly = false,
+  bgColor,
 }: {
   title: string;
   placeholder: string;
   items: string[];
   onChange: (next: string[]) => void;
+  readOnly?: boolean;
+  bgColor?: string;
 }) {
   const [input, setInput] = useState("");
 
@@ -1351,28 +1595,37 @@ function TagListEditor({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="min-w-0">
-        <div className="relative border border-congress-blue-900 rounded-full px-3 py-2">
-          <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 bg-background z-10">
-            {title}
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={placeholder}
-              className="w-full text-sm outline-none bg-transparent text-congress-blue-900"
-            />
-            <button
-              type="button"
-              onClick={add}
-              className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold border border-congress-blue-900 text-congress-blue-900 hover:bg-congress-blue-50"
+      {!readOnly ? (
+        <div className="min-w-0">
+          <div className="relative border border-congress-blue-900 rounded-full px-3 py-2">
+            <label
+              className={cn(
+                "absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 z-10",
+                bgColor ? bgColor : "bg-background"
+              )}
             >
-              Add
-            </button>
+              {title}
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={placeholder}
+                readOnly={readOnly}
+                disabled={readOnly}
+                className="w-full text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
+              />
+              <button
+                type="button"
+                onClick={add}
+                className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold border border-congress-blue-900 text-congress-blue-900 hover:bg-congress-blue-50"
+              >
+                Add
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         {items.length === 0 ? (
@@ -1381,17 +1634,19 @@ function TagListEditor({
         {items.map((value) => (
           <span
             key={value}
-            className="flex items-center gap-2 rounded-full border border-congress-blue-900/20 px-3 py-1.5 text-sm text-congress-blue-900"
+            className="flex items-center gap-2 rounded-full border border-congress-blue-900 px-3 py-1.5 text-sm text-congress-blue-900"
           >
             <span className="font-medium">{value}</span>
-            <button
-              type="button"
-              onClick={() => remove(value)}
-              className="rounded-full px-2 py-0.5 text-[0.75rem] font-semibold text-congress-blue-900/70 hover:text-congress-blue-900"
-              title="Remove"
-            >
-              ✕
-            </button>
+            {!readOnly ? (
+              <button
+                type="button"
+                onClick={() => remove(value)}
+                className="rounded-full px-2 py-0.5 text-[0.75rem] font-semibold text-congress-blue-900/70 hover:text-congress-blue-900"
+                title="Remove"
+              >
+                ✕
+              </button>
+            ) : null}
           </span>
         ))}
       </div>

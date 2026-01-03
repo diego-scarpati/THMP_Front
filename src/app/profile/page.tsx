@@ -8,23 +8,6 @@ import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const currentUser = useCurrentUser();
-  const parseResume = useParseResume();
-
-  const handleParsingResume = async () => {
-    const formData = new FormData();
-    const resume = await fetch("/assets/Diego_Scarpati_Resume.docx");
-    if (!resume.ok) {
-      throw new Error("Failed to fetch resume file");
-    }
-    const blob = await resume.blob();
-    const file = new File([blob], "Diego_Scarpati_Resume.docx", {
-      type: blob.type,
-    });
-
-    formData.append("resume", file); // field name must match backend
-
-    return await parseResume.mutateAsync(formData);
-  };
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6">
@@ -57,18 +40,6 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
-          </div>
-
-          <div>
-            <button
-              type="button"
-              onClick={() => {
-                handleParsingResume();
-              }}
-              className="flex p-3 py-1.5 border border-congress-blue-900 text-congress-blue-300 rounded-full font-semibold bg-congress-blue-900 hover:bg-congress-blue-500 hover:border-congress-blue-500 hover:text-congress-blue-100 transition-colors items-center justify-center text-sm cursor-pointer"
-            >
-              Parse Resume
-            </button>
           </div>
 
           <div className="mt-2 flex flex-col gap-4">

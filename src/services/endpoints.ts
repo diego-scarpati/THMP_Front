@@ -19,9 +19,7 @@ export const jobApi = {
     params?: apiTypes.JobQueryParams
   ): Promise<apiTypes.PaginatedJobsResponse> => {
     const queryString = params ? buildQueryString(params) : "";
-    return apiService.get(`/jobs/getAll${queryString}`, {
-      headers: { "Cache-Control": "no-cache" },
-    });
+    return apiService.get(`/jobs/getAll${queryString}`);
   },
 
   getJobById: (id: string): Promise<apiTypes.Job> =>
@@ -35,6 +33,9 @@ export const jobApi = {
 
   getAllRejected: (): Promise<apiTypes.Job[]> =>
     apiService.get("/jobs/getAllRejected"),
+
+  markSeen: (data: apiTypes.MarkSeenJobsRequest): Promise<apiTypes.MarkSeenJobsResponse> =>
+    apiService.post("/jobs/markSeen", data),
 
   searchAndCreateJobs: (
     params: apiTypes.SearchAndCreateJobsRequest
@@ -87,6 +88,9 @@ export const jobApi = {
 
   approveByLLM: (): Promise<apiTypes.ApprovalResponse> =>
     apiService.patch("/jobs/approveByLLM"),
+
+  getSeekDescription: (url: string): Promise<string> =>
+    apiService.get(`/jobs/getSeekDescription?url=${encodeURIComponent(url)}`),
 };
 
 // Job Description API functions
@@ -113,6 +117,9 @@ export const userApi = {
   ): Promise<apiTypes.LoginResponse> =>
     apiService.post("/users/loginUser", credentials),
 
+  getUser: (id: string): Promise<apiTypes.User> =>
+    apiService.get(`/users/user/${id}`),
+
   getUserKeywords: (): Promise<string[]> => apiService.get("/users/keywords"),
 };
 
@@ -130,15 +137,6 @@ export const keywordApi = {
   createKeyword: (
     data: apiTypes.CreateKeywordRequest
   ): Promise<apiTypes.Keyword> => apiService.post("/keywords/create", data),
-
-  updateKeyword: (
-    id: number,
-    data: apiTypes.UpdateKeywordRequest
-  ): Promise<apiTypes.Keyword> =>
-    apiService.put(`/keywords/update/${id}`, data),
-
-  deleteKeyword: (id: number): Promise<{ success: boolean }> =>
-    apiService.delete(`/keywords/delete/${id}`),
 };
 
 // Skill API functions
@@ -187,6 +185,12 @@ export const filterApi = {
 
   setExclusionsActive: (data: apiTypes.SetActiveRequest): Promise<void> =>
     apiService.patch("/filters/exclusions", data),
+
+  setUserInclusionActive: (data: apiTypes.SetUserFilterActiveRequest): Promise<void> =>
+    apiService.patch("/filters/user-inclusions/active", data),
+
+  setUserExclusionActive: (data: apiTypes.SetUserFilterActiveRequest): Promise<void> =>
+    apiService.patch("/filters/user-exclusions/active", data),
 };
 
 // Resume API functions
@@ -198,6 +202,12 @@ export const resumeApi = {
 
   updateResume: (data: apiTypes.UpdateResumeRequest): Promise<apiTypes.Resume> =>
     apiService.put("/resumes", data),
+
+  addResumeSkills: (data: apiTypes.AddResumeSkillsRequest): Promise<apiTypes.MessageResponse> =>
+    apiService.post("/resumes/skills", data),
+
+  deleteResumeSkill: (skill: string | number): Promise<void> =>
+    apiService.delete(`/resumes/skills/${encodeURIComponent(String(skill))}`),
 
   deleteResume: (): Promise<void> => apiService.delete("/resumes"),
 

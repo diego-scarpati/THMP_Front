@@ -60,8 +60,8 @@ const KeywordsList = ({
                     : "bg-congress-blue-200 border-congress-blue-300 text-congress-blue-900 hover:bg-congress-blue-300"
                 )}
               >
-                {/* <Add className="h-3 w-3" /> */}
-                <img src="/icons/add.svg" alt="Add" className="h-3 w-3" />
+                <Add className="h-3 w-3" />
+                {/* <img src="/icons/add.svg" alt="Add" className="h-3 w-3" /> */}
               </button>
             </div>
           );

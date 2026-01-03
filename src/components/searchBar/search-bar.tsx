@@ -141,8 +141,8 @@ const SearchBar = () => {
                     )}
                   >
                     <span className="">Add</span>
-                    {/* <Add className="h-5 w-5" /> */}
-                    <img src="/icons/add.svg" alt="Add" className="h-5 w-5" />
+                    <Add className="h-5 w-5" />
+                    {/* <img src="/icons/add.svg" alt="Add" className="h-5 w-5" /> */}
                   </button>
                   <div className="flex items-center justify-center mr-2 rounded-full bg-congress-blue-300 border border-congress-blue-300 py-1.5 px-2 max-w-[4.25rem] h-8">
                     <p className="text-congress-blue-900 text-sm/[1rem] font-semibold px-2 h-5 leading-[20px]">

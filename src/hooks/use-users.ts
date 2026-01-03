@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { userApi } from '@/services/endpoints'
+import { setStoredAccessToken, getStoredAccessToken } from '@/services/api'
+import { useAccessToken } from './use-auth'
 import type { User, CreateUserRequest, LoginRequest } from '@/types/api'
 
 const CURRENT_USER_STORAGE_KEY = 'thmp.currentUser'
@@ -43,9 +45,20 @@ export const useCurrentUser = () => {
 }
 
 export const useUserKeywords = () => {
+  const { data: token } = useAccessToken()
   return useQuery({
     queryKey: queryKeys.users.keywords(),
     queryFn: () => userApi.getUserKeywords(),
+    enabled: !!token,
+  })
+}
+
+export const useUser = (id: string) => {
+  const { data: token } = useAccessToken()
+  return useQuery({
+    queryKey: queryKeys.users.detail(id),
+    queryFn: () => userApi.getUser(id),
+    enabled: !!id && !!token,
   })
 }
 
@@ -71,7 +84,9 @@ export const useLoginUser = () => {
     mutationFn: (credentials: LoginRequest) =>
       userApi.loginUser(credentials),
     onSuccess: (data) => {
-      const user = data.data.user
+      const user = data.user
+      setStoredAccessToken(data.accessToken)
+      queryClient.setQueryData<string | null>(queryKeys.auth.token(), data.accessToken)
       writeStoredUser(user)
       queryClient.setQueryData<User | null>(queryKeys.users.current(), user)
       // Invalidate user-scoped lists that depend on the configured user
@@ -90,10 +105,11 @@ export const useLogoutUser = () => {
     mutationKey: mutationKeys.users.logout,
     mutationFn: () => Promise.resolve(), // No API endpoint for logout, just clear cache
     onSuccess: () => {
+      setStoredAccessToken(null)
+      queryClient.setQueryData<string | null>(queryKeys.auth.token(), null)
       writeStoredUser(null)
       // Clear all cached data on logout
       queryClient.clear()
     },
   })
 }
-

@@ -3,9 +3,6 @@
 import { Suspense, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import JobsList from "@/components/jobs/jobs-list";
-import JobsFilter from "@/components/jobs/jobs-filter";
-import { useUserKeywords } from "@/hooks/use-keywords";
-import SkillsExample from "@/components/examples/skills-example";
 import SearchBar from "@/components/searchBar/search-bar";
 
 function JobsPageContent() {
@@ -52,14 +49,7 @@ function JobsPageContent() {
 
   return (
     <div className="w-full flex flex-col px-8 py-8 bg-background">
-      {/* <div className="mb-8">
-        <p className="text-background">
-          Find and filter through available job opportunities
-        </p>
-      </div> */}
       <SearchBar />
-      {/* <JobsFilter onSearch={handleSearch} /> */}
-      {/* <SkillsExample /> */}
       <JobsList params={cleanParams} onRefetch={handleRefetchCallback} />
     </div>
   );

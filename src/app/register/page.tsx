@@ -4,9 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCreateUser } from '@/hooks/use-users';
-import { AuthCard } from '@/components/auth/auth-card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import FilterOption from '@/components/jobs/filter-option';
+import { cn } from '@/lib/utils';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,12 +18,6 @@ export default function RegisterPage() {
     confirmPassword: '',
   });
   const [error, setError] = useState('');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError('');
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,132 +50,118 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthCard 
-      title="Create an account" 
-      description="Join us to find your next opportunity"
-    >
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-congress-blue-900">
-                First Name
-              </label>
-              <div className="mt-1">
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  autoComplete="given-name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="John"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="last_name" className="block text-sm font-medium text-congress-blue-900">
-                Last Name
-              </label>
-              <div className="mt-1">
-                <Input
-                  id="last_name"
-                  name="last_name"
-                  type="text"
-                  autoComplete="family-name"
-                  required
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  placeholder="Doe"
-                />
-              </div>
-            </div>
+    <main className="mx-auto max-w-xl mt-8 px-4 py-6">
+      <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
+        <div className="flex flex-col items-center justify-center space-y-4 w-full rounded-4xl px-10 py-10 bg-white">
+          <div className="flex flex-col items-center justify-center">
+            <h1 className="text-xl font-semibold text-congress-blue-900">
+              Create an account
+            </h1>
+            <p className="mt-1 text-sm text-congress-blue-900/70">
+              Join us to find your next opportunity
+            </p>
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-congress-blue-900">
-              Email address
-            </label>
-            <div className="mt-1">
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
+          {error ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              <span className="font-semibold">Registration failed</span>
+              <span className="opacity-80"> — {error}</span>
+            </div>
+          ) : null}
+
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <div className="space-y-3 flex flex-col mt-4">
+              <FilterOption
+                title="First Name"
+                type="text"
+                value={formData.name}
+                onChange={(v) => {
+                  setFormData((prev) => ({ ...prev, name: v }));
+                  setError('');
+                }}
+                placeholder="John"
+                className="max-w-none w-[500px]"
+                labelBackground="bg-white"
+              />
+              <FilterOption
+                title="Last Name"
+                type="text"
+                value={formData.last_name}
+                onChange={(v) => {
+                  setFormData((prev) => ({ ...prev, last_name: v }));
+                  setError('');
+                }}
+                placeholder="Doe"
+                className="max-w-none w-[500px]"
+                labelBackground="bg-white"
+              />
+
+              <FilterOption
+                title="Email"
+                type="text"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(v) => {
+                  setFormData((prev) => ({ ...prev, email: v }));
+                  setError('');
+                }}
                 placeholder="you@example.com"
+                className="max-w-none w-[500px]"
+                labelBackground="bg-white"
               />
-            </div>
-          </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-congress-blue-900">
-              Password
-            </label>
-            <div className="mt-1">
-              <Input
-                id="password"
-                name="password"
+              <FilterOption
+                title="Password"
                 type="password"
-                autoComplete="new-password"
-                required
                 value={formData.password}
-                onChange={handleChange}
+                onChange={(v) => {
+                  setFormData((prev) => ({ ...prev, password: v }));
+                  setError('');
+                }}
                 placeholder="••••••••"
-                minLength={6}
+                className="max-w-none w-[500px]"
+                labelBackground="bg-white"
               />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-congress-blue-900">
-              Confirm Password
-            </label>
-            <div className="mt-1">
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
+              <FilterOption
+                title="Confirm Password"
                 type="password"
-                autoComplete="new-password"
-                required
                 value={formData.confirmPassword}
-                onChange={handleChange}
+                onChange={(v) => {
+                  setFormData((prev) => ({ ...prev, confirmPassword: v }));
+                  setError('');
+                }}
                 placeholder="••••••••"
-                minLength={6}
+                className="max-w-none w-[500px]"
+                labelBackground="bg-white"
               />
             </div>
-          </div>
-        </div>
 
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-            {error}
-          </div>
-        )}
+            <div className="flex flex-col items-center justify-between gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={createUserMutation.isPending}
+                className={cn(
+                  'rounded-full w-[80%] border border-congress-blue-900 bg-congress-blue-900 px-5 py-2 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500',
+                  createUserMutation.isPending && 'opacity-60 cursor-not-allowed'
+                )}
+              >
+                {createUserMutation.isPending
+                  ? 'Creating account...'
+                  : 'Create account'}
+              </button>
 
-        <div>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={createUserMutation.isPending}
-          >
-            {createUserMutation.isPending ? 'Creating account...' : 'Create account'}
-          </Button>
+              <div className="text-sm text-congress-blue-900/70">
+                Already have an account?{' '}
+                <Link
+                  href="/login"
+                  className="font-semibold text-congress-blue-900 hover:text-congress-blue-500"
+                >
+                  Sign in
+                </Link>
+              </div>
+            </div>
+          </form>
         </div>
-
-        <div className="text-center text-sm">
-          <span className="text-gray-600">Already have an account? </span>
-          <Link 
-            href="/login" 
-            className="font-medium text-congress-blue-600 hover:text-congress-blue-500"
-          >
-            Sign in
-          </Link>
-        </div>
-      </form>
-    </AuthCard>
+      </div>
+    </main>
   );
 }

@@ -4,7 +4,7 @@ import SelectOptions from "./select-options";
 
 interface FilterOptionProps {
   title: string;
-  type: "select" | "text" | "date";
+  type: "select" | "text" | "password" | "date";
   value: string;
   onChange: (value: string) => void;
   options?: Array<{ label: string; value: string }>; // For select type
@@ -32,15 +32,19 @@ const FilterOption = ({
   return (
     <div className={cn("min-w-0 relative max-w-[9.375rem] sm:max-w-[12rem] md:max-w-[14rem] lg:max-w-[16rem]", className)}>
       <div className="relative border border-congress-blue-900 rounded-full px-3 py-1.5">
-        <label 
-          htmlFor={inputId} 
-          className={cn("absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 z-10", labelBackground ? labelBackground : "bg-background")}
+        <label
+          htmlFor={inputId}
+          className={cn(
+            "absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 z-10",
+            labelBackground ? labelBackground : "bg-background"
+          )}
         >
           {title}
         </label>
-        {type === "text" && (
+
+        {(type === "text" || type === "password") && (
           <input
-            type="text"
+            type={type === "password" ? "password" : "text"}
             id={inputId}
             value={value}
             onChange={(e) => onChange(e.target.value)}

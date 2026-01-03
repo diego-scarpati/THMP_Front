@@ -1,21 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { keywordApi } from '@/services/endpoints'
-import type { Keyword, CreateKeywordRequest, UpdateKeywordRequest } from '@/types/api'
-import type { ApiResponse } from '@/types/api'
+import type { CreateKeywordRequest } from '@/types/api'
+import { useAccessToken } from './use-auth'
 
 // Query hooks for keywords
 export const useKeywords = () => {
   return useQuery({
-    queryKey: queryKeys.keywords.lists(),
+    queryKey: queryKeys.keywords.list(),
     queryFn: () => keywordApi.getAllKeywords(),
   })
 }
 
 export const useUserKeywords = () => {
+  const { data: token } = useAccessToken()
   return useQuery({
     queryKey: queryKeys.keywords.lists(),
     queryFn: () => keywordApi.getAllUserKeywords(),
+    enabled: !!token,
   })
 }
 
@@ -35,39 +37,6 @@ export const useCreateKeyword = () => {
     mutationKey: mutationKeys.keywords.create,
     mutationFn: (data: CreateKeywordRequest) => keywordApi.createKeyword(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.keywords.lists() })
-    },
-  })
-}
-
-export const useUpdateKeyword = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationKey: mutationKeys.keywords.update,
-    mutationFn: ({ id, data }: { id: number; data: UpdateKeywordRequest }) => 
-      keywordApi.updateKeyword(id, data),
-    onSuccess: (data, variables) => {
-      queryClient.setQueryData(
-        queryKeys.keywords.detail(variables.id),
-        (oldData: ApiResponse<Keyword> | undefined) => {
-          if (!oldData) return oldData
-          return { ...oldData, data: { ...oldData.data, ...variables.data } }
-        }
-      )
-      queryClient.invalidateQueries({ queryKey: queryKeys.keywords.lists() })
-    },
-  })
-}
-
-export const useDeleteKeyword = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationKey: mutationKeys.keywords.delete,
-    mutationFn: (id: number) => keywordApi.deleteKeyword(id),
-    onSuccess: (data, id) => {
-      queryClient.removeQueries({ queryKey: queryKeys.keywords.detail(id) })
       queryClient.invalidateQueries({ queryKey: queryKeys.keywords.lists() })
     },
   })

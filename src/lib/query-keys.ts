@@ -2,6 +2,9 @@ import { PaginationParams } from '@/types/api'
 
 // Query key factory for better cache management and invalidation
 export const queryKeys = {
+  auth: {
+    token: () => ['auth', 'token'] as const,
+  },
   // Jobs
   jobs: {
     all: ['jobs'] as const,
@@ -15,6 +18,7 @@ export const queryKeys = {
     applied: () => [...queryKeys.jobs.all, 'applied'] as const,
     rejected: () => [...queryKeys.jobs.all, 'rejected'] as const,
     approved: () => [...queryKeys.jobs.all, 'approved'] as const,
+    seekDescription: (url: string) => [...queryKeys.jobs.all, 'seekDescription', url] as const,
   },
 
   // Job Descriptions
@@ -101,6 +105,7 @@ export const mutationKeys = {
     seekSearch: ['jobs', 'seekSearch'] as const,
     seekAllKeywords: ['jobs', 'seekAllKeywords'] as const,
     approveByLLM: ['jobs', 'approveByLLM'] as const,
+    markSeen: ['jobs', 'markSeen'] as const,
   },
   jobDescriptions: {
     create: ['jobDescriptions', 'create'] as const,
@@ -112,13 +117,13 @@ export const mutationKeys = {
   },
   keywords: {
     create: ['keywords', 'create'] as const,
-    update: ['keywords', 'update'] as const,
-    delete: ['keywords', 'delete'] as const,
   },
   resumes: {
     create: ['resumes', 'create'] as const,
     update: ['resumes', 'update'] as const,
     delete: ['resumes', 'delete'] as const,
+    addSkills: ['resumes', 'addSkills'] as const,
+    deleteSkill: ['resumes', 'deleteSkill'] as const,
   },
   inclusions: {
     create: ['inclusions', 'create'] as const,
@@ -136,5 +141,7 @@ export const mutationKeys = {
     toggleActive: ['filters', 'toggleActive'] as const,
     setInclusionsActive: ['filters', 'setInclusionsActive'] as const,
     setExclusionsActive: ['filters', 'setExclusionsActive'] as const,
+    setUserInclusionActive: ['filters', 'setUserInclusionActive'] as const,
+    setUserExclusionActive: ['filters', 'setUserExclusionActive'] as const,
   },
 } as const

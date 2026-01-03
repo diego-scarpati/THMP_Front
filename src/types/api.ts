@@ -34,8 +34,7 @@ export interface ApiResponse<T> {
 // Error types
 export interface ApiErrorResponse {
   error: string;
-  message: string;
-  statusCode: number;
+  message?: string;
 }
 
 // ===== JOB INTERFACES =====
@@ -76,10 +75,10 @@ export interface CreateJobRequest {
   posted_by?: string;
 }
 
-export type UpdateJobRequest = Partial<CreateJobRequest>
+export type UpdateJobRequest = Partial<CreateJobRequest>;
 
-export type JobResponse = ApiResponse<Job>
-export type JobsResponse = ApiResponse<Job[]>
+export type JobResponse = ApiResponse<Job>;
+export type JobsResponse = ApiResponse<Job[]>;
 export interface PaginatedJobsResponse {
   total: number;
   totalPages: number;
@@ -107,10 +106,10 @@ export interface CreateJobDescriptionRequest {
   jobDescription: JobDescription;
 }
 
-export type UpdateJobDescriptionRequest = Partial<Omit<JobDescription, "id">>
+export type UpdateJobDescriptionRequest = Partial<Omit<JobDescription, "id">>;
 
-export type JobDescriptionResponse = ApiResponse<JobDescription>
-export type JobDescriptionsResponse = ApiResponse<JobDescription[]>
+export type JobDescriptionResponse = ApiResponse<JobDescription>;
+export type JobDescriptionsResponse = ApiResponse<JobDescription[]>;
 
 // ===== USER INTERFACES =====
 
@@ -147,13 +146,14 @@ export interface LoginRequest {
   password: string;
 }
 
-export type LoginResponse = ApiResponse<{
-  user: Omit<User, "password">;
+// API_REFERENCE.md: LoginResponse is a plain object: { user, accessToken }
+export interface LoginResponse {
+  user: User;
   accessToken: string;
-}>
+}
 
-export type UserResponse = ApiResponse<User>
-export type UsersResponse = ApiResponse<User[]>
+export type UserResponse = ApiResponse<User>;
+export type UsersResponse = ApiResponse<User[]>;
 
 // ===== USER JOB INTERFACES =====
 
@@ -176,10 +176,12 @@ export interface CreateUserJobRequest {
   cover_letter?: string;
 }
 
-export type UpdateUserJobRequest = Partial<Omit<CreateUserJobRequest, "user_id" | "job_id">>
+export type UpdateUserJobRequest = Partial<
+  Omit<CreateUserJobRequest, "user_id" | "job_id">
+>;
 
-export type UserJobResponse = ApiResponse<UserJob>
-export type UserJobsResponse = ApiResponse<UserJob[]>
+export type UserJobResponse = ApiResponse<UserJob>;
+export type UserJobsResponse = ApiResponse<UserJob[]>;
 
 // ===== KEYWORD INTERFACES =====
 
@@ -192,10 +194,10 @@ export interface CreateKeywordRequest {
   keyword: string;
 }
 
-export type UpdateKeywordRequest = Partial<CreateKeywordRequest>
+export type UpdateKeywordRequest = Partial<CreateKeywordRequest>;
 
-export type KeywordResponse = ApiResponse<Keyword>
-export type KeywordsResponse = ApiResponse<Keyword[]>
+export type KeywordResponse = ApiResponse<Keyword>;
+export type KeywordsResponse = ApiResponse<Keyword[]>;
 
 // ===== SKILL INTERFACES =====
 
@@ -209,10 +211,10 @@ export interface CreateSkillRequest {
   skills: string[];
 }
 
-export type UpdateSkillRequest = Partial<CreateSkillRequest>
+export type UpdateSkillRequest = Partial<CreateSkillRequest>;
 
-export type SkillResponse = ApiResponse<Skill>
-export type SkillsResponse = ApiResponse<Skill[]>
+export type SkillResponse = ApiResponse<Skill>;
+export type SkillsResponse = ApiResponse<Skill[]>;
 
 // ===== INCLUSION INTERFACES =====
 
@@ -228,8 +230,8 @@ export interface CreateInclusionsRequest {
   inclusions: string[];
 }
 
-export type InclusionResponse = ApiResponse<Inclusion>
-export type InclusionsResponse = ApiResponse<Inclusion[]>
+export type InclusionResponse = ApiResponse<Inclusion>;
+export type InclusionsResponse = ApiResponse<Inclusion[]>;
 
 // ===== EXCLUSION INTERFACES =====
 
@@ -245,8 +247,8 @@ export interface CreateExclusionsRequest {
   exclusions: string[];
 }
 
-export type ExclusionResponse = ApiResponse<Exclusion>
-export type ExclusionsResponse = ApiResponse<Exclusion[]>
+export type ExclusionResponse = ApiResponse<Exclusion>;
+export type ExclusionsResponse = ApiResponse<Exclusion[]>;
 
 // ===== USER SKILL INTERFACES =====
 
@@ -263,8 +265,8 @@ export interface CreateUserSkillRequest {
   skill_id: number;
 }
 
-export type UserSkillResponse = ApiResponse<UserSkill>
-export type UserSkillsResponse = ApiResponse<UserSkill[]>
+export type UserSkillResponse = ApiResponse<UserSkill>;
+export type UserSkillsResponse = ApiResponse<UserSkill[]>;
 
 // ===== USER EXCLUSION INTERFACES =====
 
@@ -281,8 +283,8 @@ export interface CreateUserExclusionRequest {
   exclusion_id: number;
 }
 
-export type UserExclusionResponse = ApiResponse<UserExclusion>
-export type UserExclusionsResponse = ApiResponse<UserExclusion[]>
+export type UserExclusionResponse = ApiResponse<UserExclusion>;
+export type UserExclusionsResponse = ApiResponse<UserExclusion[]>;
 
 // ===== USER INCLUSION INTERFACES =====
 
@@ -299,12 +301,32 @@ export interface CreateUserInclusionRequest {
   inclusion_id: number;
 }
 
-export type UserInclusionResponse = ApiResponse<UserInclusion>
-export type UserInclusionsResponse = ApiResponse<UserInclusion[]>
+export type UserInclusionResponse = ApiResponse<UserInclusion>;
+export type UserInclusionsResponse = ApiResponse<UserInclusion[]>;
 
 // ===== RESUME INTERFACES =====
 
 export interface Resume {
+  /* Old DTO according to API Reference: */
+
+  // id: number;
+  // user_id: string;
+  // first_name: string;
+  // last_name: string;
+  // email: string;
+  // phone: string;
+  // address: string;
+  // summary?: string;
+  // educations?: Education[];
+  // work_experiences?: WorkExperience[];
+  // resume_skills?: ResumeSkill[];
+  // certifications?: Certification[];
+  // projects?: Project[];
+  // hobbies?: Hobby[];
+  // languages?: Language[];
+  // references?: Reference[];
+
+  /* New DTO according to API Testing: */
   id: number;
   user_id: string;
   first_name: string;
@@ -313,14 +335,25 @@ export interface Resume {
   phone: string;
   address: string;
   summary?: string;
+
   educations?: Education[];
   work_experiences?: WorkExperience[];
-  resume_skills?: ResumeSkill[];
   certifications?: Certification[];
   projects?: Project[];
   hobbies?: Hobby[];
   languages?: Language[];
   references?: Reference[];
+
+  // API_REFERENCE.md name; backend may also return resumeSkills (camel) depending on ORM aliases
+  resume_skills?: ResumeSkill[];
+
+  // matches Sequelize `as: "resumeSkills"`
+  resumeSkills?: Array<{
+    id: number;
+    resume_id: number;
+    skill_id: number;
+    skill?: Skill; // note lower-case "skill" matches `as: "skill"`
+  }>;
 }
 
 // ===== PARSED RESUME (ExpandedResume) =====
@@ -360,8 +393,11 @@ export interface WorkExperience {
 export interface ResumeSkill {
   id: number;
   resume_id: number;
-  skill_id: number;
+  skill_id?: number;
+  title?: string;
+  // Some endpoints return nested Skill under different keys
   Skill?: Skill;
+  skill?: Skill;
 }
 
 export interface Certification {
@@ -403,10 +439,30 @@ export interface Reference {
   contact: string;
 }
 
-export type CreateResumeRequest = Omit<Resume, "id" | "user_id">
-export type UpdateResumeRequest = Partial<CreateResumeRequest>
+// export type CreateResumeRequest = Omit<Resume, "id" | "user_id">;
+// export type UpdateResumeRequest = Partial<CreateResumeRequest>;
+export type CreateResumeRequest = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  summary?: string;
 
-export type ResumeResponse = ApiResponse<Resume>
+  educations?: Array<Omit<Education, "id" | "resume_id">>;
+  work_experiences?: Array<Omit<WorkExperience, "id" | "resume_id">>;
+  certifications?: Array<Omit<Certification, "id" | "resume_id">>;
+  projects?: Array<Omit<Project, "id" | "resume_id">>;
+  hobbies?: Array<Omit<Hobby, "id" | "resume_id">>;
+  languages?: Array<Omit<Language, "id" | "resume_id">>;
+  references?: Array<Omit<Reference, "id" | "resume_id">>;
+
+  resume_skills?: Array<{ skill_id?: number; title?: string }>;
+};
+
+export type UpdateResumeRequest = Partial<CreateResumeRequest>;
+
+export type ResumeResponse = ApiResponse<Resume>;
 
 // ===== SPECIALIZED REQUEST/RESPONSE INTERFACES =====
 
@@ -429,7 +485,7 @@ export interface SearchAndCreateJobsMultipleKeywordsRequest {
   sort?: string;
 }
 
-export type SearchAndCreateJobsResponse = ApiResponse<string>
+export type SearchAndCreateJobsResponse = ApiResponse<string>;
 
 export interface JobAcceptanceFilterParams {
   formulaAcceptance?: "yes" | "no" | "pending";
@@ -471,8 +527,27 @@ export interface ApprovalResponse {
   jobsProcessed: number;
 }
 
+// Jobs: markSeen
+export interface MarkSeenJobsRequest {
+  jobIds: string[];
+}
+
+export interface MarkSeenJobsResponse {
+  updatedRows: number;
+}
+
+// Resumes: add/remove skills
+export interface AddResumeSkillsRequest {
+  skills?: string[];
+  skill_ids?: number[];
+}
+
+export interface MessageResponse {
+  message: string;
+}
+
 // User job approval update request
-export type UpdateUserJobsApprovalRequest = Record<string, never>
+export type UpdateUserJobsApprovalRequest = Record<string, never>;
 
 export interface UpdateUserJobsApprovalResponse {
   updatedRows: number;
@@ -491,5 +566,11 @@ export interface ToggleActiveRequest {
 
 export interface SetActiveRequest {
   titles: string[];
+  active: boolean;
+}
+
+// Filters: explicit per-user inclusion/exclusion activation
+export interface SetUserFilterActiveRequest {
+  id: string;
   active: boolean;
 }

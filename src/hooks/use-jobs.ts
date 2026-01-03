@@ -1,8 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys, mutationKeys } from "@/lib/query-keys";
 import { jobApi } from "@/services/endpoints";
+import { requireStoredAccessToken } from "@/services/api";
+import { useAccessToken } from "./use-auth";
 import type {
   Job,
+  MarkSeenJobsRequest,
   SearchAndCreateJobsRequest,
   JobQueryParams,
   SearchAndCreateJobsMultipleKeywordsRequest,
@@ -11,9 +14,11 @@ import type { PaginatedResponse, ApiResponse } from "@/types/api";
 
 // Query hooks for jobs
 export const useJobs = (params?: JobQueryParams) => {
+  const { data: token } = useAccessToken();
   return useQuery({
     queryKey: queryKeys.jobs.list(params),
     queryFn: () => jobApi.getAllJobs(params),
+    enabled: !!token,
   });
 };
 
@@ -25,11 +30,20 @@ export const useJob = (id: string) => {
   });
 };
 
+export const useSeekDescription = (url: string) => {
+  return useQuery({
+    queryKey: queryKeys.jobs.seekDescription(url),
+    queryFn: () => jobApi.getSeekDescription(url),
+    enabled: !!url,
+  });
+};
+
 export const useJobsByCompany = (companyName: string) => {
+  const { data: token } = useAccessToken();
   return useQuery({
     queryKey: queryKeys.jobs.byCompany(companyName),
     queryFn: () => jobApi.getJobsByCompanyName(companyName),
-    enabled: !!companyName,
+    enabled: !!companyName && !!token,
   });
 };
 
@@ -37,6 +51,7 @@ export const useJobsByAcceptance = (
   formulaAcceptance?: string,
   gptAcceptance?: string
 ) => {
+  const { data: token } = useAccessToken();
   return useQuery({
     queryKey: queryKeys.jobs.byAcceptance(formulaAcceptance, gptAcceptance),
     queryFn: () =>
@@ -44,21 +59,25 @@ export const useJobsByAcceptance = (
         approved_by_formula: formulaAcceptance as "yes" | "no" | "pending",
         approved_by_gpt: gptAcceptance as "yes" | "no" | "pending",
       }),
-    enabled: !!formulaAcceptance || !!gptAcceptance,
+    enabled: (!!formulaAcceptance || !!gptAcceptance) && !!token,
   });
 };
 
 export const useAppliedJobs = () => {
+  const { data: token } = useAccessToken();
   return useQuery({
     queryKey: queryKeys.jobs.applied(),
     queryFn: () => jobApi.getAllApplied(),
+    enabled: !!token,
   });
 };
 
 export const useRejectedJobs = () => {
+  const { data: token } = useAccessToken();
   return useQuery({
     queryKey: queryKeys.jobs.rejected(),
     queryFn: () => jobApi.getAllRejected(),
+    enabled: !!token,
   });
 };
 
@@ -78,7 +97,7 @@ export const useSearchAndCreateJobs = () => {
   return useMutation({
     mutationKey: mutationKeys.jobs.searchAndCreate,
     mutationFn: (searchParams: SearchAndCreateJobsRequest) =>
-      jobApi.searchAndCreateJobs(searchParams),
+      (requireStoredAccessToken(), jobApi.searchAndCreateJobs(searchParams)),
     onSuccess: () => {
       // Invalidate all job lists to refresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
@@ -92,7 +111,7 @@ export const useSearchAndCreateWithAllKeywords = () => {
   return useMutation({
     mutationKey: mutationKeys.jobs.searchAndCreateWithAllKeywords,
     mutationFn: (searchParams: SearchAndCreateJobsMultipleKeywordsRequest) =>
-      jobApi.searchAndCreateWithAllKeywords(searchParams),
+      (requireStoredAccessToken(), jobApi.searchAndCreateWithAllKeywords(searchParams)),
     onSuccess: () => {
       // Invalidate all job lists to refresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
@@ -105,7 +124,7 @@ export const useApproveJobByFormula = () => {
 
   return useMutation({
     mutationKey: mutationKeys.jobs.approveByFormula,
-    mutationFn: () => jobApi.approveByFormula(),
+    mutationFn: () => (requireStoredAccessToken(), jobApi.approveByFormula()),
     onSuccess: () => {
       // Invalidate all job-related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
@@ -118,7 +137,7 @@ export const useApproveJobByGPT = () => {
 
   return useMutation({
     mutationKey: mutationKeys.jobs.approveByGPT,
-    mutationFn: () => jobApi.approveByGPT(),
+    mutationFn: () => (requireStoredAccessToken(), jobApi.approveByGPT()),
     onSuccess: () => {
       // Invalidate all job-related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
@@ -131,7 +150,7 @@ export const useUpdateApprovedByDate = () => {
 
   return useMutation({
     mutationKey: mutationKeys.jobs.updateApprovedByDate,
-    mutationFn: () => jobApi.updateApprovedByDate(),
+    mutationFn: () => (requireStoredAccessToken(), jobApi.updateApprovedByDate()),
     onSuccess: () => {
       // Invalidate all job-related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
@@ -153,7 +172,7 @@ export const useUpdateUserJobsApprovalByFormula = () => {
 
   return useMutation({
     mutationKey: mutationKeys.jobs.updateUserJobsApprovalByFormula,
-    mutationFn: () => jobApi.updateUserJobsApprovalByFormula(),
+    mutationFn: () => (requireStoredAccessToken(), jobApi.updateUserJobsApprovalByFormula()),
     onSuccess: () => {
       // Invalidate all job-related and userJob queries
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
@@ -168,7 +187,7 @@ export const useSeekSearch = () => {
   return useMutation({
     mutationKey: mutationKeys.jobs.seekSearch,
     mutationFn: (data: { keywords: string[]; location?: string }) =>
-      jobApi.seekSearch(data),
+      (requireStoredAccessToken(), jobApi.seekSearch(data)),
     onSuccess: () => {
       // Invalidate all job lists to refresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
@@ -182,7 +201,7 @@ export const useSeekAllKeywords = () => {
   return useMutation({
     mutationKey: mutationKeys.jobs.seekAllKeywords,
     mutationFn: (data?: { keywordArray?: string[]; location?: string }) =>
-      jobApi.seekAllKeywords(data),
+      (requireStoredAccessToken(), jobApi.seekAllKeywords(data)),
     onSuccess: () => {
       // Invalidate all job lists to refresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
@@ -195,10 +214,22 @@ export const useApproveJobByLLM = () => {
 
   return useMutation({
     mutationKey: mutationKeys.jobs.approveByLLM,
-    mutationFn: () => jobApi.approveByLLM(),
+    mutationFn: () => (requireStoredAccessToken(), jobApi.approveByLLM()),
     onSuccess: () => {
       // Invalidate all job-related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
+    },
+  });
+};
+
+export const useMarkJobsSeen = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.markSeen,
+    mutationFn: (data: MarkSeenJobsRequest) => (requireStoredAccessToken(), jobApi.markSeen(data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
     },
   });
 };

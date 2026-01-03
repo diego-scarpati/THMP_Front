@@ -1,5 +1,60 @@
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8888/api'
 
+const ACCESS_TOKEN_STORAGE_KEY = 'thmp.accessToken'
+
+let inMemoryAccessToken: string | null = null
+
+function readAccessTokenFromStorage(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function getStoredAccessToken(): string | null {
+  if (inMemoryAccessToken) return inMemoryAccessToken
+  const fromStorage = readAccessTokenFromStorage()
+  if (fromStorage) {
+    inMemoryAccessToken = fromStorage
+  }
+  return fromStorage
+}
+
+export function setStoredAccessToken(token: string | null) {
+  inMemoryAccessToken = token
+  if (typeof window === 'undefined') return
+  try {
+    if (!token) {
+      window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY)
+      return
+    }
+    window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token)
+  } catch {
+    // ignore storage failures
+  }
+}
+
+export class AuthError extends Error {
+  constructor(message: string = 'Not authenticated') {
+    super(message)
+    this.name = 'AuthError'
+  }
+}
+
+export function isAuthError(error: unknown): error is AuthError {
+  return error instanceof AuthError || (error instanceof Error && error.name === 'AuthError')
+}
+
+export function requireStoredAccessToken(): string {
+  const token = getStoredAccessToken()
+  if (!token) {
+    throw new AuthError()
+  }
+  return token
+}
+
 export class ApiError extends Error {
   status: number
   statusText: string
@@ -41,6 +96,10 @@ class ApiService {
       } catch {
         // If we can't parse the error, use the default message
       }
+
+      if (response.status === 401) {
+        throw new AuthError(errorMessage)
+      }
       
       throw new ApiError(response.status, response.statusText, errorMessage)
     }
@@ -52,13 +111,37 @@ class ApiService {
     }
   }
 
+  private buildHeaders(options?: RequestInit, isFormData?: boolean): HeadersInit {
+    const accessToken = getStoredAccessToken()
+    console.log("🚀 ~ ApiService ~ buildHeaders ~ accessToken:", accessToken)
+    const incoming = options?.headers ?? {}
+
+    const base: HeadersInit = {
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...incoming,
+    }
+
+    // Attach auth header if we have a token and caller didn't override it.
+    if (accessToken) {
+      const hasAuthorizationHeader =
+        (typeof Headers !== 'undefined' && incoming instanceof Headers && incoming.has('Authorization')) ||
+        (typeof incoming === 'object' &&
+          incoming !== null &&
+          ('Authorization' in (incoming as Record<string, unknown>) ||
+            'authorization' in (incoming as Record<string, unknown>)))
+
+      if (!hasAuthorizationHeader) {
+        return { ...base, Authorization: `Bearer ${accessToken}` }
+      }
+    }
+
+    return base
+  }
+
   async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers: this.buildHeaders(options, false),
       ...options,
     })
 
@@ -69,10 +152,7 @@ class ApiService {
     const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'POST',
-      headers: {
-        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-        ...options?.headers,
-      },
+      headers: this.buildHeaders(options, isFormData),
       body: data ? (isFormData ? (data as FormData) : JSON.stringify(data)) : undefined,
       ...options,
     })
@@ -84,10 +164,7 @@ class ApiService {
     const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'PUT',
-      headers: {
-        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-        ...options?.headers,
-      },
+      headers: this.buildHeaders(options, isFormData),
       body: data ? (isFormData ? (data as FormData) : JSON.stringify(data)) : undefined,
       ...options,
     })
@@ -98,10 +175,7 @@ class ApiService {
   async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers: this.buildHeaders(options, false),
       ...options,
     })
 
@@ -112,10 +186,7 @@ class ApiService {
     const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'PATCH',
-      headers: {
-        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-        ...options?.headers,
-      },
+      headers: this.buildHeaders(options, isFormData),
       body: data ? (isFormData ? (data as FormData) : JSON.stringify(data)) : undefined,
       ...options,
     })

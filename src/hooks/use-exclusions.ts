@@ -2,13 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { exclusionApi } from '@/services/endpoints'
 import type { CreateExclusionsRequest } from '@/types/api'
+import { useAccessToken } from './use-auth'
+import { requireStoredAccessToken } from '@/services/api'
 
 
 // Query hooks for exclusions
 export const useExclusions = () => {
+  const { data: token } = useAccessToken()
   return useQuery({
     queryKey: queryKeys.exclusions.all,
     queryFn: () => exclusionApi.getAllExclusions(),
+    enabled: !!token,
   })
 }
 
@@ -18,7 +22,7 @@ export const useCreateExclusion = () => {
 
   return useMutation({
     mutationKey: mutationKeys.exclusions.create,
-    mutationFn: (data: CreateExclusionsRequest) => exclusionApi.createExclusions(data),
+    mutationFn: (data: CreateExclusionsRequest) => (requireStoredAccessToken(), exclusionApi.createExclusions(data)),
     onSuccess: () => {
       // Invalidate exclusions list to refresh
       queryClient.invalidateQueries({ queryKey: queryKeys.exclusions.all })
@@ -31,7 +35,7 @@ export const useDeleteExclusion = () => {
 
   return useMutation({
     mutationKey: mutationKeys.exclusions.delete,
-    mutationFn: (exclusion: string) => exclusionApi.deleteExclusion(exclusion),
+    mutationFn: (exclusion: string) => (requireStoredAccessToken(), exclusionApi.deleteExclusion(exclusion)),
     onSuccess: () => {
       // Invalidate exclusions list to refresh
       queryClient.invalidateQueries({ queryKey: queryKeys.exclusions.all })

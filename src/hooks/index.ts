@@ -2,6 +2,7 @@
 export {
   useJobs,
   useJob,
+  useSeekDescription,
   useJobsByCompany,
   useJobsByAcceptance,
   useAppliedJobs,
@@ -15,11 +16,19 @@ export {
   useUpdateUserJobsApprovalByFormula,
   useSeekSearch,
   useApproveJobByLLM,
+  useMarkJobsSeen,
 } from "./use-jobs";
+
+// Auth hooks
+export {
+  useAccessToken,
+  useIsAuthenticated,
+} from "./use-auth";
 
 // User-related hooks
 export {
   useCurrentUser,
+  useUser,
   useCreateUser,
   useLoginUser,
   useLogoutUser,
@@ -40,6 +49,8 @@ export {
   useUpdateResume,
   useDeleteResume,
   useParseResume,
+  useAddResumeSkills,
+  useDeleteResumeSkill,
 } from "./use-resumes";
 
 // Skill hooks
@@ -54,6 +65,8 @@ export {
   useToggleFilterActive,
   useSetInclusionsActive,
   useSetExclusionsActive,
+  useSetUserInclusionActive,
+  useSetUserExclusionActive,
 } from "./use-filters";
 
 // Keyword hooks
@@ -62,8 +75,6 @@ export {
   useKeywords,
   useKeyword,
   useCreateKeyword,
-  useUpdateKeyword,
-  useDeleteKeyword,
 } from "./use-keywords";
 
 // Inclusion hooks
