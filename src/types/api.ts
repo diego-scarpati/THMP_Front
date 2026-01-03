@@ -221,9 +221,8 @@ export type SkillsResponse = ApiResponse<Skill[]>;
 export interface Inclusion {
   id: number;
   title: string;
-  active?: boolean;
+  Users: { id: string; UserInclusion: { active: boolean; id: number } }[];
   // Back-compat (older backend responses returned a join table payload)
-  Users?: { id: string; UserInclusion: { active: boolean; id: number } }[];
 }
 
 export interface CreateInclusionsRequest {
@@ -238,9 +237,8 @@ export type InclusionsResponse = ApiResponse<Inclusion[]>;
 export interface Exclusion {
   id: number;
   title: string;
-  active?: boolean;
+  Users: { id: string; UserExclusion: { active: boolean; id: number } }[];
   // Back-compat (older backend responses returned a join table payload)
-  Users?: { id: string; UserExclusion: { active: boolean; id: number } }[];
 }
 
 export interface CreateExclusionsRequest {
@@ -571,6 +569,6 @@ export interface SetActiveRequest {
 
 // Filters: explicit per-user inclusion/exclusion activation
 export interface SetUserFilterActiveRequest {
-  id: string;
+  id: number;
   active: boolean;
 }
