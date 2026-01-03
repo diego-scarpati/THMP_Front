@@ -4,6 +4,7 @@ import { PaginationParams } from '@/types/api'
 export const queryKeys = {
   auth: {
     token: () => ['auth', 'token'] as const,
+    validity: (token: string) => ['auth', 'tokenValidity', token] as const,
   },
   // Jobs
   jobs: {

@@ -1,15 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCreateUser } from '@/hooks/use-users';
 import FilterOption from '@/components/jobs/filter-option';
 import { cn } from '@/lib/utils';
+import { useAccessToken, useTokenValidity } from '@/hooks';
+import { isAuthError, setStoredAccessToken } from '@/services/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/query-keys';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const createUserMutation = useCreateUser();
+  const accessToken = useAccessToken();
+  const tokenValidity = useTokenValidity();
   const [formData, setFormData] = useState({
     name: '',
     last_name: '',
@@ -18,6 +25,39 @@ export default function RegisterPage() {
     confirmPassword: '',
   });
   const [error, setError] = useState('');
+
+  const hasStoredToken = !!accessToken.data;
+  const isTokenInvalid = useMemo(() => {
+    if (!hasStoredToken) return false;
+    if (!tokenValidity.isError) return false;
+    return isAuthError(tokenValidity.error);
+  }, [hasStoredToken, tokenValidity.isError, tokenValidity.error]);
+
+  useEffect(() => {
+    if (!hasStoredToken) return;
+
+    if (tokenValidity.isSuccess && tokenValidity.data?.valid) {
+      router.replace('/jobs');
+      return;
+    }
+
+    if (isTokenInvalid) {
+      // If a token exists but it's invalid and the user is on Register,
+      // clear it and redirect to Login.
+      setStoredAccessToken(null);
+      queryClient.setQueryData<string | null>(queryKeys.auth.token(), null);
+      queryClient.removeQueries({ queryKey: queryKeys.auth.validity(accessToken.data ?? '') });
+      router.replace('/login');
+    }
+  }, [
+    hasStoredToken,
+    tokenValidity.isSuccess,
+    tokenValidity.data,
+    isTokenInvalid,
+    router,
+    queryClient,
+    accessToken.data,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

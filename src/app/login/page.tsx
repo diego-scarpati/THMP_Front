@@ -1,26 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLoginUser } from "@/hooks/use-users";
 import FilterOption from "@/components/jobs/filter-option";
 import { cn } from "@/lib/utils";
+import { useAccessToken, useTokenValidity } from "@/hooks";
+import { isAuthError, setStoredAccessToken } from "@/services/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function LoginPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const loginMutation = useLoginUser();
+  const accessToken = useAccessToken();
+  const tokenValidity = useTokenValidity();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(""); // Clear error on input change
-  };
+  const hasStoredToken = !!accessToken.data;
+  const isTokenInvalid = useMemo(() => {
+    if (!hasStoredToken) return false;
+    if (!tokenValidity.isError) return false;
+    return isAuthError(tokenValidity.error);
+  }, [hasStoredToken, tokenValidity.isError, tokenValidity.error]);
+
+  useEffect(() => {
+    if (!hasStoredToken) return;
+    if (tokenValidity.isSuccess && tokenValidity.data?.valid) {
+      router.replace("/jobs");
+    }
+  }, [hasStoredToken, tokenValidity.isSuccess, tokenValidity.data, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +119,16 @@ export default function LoginPage() {
                 Don't have an account?{" "}
                 <Link
                   href="/register"
+                  onClick={(e) => {
+                    if (!isTokenInvalid) return;
+                    // If the stored token is known to be invalid and the user goes to Register,
+                    // clear it to avoid bouncing/loops.
+                    e.preventDefault();
+                    setStoredAccessToken(null);
+                    queryClient.setQueryData<string | null>(queryKeys.auth.token(), null);
+                    queryClient.removeQueries({ queryKey: queryKeys.auth.validity(accessToken.data ?? "") });
+                    router.push("/register");
+                  }}
                   className="font-semibold text-congress-blue-900 hover:text-congress-blue-500"
                 >
                   Register

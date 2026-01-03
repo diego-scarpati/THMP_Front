@@ -23,6 +23,7 @@ export {
 export {
   useAccessToken,
   useIsAuthenticated,
+  useTokenValidity,
 } from "./use-auth";
 
 // User-related hooks
