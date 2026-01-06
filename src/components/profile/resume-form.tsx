@@ -1272,7 +1272,7 @@ export function ResumeForm() {
                 />
               </div>
               <div className="relative border border-congress-blue-900 rounded-2xl px-3 py-2">
-                <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 bg-background z-10">
+                <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 bg-white z-10">
                   Description
                 </label>
                 <textarea

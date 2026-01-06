@@ -55,7 +55,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="mx-auto max-w-xl mt-8 px-4 py-6">
+    <main className="mx-auto max-w-xl mt-10 px-4 py-6">
       <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
         <div className="flex flex-col items-center justify-center space-y-4 w-full rounded-4xl px-10 py-10 bg-white">
           <div className="flex flex-col items-center justify-center">

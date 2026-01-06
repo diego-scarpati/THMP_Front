@@ -1,32 +1,33 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'outline' | 'ghost'
+  variant?: "primary" | "secondary";
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', ...props }, ref) => {
+  ({ className, variant = "primary", ...props }, ref) => {
     const variants = {
-      default: "bg-congress-blue-500 text-white hover:bg-congress-blue-600",
-      outline: "border border-congress-blue-500 text-congress-blue-500 hover:bg-congress-blue-50",
-      ghost: "hover:bg-congress-blue-50 text-congress-blue-900"
-    }
-    
+      primary:
+        "border-congress-blue-900 bg-congress-blue-900 text-white hover:bg-congress-blue-500 hover:border-congress-blue-500",
+      secondary:
+        "border-congress-blue-900 text-congress-blue-900 hover:bg-congress-blue-50",
+    } satisfies Record<NonNullable<ButtonProps["variant"]>, string>;
+
     return (
       <button
         className={cn(
-          "inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-congress-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-white h-10 py-2 px-4",
           variants[variant],
+          "transition-colors disabled:opacity-60 disabled:cursor-not-allowed rounded-full w-[80%] min-w-[80px] border-2 px-5 py-2 text-xs font-semibold",
           className
         )}
         ref={ref}
         {...props}
       />
-    )
+    );
   }
-)
-Button.displayName = "Button"
+);
+Button.displayName = "Button";
 
-export { Button }
+export { Button };
