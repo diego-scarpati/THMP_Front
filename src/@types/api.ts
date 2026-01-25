@@ -79,6 +79,7 @@ export type UpdateJobRequest = Partial<CreateJobRequest>;
 
 export type JobResponse = ApiResponse<Job>;
 export type JobsResponse = ApiResponse<Job[]>;
+export type SavedForLaterJobsResponse = Job[];
 export interface PaginatedJobsResponse {
   total: number;
   totalPages: number;
@@ -163,6 +164,9 @@ export interface UserJob extends BaseEntity {
   job_id: string;
   approved_by_formula: "yes" | "no" | "pending";
   approved_by_gpt: "yes" | "no" | "pending";
+  seen: boolean;
+  saved_for_later: boolean;
+  applied: boolean;
   cover_letter?: string;
   User?: User;
   Job?: Job;
@@ -520,6 +524,18 @@ export interface SeekAllKeywordsRequest {
   location?: string;
 }
 
+// Indeed search request (matches Seek structure)
+export interface IndeedSearchRequest {
+  keywords: string[];
+  location?: string; // defaults to 'sydney'
+}
+
+// Indeed all keywords search request
+export interface IndeedAllKeywordsRequest {
+  keywordArray?: string[]; // optional subset of stored keywords
+  location?: string;
+}
+
 // Approval operations response
 export interface ApprovalResponse {
   jobsProcessed: number;
@@ -530,8 +546,17 @@ export interface MarkSeenJobsRequest {
   jobIds: string[];
 }
 
+export interface ToggleStateRequest {
+  jobId: string;
+  currentState: boolean;
+}
+
 export interface MarkSeenJobsResponse {
   updatedRows: number;
+}
+
+export interface ToggleStateResponse {
+  updatedRow: number;
 }
 
 // Resumes: add/remove skills
@@ -556,6 +581,11 @@ export interface DeleteInclusionRequest {
   inclusion: string; // query param
 }
 
+// Exclusion DELETE uses query param
+export interface DeleteExclusionRequest {
+  exclusion: string; // query param
+}
+
 // Filter API interfaces
 export interface ToggleActiveRequest {
   includes?: string[];
@@ -569,6 +599,6 @@ export interface SetActiveRequest {
 
 // Filters: explicit per-user inclusion/exclusion activation
 export interface SetUserFilterActiveRequest {
-  id: number;
+  id: string | number;
   active: boolean;
 }

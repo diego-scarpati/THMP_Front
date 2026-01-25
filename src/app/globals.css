@@ -51,6 +51,7 @@ div[data-tooltip]:not([data-tooltip=""])::after {
   transition: opacity 0.3s ease;
   background: var(--background);
   border: solid 1px var(--color-congress-blue-900);
+  color: var(--color-congress-blue-900);
   opacity: 0;
   pointer-events: none;
   white-space: nowrap;
@@ -59,6 +60,7 @@ div[data-tooltip]:not([data-tooltip=""])::after {
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 20px;
+  z-index: 15;
 }
 
 div[data-tooltip]:not([data-tooltip=""]):hover::after {

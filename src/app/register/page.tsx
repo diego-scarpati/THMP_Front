@@ -1,15 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCreateUser } from '@/hooks/use-users';
-import FilterOption from '@/components/jobs/filter-option';
-import { cn } from '@/lib/utils';
-import { useAccessToken, useTokenValidity } from '@/hooks';
-import { isAuthError, setStoredAccessToken } from '@/services/api';
-import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/query-keys';
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCreateUser } from "@/hooks/use-users";
+import FilterOption from "@/components/jobs/filter-option";
+import PasswordEye from "@/components/ui/password-eye";
+import { cn } from "@/lib/utils";
+import { useAccessToken, useTokenValidity } from "@/hooks";
+import { isAuthError, setStoredAccessToken } from "@/services/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,13 +19,15 @@ export default function RegisterPage() {
   const accessToken = useAccessToken();
   const tokenValidity = useTokenValidity();
   const [formData, setFormData] = useState({
-    name: '',
-    last_name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const hasStoredToken = !!accessToken.data;
   const isTokenInvalid = useMemo(() => {
@@ -37,7 +40,7 @@ export default function RegisterPage() {
     if (!hasStoredToken) return;
 
     if (tokenValidity.isSuccess && tokenValidity.data?.valid) {
-      router.replace('/jobs');
+      router.replace("/jobs");
       return;
     }
 
@@ -46,8 +49,10 @@ export default function RegisterPage() {
       // clear it and redirect to Login.
       setStoredAccessToken(null);
       queryClient.setQueryData<string | null>(queryKeys.auth.token(), null);
-      queryClient.removeQueries({ queryKey: queryKeys.auth.validity(accessToken.data ?? '') });
-      router.replace('/login');
+      queryClient.removeQueries({
+        queryKey: queryKeys.auth.validity(accessToken.data ?? ""),
+      });
+      router.replace("/login");
     }
   }, [
     hasStoredToken,
@@ -61,10 +66,10 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
@@ -78,13 +83,13 @@ export default function RegisterPage() {
         },
       });
       // After successful registration, redirect to login
-      router.push('/login');
+      router.push("/login");
     } catch (err: unknown) {
-      console.error('Registration error:', err);
+      console.error("Registration error:", err);
       const message =
-        typeof err === 'object' && err !== null && 'message' in err
+        typeof err === "object" && err !== null && "message" in err
           ? String((err as { message?: unknown }).message)
-          : 'Failed to create account';
+          : "Failed to create account";
       setError(message);
     }
   };
@@ -117,7 +122,7 @@ export default function RegisterPage() {
                 value={formData.name}
                 onChange={(v) => {
                   setFormData((prev) => ({ ...prev, name: v }));
-                  setError('');
+                  setError("");
                 }}
                 placeholder="John"
                 className="max-w-none w-[500px]"
@@ -129,7 +134,7 @@ export default function RegisterPage() {
                 value={formData.last_name}
                 onChange={(v) => {
                   setFormData((prev) => ({ ...prev, last_name: v }));
-                  setError('');
+                  setError("");
                 }}
                 placeholder="Doe"
                 className="max-w-none w-[500px]"
@@ -142,7 +147,7 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={(v) => {
                   setFormData((prev) => ({ ...prev, email: v }));
-                  setError('');
+                  setError("");
                 }}
                 placeholder="you@example.com"
                 className="max-w-none w-[500px]"
@@ -151,27 +156,32 @@ export default function RegisterPage() {
 
               <FilterOption
                 title="Password"
-                type="password"
+                type={"password"}
                 value={formData.password}
                 onChange={(v) => {
                   setFormData((prev) => ({ ...prev, password: v }));
-                  setError('');
+                  setError("");
                 }}
                 placeholder="••••••••"
                 className="max-w-none w-[500px]"
                 labelBackground="bg-white"
+                isVisible={showPassword}
+                onClick={() => setShowPassword((prev) => !prev)}
               />
+
               <FilterOption
                 title="Confirm Password"
-                type="password"
+                type={"password"}
                 value={formData.confirmPassword}
                 onChange={(v) => {
                   setFormData((prev) => ({ ...prev, confirmPassword: v }));
-                  setError('');
+                  setError("");
                 }}
                 placeholder="••••••••"
                 className="max-w-none w-[500px]"
                 labelBackground="bg-white"
+                isVisible={showConfirmPassword}
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
               />
             </div>
 
@@ -180,17 +190,18 @@ export default function RegisterPage() {
                 type="submit"
                 disabled={createUserMutation.isPending}
                 className={cn(
-                  'rounded-full w-[80%] border border-congress-blue-900 bg-congress-blue-900 px-5 py-2 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500',
-                  createUserMutation.isPending && 'opacity-60 cursor-not-allowed'
+                  "rounded-full w-[80%] border border-congress-blue-900 bg-congress-blue-900 px-5 py-2 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500",
+                  createUserMutation.isPending &&
+                    "opacity-60 cursor-not-allowed"
                 )}
               >
                 {createUserMutation.isPending
-                  ? 'Creating account...'
-                  : 'Create account'}
+                  ? "Creating account..."
+                  : "Create account"}
               </button>
 
               <div className="text-sm text-congress-blue-900/70">
-                Already have an account?{' '}
+                Already have an account?{" "}
                 <Link
                   href="/login"
                   className="font-semibold text-congress-blue-900 hover:text-congress-blue-500"

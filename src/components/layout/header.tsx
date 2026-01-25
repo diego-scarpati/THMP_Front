@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-users";
 import { useLogoutUser } from "@/hooks";
 import { Button } from "@/components/ui/button";
-import Logo from "@/icons/logo.svg";
+// import Logo from "@/icons/logo.svg";
+import Brand from "@/icons/brand.svg";
 
 export function Header() {
   const router = useRouter();
@@ -17,36 +18,24 @@ export function Header() {
       <div className="flex h-[4rem] items-center justify-between bg-background w-full rounded-b-xl rounded-t-md px-6">
         {/* Left Section: Home Button */}
         <div className="flex items-center w-[20%]">
-          {/* <Link
-            href="/"
-            className="text-xl font-bold text-congress-blue-900 hover:text-congress-blue-700 transition-colors"
-          >
-            Home
-          </Link> */}
-          <Link href="/">
-            <Logo className="h-12 bg-background" />
+          <Link href="/jobs">
+            <Brand className="h-12 bg-background" />
           </Link>
         </div>
 
         {/* Middle Section: Navigation Bar */}
         <nav className="flex items-center justify-center gap-8 w-[50%]">
-          <Link
+          {user && <Link
             href="/jobs"
-            className="text-congress-blue-900 hover:text-congress-blue-600 font-medium transition-colors"
+            className="text-congress-blue-900 hover:text-congress-blue-600 font-semibold text-xl transition-colors"
           >
-            Jobs
-          </Link>
+            JOBS
+          </Link>}
           {/* Add more navigation links here as needed */}
         </nav>
 
         {/* Right Section: Login/Register or Profile */}
         <div className="flex items-center justify-end w-[20%] gap-4">
-          {/* <Link 
-            href="/profile"
-            className="px-6 py-2 bg-congress-blue-500 text-white rounded-full hover:bg-congress-blue-600 transition-colors font-medium"
-          >
-            Profile
-          </Link> */}
           {isLoading ? (
             // Loading state placeholder
             <div className="h-10 w-20 bg-gray-200 animate-pulse rounded-md" />

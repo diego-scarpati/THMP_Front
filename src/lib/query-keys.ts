@@ -18,8 +18,10 @@ export const queryKeys = {
       [...queryKeys.jobs.all, 'byAcceptance', formulaAcceptance, gptAcceptance] as const,
     applied: () => [...queryKeys.jobs.all, 'applied'] as const,
     rejected: () => [...queryKeys.jobs.all, 'rejected'] as const,
+    savedForLater: () => [...queryKeys.jobs.all, 'savedForLater'] as const,
     approved: () => [...queryKeys.jobs.all, 'approved'] as const,
     seekDescription: (url: string) => [...queryKeys.jobs.all, 'seekDescription', url] as const,
+    indeedDescription: (jobId: string) => [...queryKeys.jobs.all, 'indeedDescription', jobId] as const,
   },
 
   // Job Descriptions
@@ -105,8 +107,12 @@ export const mutationKeys = {
     updateUserJobsApprovalByFormula: ['jobs', 'updateUserJobsApprovalByFormula'] as const,
     seekSearch: ['jobs', 'seekSearch'] as const,
     seekAllKeywords: ['jobs', 'seekAllKeywords'] as const,
+    indeedSearch: ['jobs', 'indeedSearch'] as const,
+    indeedAllKeywords: ['jobs', 'indeedAllKeywords'] as const,
     approveByLLM: ['jobs', 'approveByLLM'] as const,
     markSeen: ['jobs', 'markSeen'] as const,
+    toggleSavedForLater: ['jobs', 'toggleSavedForLater'] as const,
+    toggleApplied: ['jobs', 'toggleApplied'] as const,
   },
   jobDescriptions: {
     create: ['jobDescriptions', 'create'] as const,

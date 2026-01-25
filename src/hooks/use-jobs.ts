@@ -4,13 +4,12 @@ import { jobApi } from "@/services/endpoints";
 import { requireStoredAccessToken } from "@/services/api";
 import { useAccessToken } from "./use-auth";
 import type {
-  Job,
   MarkSeenJobsRequest,
   SearchAndCreateJobsRequest,
   JobQueryParams,
   SearchAndCreateJobsMultipleKeywordsRequest,
+  ToggleStateRequest,
 } from "@/types/api";
-import type { PaginatedResponse, ApiResponse } from "@/types/api";
 
 // Query hooks for jobs
 export const useJobs = (params?: JobQueryParams) => {
@@ -77,6 +76,15 @@ export const useRejectedJobs = () => {
   return useQuery({
     queryKey: queryKeys.jobs.rejected(),
     queryFn: () => jobApi.getAllRejected(),
+    enabled: !!token,
+  });
+};
+
+export const useSavedForLaterJobs = () => {
+  const { data: token } = useAccessToken();
+  return useQuery({
+    queryKey: queryKeys.jobs.savedForLater(),
+    queryFn: () => jobApi.getAllSavedForLater(),
     enabled: !!token,
   });
 };
@@ -165,6 +173,34 @@ export const useUpdateApprovedByDate = () => {
 //   })
 // }
 
+export const useToggleSavedForLater = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.toggleSavedForLater,
+    mutationFn: (data: ToggleStateRequest) =>
+      (requireStoredAccessToken(), jobApi.toggleSavedForLater(data)),
+    onSuccess: () => {
+      // Invalidate all job lists to refresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+    },
+  });
+};
+
+export const useToggleApplied = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.toggleApplied,
+    mutationFn: (data: ToggleStateRequest) =>
+      (requireStoredAccessToken(), jobApi.toggleApplied(data)),
+    onSuccess: () => {
+      // Invalidate all job lists to refresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+    },
+  });
+};
+
 // ===== NEW HOOKS FROM API REFERENCE =====
 
 export const useUpdateUserJobsApprovalByFormula = () => {
@@ -233,3 +269,40 @@ export const useMarkJobsSeen = () => {
     },
   });
 };
+
+// ===== INDEED HOOKS =====
+
+export const useIndeedDescription = (jobId: string) => {
+  return useQuery({
+    queryKey: queryKeys.jobs.indeedDescription(jobId),
+    queryFn: () => jobApi.getIndeedDescription(jobId),
+    enabled: !!jobId,
+  });
+};
+
+export const useIndeedSearch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.indeedSearch,
+    mutationFn: (data: { keywords: string[]; location?: string }) =>
+      (requireStoredAccessToken(), jobApi.indeedSearch(data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+    },
+  });
+};
+
+export const useIndeedAllKeywords = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.indeedAllKeywords,
+    mutationFn: (data?: { keywordArray?: string[]; location?: string }) =>
+      (requireStoredAccessToken(), jobApi.indeedAllKeywords(data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+    },
+  });
+};
+

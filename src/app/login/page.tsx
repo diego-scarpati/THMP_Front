@@ -22,6 +22,8 @@ export default function LoginPage() {
     password: "",
   });
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  console.log("🚀 ~ LoginPage ~ showPassword:", showPassword)
 
   const hasStoredToken = !!accessToken.data;
   const isTokenInvalid = useMemo(() => {
@@ -81,7 +83,7 @@ export default function LoginPage() {
                 type="text"
                 value={formData.email}
                 onChange={(v) => {
-                  setFormData((prev) => ({ ...prev, email: v }));
+                  setFormData((prev) => ({ ...prev, email: v.trim() }));
                   setError("");
                 }}
                 placeholder="you@example.com"
@@ -91,7 +93,7 @@ export default function LoginPage() {
 
               <FilterOption
                 title="Password"
-                type="password"
+                type={"password"}
                 value={formData.password}
                 onChange={(v) => {
                   setFormData((prev) => ({ ...prev, password: v }));
@@ -100,6 +102,8 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 className="max-w-none w-[500px]"
                 labelBackground="bg-white"
+                isVisible={showPassword}
+                onClick={() => setShowPassword((prev) => !prev)}
               />
             </div>
 
@@ -125,8 +129,13 @@ export default function LoginPage() {
                     // clear it to avoid bouncing/loops.
                     e.preventDefault();
                     setStoredAccessToken(null);
-                    queryClient.setQueryData<string | null>(queryKeys.auth.token(), null);
-                    queryClient.removeQueries({ queryKey: queryKeys.auth.validity(accessToken.data ?? "") });
+                    queryClient.setQueryData<string | null>(
+                      queryKeys.auth.token(),
+                      null
+                    );
+                    queryClient.removeQueries({
+                      queryKey: queryKeys.auth.validity(accessToken.data ?? ""),
+                    });
                     router.push("/register");
                   }}
                   className="font-semibold text-congress-blue-900 hover:text-congress-blue-500"

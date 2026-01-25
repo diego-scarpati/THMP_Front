@@ -20,6 +20,7 @@ interface FilterState {
   dateTo: string;
   approvedByAI: string;
   postedBy: string;
+  seen: string;
 }
 
 interface FilterListProps {
@@ -40,6 +41,7 @@ const FilterList = ({
     dateTo: "",
     approvedByAI: "",
     postedBy: "",
+    seen: "",
   });
   const [keywordInput, setKeywordInput] = useState<string>(""); // Separate state for keyword input
 
@@ -103,6 +105,16 @@ const FilterList = ({
         { label: "Seek", value: "seek" },
       ],
     },
+    {
+      key: "seen",
+      title: "Seen Status",
+      type: "select",
+      options: [
+        { label: "All", value: "" },
+        { label: "Seen", value: "seen" },
+        { label: "Unseen", value: "unseen" },
+      ],
+    },
   ];
 
   const handleToggleExpanded = () => {
@@ -133,6 +145,7 @@ const FilterList = ({
       dateTo: "",
       approvedByAI: "",
       postedBy: "",
+      seen: "",
     };
 
     setFilters(clearedFilters);

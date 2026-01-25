@@ -1,4 +1,8 @@
-import { useSearchAndCreateWithAllKeywords, useSeekAllKeywords } from "@/hooks";
+import {
+  useSearchAndCreateWithAllKeywords,
+  useSeekAllKeywords,
+  useIndeedAllKeywords,
+} from "@/hooks";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import KeywordsList from "../keywords/keywords-list";
@@ -11,16 +15,21 @@ const SearchBar = () => {
   const [searchBarKeyword, setSearchBarKeyword] = useState<string>("");
   const [typedKeywords, setTypedKeywords] = useState<string[]>([]);
   const [selectedRadioOption, setSelectedRadioOption] = useState<
-    "LinkedIn" | "Seek" | "Both"
+    "LinkedIn" | "Seek" | "All"
   >("LinkedIn");
+  // const [selectedRadioOption, setSelectedRadioOption] = useState<
+  //   "LinkedIn" | "Seek" | "Indeed" | "All"
+  // >("LinkedIn");
   const [selectedLocation, setSelectedLocation] = useState<
     "sydney" | "melbourne" | "oceania" | "APAC"
   >("sydney");
   const searchAndCreateJobs = useSearchAndCreateWithAllKeywords();
   const seekAllKeywords = useSeekAllKeywords();
+  const indeedAllKeywords = useIndeedAllKeywords();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const radioOptions = ["LinkedIn", "Seek", "Both"];
+  const radioOptions = ["LinkedIn", "Seek", "All"];
+  // const radioOptions = ["LinkedIn", "Seek", "Indeed", "All"];
 
   const locationOptions = ["sydney", "melbourne", "oceania", "APAC"];
 
@@ -56,20 +65,23 @@ const SearchBar = () => {
       const newJobs = await searchAndCreateJobs.mutateAsync({
         keywords,
       });
-      // console.log("🚀 ~ handleSearchNewJobs ~ LinkedIn jobs:", newJobs);
     } else if (selectedRadioOption === "Seek") {
       const seekJobs = await seekAllKeywords.mutateAsync({
         keywordArray: keywords,
       });
-      // console.log("🚀 ~ handleSearchNewJobs ~ Seek jobs:", seekJobs);
-    } else if (selectedRadioOption === "Both") {
+      // } else if (selectedRadioOption === "Indeed") {
+      //   const indeedJobs = await indeedAllKeywords.mutateAsync({
+      //     keywordArray: keywords,
+      //   });
+    } else if (selectedRadioOption === "All") {
       try {
         const [linkedInJobs, seekJobs] = await Promise.all([
           searchAndCreateJobs.mutateAsync({ keywords }),
           seekAllKeywords.mutateAsync({ keywordArray: keywords }),
+          // indeedAllKeywords.mutateAsync({
+          //   keywordArray: keywords,
+          // }),
         ]);
-        // console.log("🚀 ~ handleSearchNewJobs ~ LinkedIn jobs:", linkedInJobs);
-        // console.log("🚀 ~ handleSearchNewJobs ~ Seek jobs:", seekJobs);
       } catch (error) {
         console.error(
           "❌ ~ handleSearchNewJobs ~ Error searching both:",
@@ -144,8 +156,8 @@ const SearchBar = () => {
                     <Add className="h-5 w-5" />
                     {/* <img src="/icons/add.svg" alt="Add" className="h-5 w-5" /> */}
                   </button>
-                  <div className="flex items-center justify-center mr-2 rounded-full bg-congress-blue-300 border border-congress-blue-300 py-1.5 px-2 max-w-[4.25rem] h-8">
-                    <p className="text-congress-blue-900 text-sm/[1rem] font-semibold px-2 h-5 leading-[20px]">
+                  <div className="flex items-center justify-center mr-2 rounded-full bg-congress-blue-300 border border-congress-blue-300 py-1.5 px-2 min-w-[3.25rem] max-w-[4.25rem] h-8">
+                    <p className="text-congress-blue-900 text-sm/[1rem] font-semibold h-5 leading-[20px]">
                       #: <span>{typedKeywords.length}</span>
                     </p>
                   </div>
@@ -172,7 +184,8 @@ const SearchBar = () => {
                     )}
                   >
                     {searchAndCreateJobs.isPending ||
-                    seekAllKeywords.isPending ? (
+                    seekAllKeywords.isPending ||
+                    indeedAllKeywords.isPending ? (
                       <ProgressActivity className="h-5 w-5 text-congress-blue-900 animate-spin" />
                     ) : (
                       <MagnifyingGlass className="h-5 w-5 text-congress-blue-900 group-hover:text-congress-blue-700 transition-colors duration-200" />
@@ -207,8 +220,11 @@ const SearchBar = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedRadioOption(
-                          option as "LinkedIn" | "Seek" | "Both"
+                          option as "LinkedIn" | "Seek" | "All"
                         );
+                        // setSelectedRadioOption(
+                        //   option as "LinkedIn" | "Seek" | "Indeed" | "All"
+                        // );
                       }}
                       className={cn(
                         "h-5 w-5 rounded-full border transition-transform duration-200 cursor-pointer bg-congress-blue-300 rotate-45 justify-center items-center flex",

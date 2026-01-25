@@ -1,6 +1,7 @@
-import React from 'react'
+import React from "react";
 import { cn } from "@/lib/utils";
 import SelectOptions from "./select-options";
+import PasswordEye from "../ui/password-eye";
 
 interface FilterOptionProps {
   title: string;
@@ -13,24 +14,33 @@ interface FilterOptionProps {
   className?: string; // For custom styling
   labelBackground?: string; // For label background color
   disabled?: boolean;
+  isVisible?: boolean; // For password visibility
+  onClick?: () => void;
 }
 
-const FilterOption = ({ 
-  title, 
-  type, 
-  value, 
-  onChange, 
-  options, 
+const FilterOption = ({
+  title,
+  type,
+  value,
+  onChange,
+  options,
   placeholder,
   id,
   className,
   labelBackground,
-  disabled
+  disabled,
+  isVisible,
+  onClick,
 }: FilterOptionProps) => {
-  const inputId = id || `filter-${title.toLowerCase().replace(/\s+/g, '-')}`;
+  const inputId = id || `filter-${title.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
-    <div className={cn("min-w-0 relative max-w-[9.375rem] sm:max-w-[12rem] md:max-w-[14rem] lg:max-w-[16rem]", className)}>
+    <div
+      className={cn(
+        "min-w-0 relative max-w-[9.375rem] sm:max-w-[12rem] md:max-w-[14rem] lg:max-w-[16rem]",
+        className
+      )}
+    >
       <div className="relative border border-congress-blue-900 rounded-full px-3 py-1.5">
         <label
           htmlFor={inputId}
@@ -42,9 +52,9 @@ const FilterOption = ({
           {title}
         </label>
 
-        {(type === "text" || type === "password") && (
+        {type === "text" && (
           <input
-            type={type === "password" ? "password" : "text"}
+            type={"text"}
             id={inputId}
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -52,6 +62,42 @@ const FilterOption = ({
             disabled={disabled}
             className="w-full text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
           />
+        )}
+        {type === "password" && (
+          // <div className="flex items-center justify-between gap-2">
+          //   <input
+          //     type={isVisible ? "text" : "password"}
+          //     id={inputId}
+          //     value={value}
+          //     onChange={(e) => onChange(e.target.value)}
+          //     placeholder={placeholder}
+          //     disabled={disabled}
+          //     className={cn("flex-1 text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed", isVisible ? "w-[80%]" : "w-full")}
+          //   />
+          //   <div className="">
+          //   <PasswordEye
+          //     isVisible={isVisible ? true : false}
+          //     onClick={onClick ? onClick : () => {}}
+          //   />
+          //   </div>
+          // </div>
+          <div className="flex items-center justify-between gap-2">
+            <input
+              type={isVisible ? "text" : "password"}
+              id={inputId}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="flex-1 text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
+            />
+            <div onClick={(e) => e.stopPropagation()}>
+              <PasswordEye
+                isVisible={isVisible ? true : false}
+                onClick={onClick ? onClick : () => {}}
+              />
+            </div>
+          </div>
         )}
         {type === "date" && (
           <input
@@ -73,7 +119,7 @@ const FilterOption = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default FilterOption
+export default FilterOption;

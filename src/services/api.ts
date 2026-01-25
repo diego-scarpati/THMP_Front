@@ -113,7 +113,6 @@ class ApiService {
 
   private buildHeaders(options?: RequestInit, isFormData?: boolean): HeadersInit {
     const accessToken = getStoredAccessToken()
-    console.log("🚀 ~ ApiService ~ buildHeaders ~ accessToken:", accessToken)
     const incoming = options?.headers ?? {}
 
     const base: HeadersInit = {

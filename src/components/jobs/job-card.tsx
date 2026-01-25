@@ -1,9 +1,11 @@
 import { Job } from "@/types/api";
-import React from "react";
+import React, { use } from "react";
 import { cn } from "@/lib/utils";
 import { normalizeDates } from "@/utils/normalizeDates";
-import AiApprovedPill from "./ai-approved-pill";
+// import AiApprovedPill from "./ai-approved-pill";
 import AiApprovedViewJob from "./ai-approved-view-job";
+import { useToggleSavedForLater } from "@/hooks";
+import SeenPill from "../ui/seen-pill";
 
 interface JobCardProps {
   job: Job;
@@ -20,6 +22,18 @@ const JobCard = ({
   handleDescriptionChange,
   highlightKeywords,
 }: JobCardProps) => {
+  const toggleSaveForLater = useToggleSavedForLater();
+
+  const saveForLaterHandler = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!job.id || job?.Users?.[0]?.UserJob?.saved_for_later === undefined)
+      return;
+    toggleSaveForLater.mutate({
+      jobId: job.id,
+      currentState: job.Users[0].UserJob.saved_for_later,
+    });
+  };
+
   return (
     <div
       key={job.id}
@@ -28,11 +42,36 @@ const JobCard = ({
           ? "bg-congress-blue-300 border-congress-blue-300"
           : "bg-congress-blue-200 border-congress-blue-200",
         // switch to grid with left column (fluid) and right column (auto)
-        "border rounded-2xl p-3 lg:p-4 hover:shadow-md hover:transition-shadow text-congress-blue-900 transition-colors duration-300",
-        "grid grid-cols-[1fr_auto] gap-4 items-start"
+        "border-2 rounded-2xl p-3 lg:p-4 hover:shadow-md hover:transition-shadow text-congress-blue-900 transition-colors duration-300",
+        "grid grid-cols-[1fr_auto] gap-4 items-start",
+        "relative",
+        job?.Users?.[0]?.UserJob?.seen ? "border-congress-blue-900" : ""
       )}
       onClick={() => handleDescriptionChange(index)}
     >
+      {/* Bookmark icon - positioned absolute top right */}
+      <div
+        onClick={saveForLaterHandler}
+        className={cn("cursor-pointer absolute -top-[2px] right-4 mx-1 overflow-y-visible", index === jobDescriptionIndex ? "bg-congress-blue-300" : "bg-congress-blue-200")}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className="w-6 h-6 cursor-pointer text-congress-blue-900 hover:text-congress-blue-700 transition-colors z-10 relative -top-[4px]"
+          fill={
+            job?.Users?.[0]?.UserJob?.saved_for_later ? "currentColor" : index === jobDescriptionIndex ? "#94bee5" : "#c6dbf1"
+          }
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+        </svg>
+      </div>
+
+      {job?.Users?.[0]?.UserJob?.seen && <SeenPill className={cn("absolute -bottom-[2.5px] right-5 text-base/[1rem] z-10 px-1", index === jobDescriptionIndex ? "bg-congress-blue-300" : "bg-congress-blue-200")}/>}
+
       {/* LEFT: title (top) and meta (bottom) stacked vertically and allowed to shrink */}
       <div className="flex flex-col justify-between min-w-0">
         <div id="job-title" className="mb-2">
@@ -50,7 +89,9 @@ const JobCard = ({
               <>
                 <span className="hidden lg:inline">•</span>
                 <span>
-                  {highlightKeywords ? highlightKeywords(job.location) : job.location}
+                  {highlightKeywords
+                    ? highlightKeywords(job.location)
+                    : job.location}
                 </span>
               </>
             )}
@@ -73,8 +114,8 @@ const JobCard = ({
         </div>
       </div>
 
-      {/* RIGHT: AiApprovedViewJob - vertically centered, spaced from left */}
-      <div className="flex items-center justify-end">
+      {/* RIGHT: AiApprovedViewJob */}
+      <div className="flex items-center justify-end mr-4">
         <AiApprovedViewJob
           approvedByAI={job?.Users?.[0]?.UserJob?.approved_by_gpt}
           currentIndex={index === jobDescriptionIndex}

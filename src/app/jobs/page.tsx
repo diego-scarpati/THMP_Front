@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useCallback, useRef } from "react";
+import { Suspense, Activity, useCallback, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import JobsList from "@/components/jobs/jobs-list";
 import SearchBar from "@/components/searchBar/search-bar";
+import { useJobs, useSavedForLaterJobs } from "@/hooks";
 
 function JobsPageContent() {
   const searchParams = useSearchParams();
@@ -33,11 +34,38 @@ function JobsPageContent() {
 
   // Remove undefined values
   const cleanParams = Object.fromEntries(
-    Object.entries(queryParams).filter(([_, value]) => value !== undefined)
+    Object.entries(queryParams).filter(([_, value]) => value !== undefined),
   );
 
+  const { data, isLoading, error, isError, refetch, isFetching } =
+    useJobs(cleanParams);
+
+  const handleRefetchCallback = useCallback((refetchFn: () => void) => {
+    refetchJobsRef.current = refetchFn;
+  }, []);
+
+  return (
+    <div className="w-full flex flex-col px-8 py-8 bg-background">
+      <SearchBar />
+      <JobsList
+        data={data}
+        isLoading={isLoading}
+        error={error}
+        isError={isError}
+        refetch={refetch}
+        isFetching={isFetching}
+        onRefetch={handleRefetchCallback}
+      />
+    </div>
+  );
+}
+
+function SavedJobsPageContent() {
+  const refetchJobsRef = useRef<(() => void) | null>(null);
+  const { data: savedJobs, refetch, isLoading, error, isError, isFetching } = useSavedForLaterJobs();
+
   const handleSearch = useCallback(() => {
-    // Trigger refetch of jobs with current parameters
+    // Trigger refetch of saved jobs
     if (refetchJobsRef.current) {
       refetchJobsRef.current();
     }
@@ -47,10 +75,79 @@ function JobsPageContent() {
     refetchJobsRef.current = refetchFn;
   }, []);
 
+  // Convert the saved jobs data to match the expected format for JobsList
+  const jobsData = savedJobs
+    ? {
+        data: savedJobs,
+        pagination: {
+          page: 1,
+          limit: savedJobs.length,
+          total: savedJobs.length,
+        },
+      }
+    : undefined;
+
   return (
     <div className="w-full flex flex-col px-8 py-8 bg-background">
-      <SearchBar />
-      <JobsList params={cleanParams} onRefetch={handleRefetchCallback} />
+      {/* <SearchBar /> */}
+      <JobsList
+        data={
+          jobsData?.data
+            ? {
+                jobs: jobsData.data,
+                total: jobsData.pagination.total,
+                totalPages: 1,
+              }
+            : undefined
+        }
+        isLoading={isLoading}
+        error={error}
+        isError={isError}
+        refetch={refetch}
+        isFetching={isFetching}
+        onRefetch={handleRefetchCallback}
+        className="max-h-[60dvh] h-[60dvh]"
+      />
+    </div>
+  );
+}
+
+type ActivityTab = "all" | "saved";
+
+function JobsPageMain() {
+  const [activeTab, setActiveTab] = useState<ActivityTab>("all");
+
+  return (
+    <div className="w-full flex flex-col px-8 py-8 bg-background">
+      <div className="relative flex justify-center items-center gap-4 w-[80%] mx-auto">
+        <div
+          className={`absolute w-[9rem] h-[2.5rem] bg-congress-blue-900 rounded-full transition-all duration-300 ${
+            activeTab === "all" ? "left-[calc(50%-9.5rem)]" : "left-[calc(50%+0.5rem)]"
+          }`}
+        />
+        <h3
+          onClick={() => setActiveTab("all")}
+          className={`relative z-10 w-[9rem] h-[2.5rem] flex items-center justify-center text-base/[1rem] font-semibold cursor-pointer transition-colors duration-300 ${
+            activeTab === "all" ? "text-background" : ""
+          }`}
+        >
+          Search Jobs
+        </h3>
+        <h3
+          onClick={() => setActiveTab("saved")}
+          className={`relative z-10 w-[9rem] h-[2.5rem] flex items-center justify-center text-base/[1rem] font-semibold cursor-pointer transition-colors duration-300 ${
+            activeTab === "saved" ? "text-background" : ""
+          }`}
+        >
+          Saved Jobs
+        </h3>
+      </div>
+      <Activity mode={activeTab === "all" ? "visible" : "hidden"}>
+        {activeTab === "all" && <JobsPageContent />}
+      </Activity>
+      <Activity mode={activeTab === "saved" ? "visible" : "hidden"}>
+        {activeTab === "saved" && <SavedJobsPageContent />}
+      </Activity>
     </div>
   );
 }
@@ -67,7 +164,7 @@ export default function JobsPage() {
         </div>
       }
     >
-      <JobsPageContent />
+      <JobsPageMain />
     </Suspense>
   );
 }

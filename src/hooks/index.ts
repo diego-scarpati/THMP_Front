@@ -7,6 +7,7 @@ export {
   useJobsByAcceptance,
   useAppliedJobs,
   useRejectedJobs,
+  useSavedForLaterJobs,
   useSearchAndCreateJobs,
   useSearchAndCreateWithAllKeywords,
   useApproveJobByFormula,
@@ -17,6 +18,11 @@ export {
   useSeekSearch,
   useApproveJobByLLM,
   useMarkJobsSeen,
+  useIndeedDescription,
+  useIndeedAllKeywords,
+  useIndeedSearch,
+  useToggleApplied,
+  useToggleSavedForLater,
 } from "./use-jobs";
 
 // Auth hooks
@@ -55,11 +61,7 @@ export {
 } from "./use-resumes";
 
 // Skill hooks
-export {
-  useSkills,
-  useCreateSkill,
-  useDeleteSkill,
-} from "./use-skills";
+export { useSkills, useCreateSkill, useDeleteSkill } from "./use-skills";
 
 // Filter hooks
 export {
