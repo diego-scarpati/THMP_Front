@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { keywordApi } from '@/services/endpoints'
-import type { CreateKeywordRequest } from '@/types/api'
+import type { CreateKeywordRequest } from '@/@types/api'
 import { useAccessToken } from './use-auth'
 
 // Query hooks for keywords

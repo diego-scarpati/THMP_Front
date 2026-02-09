@@ -40,6 +40,11 @@ body {
   /* color: var(--foreground); */
   color: var(--text-color);
   font-family: Poppins, Arial, Helvetica, sans-serif;
+  ::selection {
+    background-color: #fef08a;
+    padding-inline: 2px;
+    border-radius: 4px;
+  }
 }
 
 div[data-tooltip]:not([data-tooltip=""])::after {
@@ -47,24 +52,33 @@ div[data-tooltip]:not([data-tooltip=""])::after {
   position: absolute;
   top: calc(100% + 6px);
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(max(-100% + 8px, min(-50%, -8px)));
   transition: opacity 0.3s ease;
   background: var(--background);
   border: solid 1px var(--color-congress-blue-900);
   color: var(--color-congress-blue-900);
   opacity: 0;
+  font-weight: 600;
   pointer-events: none;
   white-space: nowrap;
-  /* overflow: hidden;
-  text-overflow: ellipsis; */
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 20px;
   z-index: 15;
+  /* Prevent viewport overflow by constraining width and position */
+  max-width: calc(100vw - 16px);
+  width: max-content;
 }
 
 div[data-tooltip]:not([data-tooltip=""]):hover::after {
   opacity: 1;
+}
+
+/* Tooltip positioned to the left (anchored to right edge) */
+div[data-tooltip-position="left"][data-tooltip]:not([data-tooltip=""])::after {
+  left: auto;
+  right: 0;
+  transform: translateX(0);
 }
 
 @utility scrollbar-hide {

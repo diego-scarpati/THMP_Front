@@ -37,7 +37,7 @@ const FilterOption = ({
   return (
     <div
       className={cn(
-        "min-w-0 relative max-w-[9.375rem] sm:max-w-[12rem] md:max-w-[14rem] lg:max-w-[16rem]",
+        "min-w-0 relative xs:max-w-[9.375rem] sm:max-w-[14rem] md:max-w-[14rem] lg:max-w-[16rem] xl:max-w-[20rem]",
         className
       )}
     >

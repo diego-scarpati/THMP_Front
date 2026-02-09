@@ -1,6 +1,6 @@
 "use client";
 
-import type { Job } from "@/types/api";
+import type { Job } from "@/@types/api";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import JobCard from "./job-card";
 import FilterList from "./filter-list";
@@ -234,15 +234,7 @@ export default function JobsList({
     setJobDescriptionIndex(index);
 
     // Scroll to top of the description panel
-    console.log(
-      "🚀 ~ handleDescriptionChange ~ descriptionPanelRef:",
-      descriptionPanelRef
-    );
     if (descriptionPanelRef.current) {
-      console.log(
-        "🚀 ~ handleDescriptionChange ~ descriptionPanelRef.current:",
-        descriptionPanelRef.current
-      );
       descriptionPanelRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -254,14 +246,14 @@ export default function JobsList({
     }
   }, [onRefetch, refetch]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 ">Loading jobs...</span>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center p-8">
+  //       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  //       <span className="ml-2 ">Loading jobs...</span>
+  //     </div>
+  //   );
+  // }
 
   if (isError) {
     return (
@@ -336,8 +328,8 @@ export default function JobsList({
         <FilterList onFiltersChange={handleFiltersChange} totalJobs={data?.total || 0} filteredJobs={filteredJobs.length} />
         <div className={cn("flex lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full", className ? className : "max-h-screen")}>
           {/* LEFT: list - flex-1 so it fills remaining space */}
-          <div className="flex-1 overflow-y-auto pt-[2px] rounded-lg lg:mb-0 scrollbar-hide">
-            <div className="grid gap-3">
+          <div className="flex-1 min-w-0 overflow-y-auto pt-[2px] rounded-lg lg:mb-0 scrollbar-hide">
+            <div className="grid gap-3 w-full">
               {jobs.map((job: Job, index: number) => (
                 <JobCard
                   key={job.id}
@@ -351,16 +343,17 @@ export default function JobsList({
                           highlightKeywords(text, filters.keyword)
                       : undefined
                   }
+                  description={job.JobDescription?.description || ""}
                 />
               ))}
             </div>
           </div>
 
-          {/* Description panel - full width on mobile, 40% on desktop with min/max constraints */}
+          {/* Description panel - hidden on mobile, 40% on desktop with min/max constraints */}
           <div
             ref={descriptionPanelRef}
             onScroll={handleDescriptionScroll}
-            className="not-last:w-full p-4 border border-congress-blue-300 bg-congress-blue-300 rounded-2xl max-h-[40vh] overflow-y-auto scrollbar-hide lg:w-[40%] lg:min-w-[430px] lg:max-w-[640px] lg:max-h-[80dvh]"
+            className="hidden lg:block p-4 border border-congress-blue-300 bg-congress-blue-300 rounded-2xl lg:w-[40%] lg:min-w-[430px] lg:max-w-[640px] lg:max-h-[80dvh] overflow-y-auto scrollbar-hide"
           >
             <div className="mb-4">
               <h3 className="text-lg text-congress-blue-900 text-center font-semibold">

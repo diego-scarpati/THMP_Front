@@ -95,7 +95,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="mx-auto max-w-xl mt-10 px-4 py-6">
+    <main className="mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg max-w-xl mt-10 px-4 py-6">
       <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
         <div className="flex flex-col items-center justify-center space-y-4 w-full rounded-4xl px-10 py-10 bg-white">
           <div className="flex flex-col items-center justify-center">
@@ -125,7 +125,6 @@ export default function RegisterPage() {
                   setError("");
                 }}
                 placeholder="John"
-                className="max-w-none w-[500px]"
                 labelBackground="bg-white"
               />
               <FilterOption
@@ -137,7 +136,6 @@ export default function RegisterPage() {
                   setError("");
                 }}
                 placeholder="Doe"
-                className="max-w-none w-[500px]"
                 labelBackground="bg-white"
               />
 
@@ -150,7 +148,6 @@ export default function RegisterPage() {
                   setError("");
                 }}
                 placeholder="you@example.com"
-                className="max-w-none w-[500px]"
                 labelBackground="bg-white"
               />
 
@@ -163,7 +160,6 @@ export default function RegisterPage() {
                   setError("");
                 }}
                 placeholder="••••••••"
-                className="max-w-none w-[500px]"
                 labelBackground="bg-white"
                 isVisible={showPassword}
                 onClick={() => setShowPassword((prev) => !prev)}
@@ -178,7 +174,6 @@ export default function RegisterPage() {
                   setError("");
                 }}
                 placeholder="••••••••"
-                className="max-w-none w-[500px]"
                 labelBackground="bg-white"
                 isVisible={showConfirmPassword}
                 onClick={() => setShowConfirmPassword((prev) => !prev)}

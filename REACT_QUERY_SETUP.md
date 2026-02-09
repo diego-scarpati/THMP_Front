@@ -120,7 +120,7 @@ queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(userId) })
 
 ### 1. Add Types
 ```tsx
-// src/types/api.ts
+// src/@types/api.ts
 export interface NewEntity extends BaseEntity {
   name: string
   // ... other properties

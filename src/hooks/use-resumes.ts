@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { resumeApi } from '@/services/endpoints'
-import type { CreateResumeRequest, UpdateResumeRequest, ExpandedResume, AddResumeSkillsRequest } from '@/types/api'
+import type { CreateResumeRequest, UpdateResumeRequest, ExpandedResume, AddResumeSkillsRequest } from '@/@types/api'
 import { useAccessToken } from './use-auth'
 import { requireStoredAccessToken } from '@/services/api'
 

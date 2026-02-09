@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { mutationKeys, queryKeys } from "@/lib/query-keys";
 import { filterApi } from "@/services/endpoints";
-import type { ToggleActiveRequest, SetActiveRequest, SetUserFilterActiveRequest } from "@/types/api";
+import type { ToggleActiveRequest, SetActiveRequest, SetUserFilterActiveRequest } from "@/@types/api";
 import { requireStoredAccessToken } from "@/services/api";
 
 export const useToggleFilterActive = () => {

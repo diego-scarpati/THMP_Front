@@ -23,7 +23,7 @@ const KeywordsList = ({
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error loading keywords</div>;
   return (
-    <div className="flex gap-3 my-2 p-1 rounded-lg items-center px-4">
+    <div className="flex flex-wrap gap-3 mb-2 mt-3 p-1 rounded-lg items-center px-4">
       <h4 className="font-semibold text-md text-congress-blue-900 align-middle">
         Used Keywords:
       </h4>

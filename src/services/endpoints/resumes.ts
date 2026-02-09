@@ -1,5 +1,5 @@
 import { apiService } from "../api";
-import * as apiTypes from "@/types/api";
+import * as apiTypes from "@/@types/api";
 
 export const resumeApi = {
   getResume: (): Promise<apiTypes.Resume> => apiService.get("/resumes"),

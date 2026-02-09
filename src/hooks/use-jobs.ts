@@ -9,7 +9,7 @@ import type {
   JobQueryParams,
   SearchAndCreateJobsMultipleKeywordsRequest,
   ToggleStateRequest,
-} from "@/types/api";
+} from "@/@types/api";
 
 // Query hooks for jobs
 export const useJobs = (params?: JobQueryParams) => {

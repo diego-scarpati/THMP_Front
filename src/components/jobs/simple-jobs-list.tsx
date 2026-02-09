@@ -1,7 +1,7 @@
 'use client'
 
 import { useJobs } from '@/hooks'
-import type { Job } from '@/types/api'
+import type { Job } from '@/@types/api'
 
 export default function SimpleJobsList() {
   const { data, isLoading, error, isError } = useJobs()

@@ -15,7 +15,7 @@ import type {
   CreateResumeRequest,
   Resume,
   UpdateResumeRequest,
-} from "@/types/api";
+} from "@/@types/api";
 import { normalizeOptionalISODate } from "@/utils/normalizeDates";
 
 type Mode = "create" | "update";

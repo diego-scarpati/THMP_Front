@@ -108,7 +108,7 @@ const SearchBar = () => {
     <div className="w-full flex flex-col mb-4">
       <div className="flex flex-col justify-center">
         <div className="flex flex-col items-center w-full mx-auto">
-          <div className="flex flex-col items-end mx-auto p-4">
+          <div className="flex flex-col items-end p-4">
             {/* Search Bar */}
             <div
               className="flex justify-between w-full max-w-full sm:w-[600px] md:w-[700px] lg:w-[800px] xl:w-[900px] 2xl:w-[1000px] p-4 bg-congress-blue-900 rounded-[calc(2rem+1rem)] rounded-br-none"

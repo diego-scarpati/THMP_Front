@@ -17,7 +17,7 @@ import {
   useSetUserInclusionActive,
   useSetUserExclusionActive
 } from "@/hooks";
-import type { Exclusion, Inclusion, Skill } from "@/types/api";
+import type { Exclusion, Inclusion, Skill } from "@/@types/api";
 import { cn } from "@/lib/utils";
 import { CollapsibleCard } from "./collapsible-card";
 

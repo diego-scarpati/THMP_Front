@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys, mutationKeys } from "@/lib/query-keys";
 import { skillApi } from "@/services/endpoints";
-import type { Skill, CreateSkillRequest } from "@/types/api";
+import type { Skill, CreateSkillRequest } from "@/@types/api";
 import { useAccessToken } from "./use-auth";
 import { requireStoredAccessToken } from "@/services/api";
 

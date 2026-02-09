@@ -1,5 +1,5 @@
 import { apiService } from "../api";
-import * as apiTypes from "@/types/api";
+import * as apiTypes from "@/@types/api";
 import { buildQueryString } from "./utils";
 
 export const jobApi = {

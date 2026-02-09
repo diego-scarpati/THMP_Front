@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { inclusionApi } from '@/services/endpoints'
-import type { CreateInclusionsRequest } from '@/types/api'
+import type { CreateInclusionsRequest } from '@/@types/api'
 import { useAccessToken } from './use-auth'
 import { requireStoredAccessToken } from '@/services/api'
 

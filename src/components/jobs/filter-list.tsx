@@ -175,14 +175,14 @@ const FilterList = ({
   return (
     <div className="w-full px-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-md font-semibold text-congress-blue-900">
+        <div className="min-w-0">
+          <h3 className="text-md font-semibold text-congress-blue-900  w-[clamp(150px,100%,300px)]">
             Showing {filteredJobs} Jobs out of {totalJobs}
           </h3>
         </div>
         {/* Filter Header */}
         <div
-          className="flex items-center justify-end gap-2 cursor-pointer min-w-[300px]"
+          className="flex items-center justify-end gap-2 cursor-pointer min-w-[100px]"
           onClick={handleToggleExpanded}
         >
           <h3 className="text-md font-semibold text-congress-blue-900">

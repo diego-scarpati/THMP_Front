@@ -1,4 +1,4 @@
-import { PaginationParams } from '@/types/api'
+import { PaginationParams } from '@/@types/api'
 
 // Query key factory for better cache management and invalidation
 export const queryKeys = {

@@ -3,7 +3,7 @@ import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { userApi } from '@/services/endpoints'
 import { setStoredAccessToken, getStoredAccessToken } from '@/services/api'
 import { useAccessToken } from './use-auth'
-import type { User, CreateUserRequest, LoginRequest } from '@/types/api'
+import type { User, CreateUserRequest, LoginRequest } from '@/@types/api'
 
 const CURRENT_USER_STORAGE_KEY = 'thmp.currentUser'
 

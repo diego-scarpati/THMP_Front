@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, mutationKeys } from '@/lib/query-keys'
 import { jobDescriptionApi } from '@/services/endpoints'
-import type { CreateJobDescriptionRequest } from '@/types/api'
-import type { PaginationParams, ApiResponse } from '@/types/api'
+import type { CreateJobDescriptionRequest } from '@/@types/api'
+import type { PaginationParams, ApiResponse } from '@/@types/api'
 
 // Query hooks for job descriptions
 export const useJobDescriptions = () => {
