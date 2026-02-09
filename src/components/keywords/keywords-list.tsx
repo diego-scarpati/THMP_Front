@@ -2,6 +2,7 @@ import { useUserKeywords } from "@/hooks/use-keywords";
 import Skill from "../ui/skill";
 import Add from "@/icons/add.svg";
 import { cn } from "@/lib/utils";
+import KeywordsListSkeleton from "@/components/ui/keywords-list-skeleton";
 
 interface KeywordsListProps {
   onClickFunction?: (keyword: string) => void; // delete handler
@@ -20,7 +21,7 @@ const KeywordsList = ({
   }
   const { data, isLoading, error } = useUserKeywords();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <KeywordsListSkeleton />;
   if (error) return <div>Error loading keywords</div>;
   return (
     <div className="flex flex-wrap gap-3 mb-2 mt-3 p-1 rounded-lg items-center px-4">

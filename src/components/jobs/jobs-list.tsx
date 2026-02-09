@@ -6,6 +6,7 @@ import JobCard from "./job-card";
 import FilterList from "./filter-list";
 import { cn } from "@/lib/utils";
 import { useMarkJobsSeen } from "@/hooks/use-jobs";
+import JobsListSkeleton from "@/components/ui/jobs-list-skeleton";
 
 interface FilterState {
   keyword: string;
@@ -51,6 +52,28 @@ export default function JobsList({
     seen: "",
   });
   const descriptionPanelRef = useRef<HTMLDivElement | null>(null);
+  const retryCountRef = useRef(0);
+
+  // Auto-retry when data comes back empty (up to 3 times)
+  useEffect(() => {
+    if (
+      !isLoading &&
+      !isFetching &&
+      !isError &&
+      (!data?.jobs || data.jobs.length === 0) &&
+      retryCountRef.current < 3
+    ) {
+      const timer = setTimeout(() => {
+        retryCountRef.current += 1;
+        refetch();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+    // Reset retry count when we get data
+    if (data?.jobs && data.jobs.length > 0) {
+      retryCountRef.current = 0;
+    }
+  }, [isLoading, isFetching, isError, data, refetch]);
 
   // Refs for seen jobs tracking - using refs to avoid re-render issues
   const seenJobIdsRef = useRef<string[]>([]);
@@ -246,14 +269,9 @@ export default function JobsList({
     }
   }, [onRefetch, refetch]);
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex items-center justify-center p-8">
-  //       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-  //       <span className="ml-2 ">Loading jobs...</span>
-  //     </div>
-  //   );
-  // }
+  if (isLoading || (!data?.jobs && !isError)) {
+    return <JobsListSkeleton />;
+  }
 
   if (isError) {
     return (
@@ -273,12 +291,20 @@ export default function JobsList({
   }
 
   if (!data?.jobs || data.jobs.length === 0) {
+    // If still retrying, show the skeleton
+    if (retryCountRef.current < 3) {
+      return <JobsListSkeleton />;
+    }
+
     return (
       <div className="text-center p-8 text-congress-blue-900">
         <h3 className="text-lg font-medium">No jobs found</h3>
         <p className="mt-1">Try adjusting your search criteria.</p>
         <button
-          onClick={() => refetch()}
+          onClick={() => {
+            retryCountRef.current = 0;
+            refetch();
+          }}
           className="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-congress-blue-900 bg-background hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           Refresh

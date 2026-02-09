@@ -27,7 +27,7 @@ const AiApprovedViewJob = ({ approvedByAI, url }: AiApprovedPillProps) => {
         "w-full",
       )}
     >
-      <div className="xl:w-full sm:w-full lg:w-1/2">
+      <div className="xl:w-full w-1/2 sm:w-full lg:w-1/2">
         <a
           href={url}
           target="_blank"
@@ -46,7 +46,7 @@ const AiApprovedViewJob = ({ approvedByAI, url }: AiApprovedPillProps) => {
         className={cn(
           "group relative flex flex-row px-[10px] py-[5px] items-center border gap-1.5 rounded-md h-fit text-congress-blue-900",
           "border-congress-blue-900 bg-transparent",
-          "justify-between xl:w-full sm:w-full lg:w-1/2"
+          "justify-between xl:w-full w-1/2 sm:w-full lg:w-1/2"
         )}
         data-tooltip={"AI Approval Status: " + tooltipText}
       >

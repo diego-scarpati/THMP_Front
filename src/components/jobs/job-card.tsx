@@ -104,7 +104,7 @@ const JobCard = ({
       {/* LEFT: title (top) and meta (bottom) stacked vertically and allowed to shrink */}
       <div className="flex-1 min-w-0 overflow-hidden flex flex-col justify-between">
         <div id="job-title" className="mb-2">
-          <h3 className="text-lg font-semibold lg:text-xl lg:max-w-full xl:max-w-[500px] md:w-[clamp(200px,100%,550px)] sm:w-[clamp(150px,100%,400px)] truncate">
+          <h3 className="text-lg font-semibold lg:text-xl lg:max-w-full xl:max-w-[500px] md:w-[clamp(200px,100%,550px)] sm:w-[clamp(150px,100%,400px)] truncate mt-1 sm:mt-0">
             {highlightKeywords ? highlightKeywords(job.title) : job.title}
           </h3>
         </div>
@@ -158,7 +158,7 @@ const JobCard = ({
           e.stopPropagation();
           setIsExpanded((prev) => !prev);
         }}
-        className="lg:hidden col-span-full flex items-center justify-center w-full pt-1"
+        className={cn("lg:hidden col-span-full flex items-center justify-center w-full pt-1", isExpanded && "pb-2")}
         aria-label={isExpanded ? "Collapse description" : "Expand description"}
       >
         <svg
