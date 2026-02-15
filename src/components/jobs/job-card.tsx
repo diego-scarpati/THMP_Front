@@ -126,16 +126,16 @@ const JobCard = ({
             )}
           </div>
 
-          <div className="flex flex-row w-auto max-w-[220px]">
+          <div className="flex flex-row w-auto lg:max-w-[220px] xl:max-w-[300px]">
             {job.post_date && (
               <div className="text-xs lg:text-sm">
-                <span className="lg:hidden font-medium">Posted:</span>{" "}
+                <span className="lg:hidden xl:inline font-medium">Posted:</span>{" "}
                 {normalizeDates(new Date(job.post_date).toLocaleDateString())}{" "}
                 {new Date(job.post_date).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-                <span className="lg:hidden">{" • "}</span>
+                <span className="lg:hidden xl:inline">{" • "}</span>
                 <span className="font-semibold max-w-[80px]">{job.posted_by}</span>
               </div>
             )}
@@ -146,7 +146,7 @@ const JobCard = ({
       {/* RIGHT: AiApprovedViewJob */}
       <div className={cn("flex w-full xl:w-auto items-center xl:justify-end xl:mr-4 justify-center")}>
         <AiApprovedViewJob
-          approvedByAI={job?.Users?.[0]?.UserJob?.approved_by_gpt}
+          approvedByAI={job?.Users?.[0]?.UserJob?.formula_decision}
           currentIndex={index === jobDescriptionIndex}
           url={job.url}
         />

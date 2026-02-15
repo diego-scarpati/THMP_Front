@@ -164,6 +164,9 @@ export interface UserJob extends BaseEntity {
   job_id: string;
   approved_by_formula: "yes" | "no" | "pending";
   approved_by_gpt: "yes" | "no" | "pending";
+  formula_decision?: "approve" | "reject" | "review"; // frontend-friendly status
+  formula_score: number;
+  formula_reason: any;
   seen: boolean;
   saved_for_later: boolean;
   applied: boolean;

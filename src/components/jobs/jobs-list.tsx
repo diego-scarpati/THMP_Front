@@ -128,15 +128,20 @@ export default function JobsList({
 
       // AI Approved filter - check UserJob relation for approval status
       if (filters.approvedByAI) {
-        const userJob = job.userJobs?.[0]; // Assuming first userJob relation
+        const userJob = job.Users?.[0]?.UserJob; // Assuming first userJob relation
         if (!userJob) {
           // If no userJob relation and filter is not empty, exclude
           return false;
         }
 
         // Check both formula and GPT approval (prioritize GPT if available)
-        const aiApproved =
-          userJob.approved_by_gpt || userJob.approved_by_formula;
+        // const aiApproved =
+        //   userJob.approved_by_gpt || userJob.approved_by_formula;
+        // if (aiApproved !== filters.approvedByAI) {
+        //   return false;
+        // }
+        // New Check using formula_decision for frontend-friendly status
+        const aiApproved = userJob.formula_decision;
         if (aiApproved !== filters.approvedByAI) {
           return false;
         }
@@ -322,7 +327,7 @@ export default function JobsList({
     <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
       <div className="space-y-4 w-full bg-background rounded-4xl px-6 py-4">
         {/* Loading overlay when refetching */}
-        {isFetching && (
+        {/* {isFetching && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <div className="flex items-center">
               <svg
@@ -348,7 +353,7 @@ export default function JobsList({
               <span className="text-sm text-congress-blue-900">Updating results...</span>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Jobs list - full width on mobile, two columns on desktop */}
         <FilterList onFiltersChange={handleFiltersChange} totalJobs={data?.total || 0} filteredJobs={filteredJobs.length} />

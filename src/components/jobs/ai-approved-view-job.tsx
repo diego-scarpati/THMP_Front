@@ -8,15 +8,15 @@ import OpenInNew from "@/icons/open_in_new.svg";
 
 interface AiApprovedPillProps {
   url: string;
-  approvedByAI?: "yes" | "no" | "pending";
+  approvedByAI?: "approve" | "reject" | "review";
   currentIndex?: boolean;
 }
 
 const AiApprovedViewJob = ({ approvedByAI, url }: AiApprovedPillProps) => {
   const tooltipText =
-    approvedByAI === "yes"
+    approvedByAI === "approve"
       ? "Approved"
-      : approvedByAI === "no"
+      : approvedByAI === "reject"
       ? "Rejected"
       : "Pending";
   return (
@@ -52,9 +52,9 @@ const AiApprovedViewJob = ({ approvedByAI, url }: AiApprovedPillProps) => {
       >
         <p className="">AI Approved:</p>
         <div className="flex items-center">
-          {approvedByAI === "yes" ? (
+          {approvedByAI === "approve" ? (
             <Done className="inline-block h-4 w-4 align-middle" />
-          ) : approvedByAI === "no" ? (
+          ) : approvedByAI === "reject" ? (
             <Cancel className="inline-block h-4 w-4 align-middle" />
           ) : (
             <Pending className="inline-block h-4 w-4 align-middle" />

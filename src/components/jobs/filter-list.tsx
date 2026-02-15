@@ -90,9 +90,9 @@ const FilterList = ({
       type: "select",
       options: [
         { label: "All", value: "" },
-        { label: "Yes", value: "yes" },
-        { label: "No", value: "no" },
-        { label: "Pending", value: "pending" },
+        { label: "Approved", value: "approve" },
+        { label: "Rejected", value: "reject" },
+        { label: "Pending", value: "review" },
       ],
     },
     {
