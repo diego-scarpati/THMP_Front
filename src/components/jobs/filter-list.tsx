@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import Filter from "@/icons/filter.svg";
 import FilterOff from "@/icons/filter_off.svg";
@@ -14,7 +14,7 @@ interface FilterConfig {
   options?: Array<{ label: string; value: string }>;
 }
 
-interface FilterState {
+export interface FilterState {
   keyword: string;
   dateFrom: string;
   dateTo: string;
@@ -43,28 +43,6 @@ const FilterList = ({
     postedBy: "",
     seen: "",
   });
-  const [keywordInput, setKeywordInput] = useState<string>(""); // Separate state for keyword input
-
-  // Debounced keyword filter
-  const debouncedKeywordUpdate = useCallback(
-    debounce((keyword: string) => {
-      const newFilters = {
-        ...filters,
-        keyword,
-      };
-      setFilters(newFilters);
-      onFiltersChange?.(newFilters);
-    }, 300),
-    [filters, onFiltersChange]
-  );
-
-  // Effect to handle keyword debouncing
-  useEffect(() => {
-    debouncedKeywordUpdate(keywordInput);
-    return () => {
-      debouncedKeywordUpdate.cancel?.();
-    };
-  }, [keywordInput, debouncedKeywordUpdate]);
 
   // Filter configurations array - single source of truth
   const filterConfigs: FilterConfig[] = [
@@ -122,20 +100,15 @@ const FilterList = ({
   };
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
-    if (key === "keyword") {
-      // Handle keyword input separately for debouncing
-      setKeywordInput(value);
-      return;
-    }
-
     const newFilters = {
       ...filters,
       [key]: value,
     };
     setFilters(newFilters);
+  };
 
-    // Notify parent component immediately for non-keyword filters
-    onFiltersChange?.(newFilters);
+  const handleApplyFilters = () => {
+    onFiltersChange?.(filters);
   };
 
   const handleClearFilters = () => {
@@ -149,28 +122,8 @@ const FilterList = ({
     };
 
     setFilters(clearedFilters);
-    setKeywordInput(""); // Clear keyword input as well
     onFiltersChange?.(clearedFilters);
   };
-
-  // Debounce utility function
-  function debounce<TArgs extends unknown[], TReturn>(
-    func: (...args: TArgs) => TReturn,
-    wait: number
-  ): ((...args: TArgs) => void) & { cancel: () => void } {
-    let timeout: NodeJS.Timeout;
-
-    const debounced = ((...args: TArgs) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func(...args), wait);
-    }) as ((...args: TArgs) => void) & { cancel: () => void };
-
-    debounced.cancel = () => {
-      clearTimeout(timeout);
-    };
-
-    return debounced;
-  }
 
   return (
     <div className="w-full px-4">
@@ -191,13 +144,13 @@ const FilterList = ({
           {!isExpanded ? (
             <Filter
               className={cn(
-                "w-6 h-6 text-congress-blue-900 transition-transform duration-200"
+                "w-6 h-6 text-congress-blue-900 transition-transform duration-200",
               )}
             />
           ) : (
             <FilterOff
               className={cn(
-                "w-6 h-6 text-congress-blue-900 transition-transform duration-500"
+                "w-6 h-6 text-congress-blue-900 transition-transform duration-500",
               )}
             />
           )}
@@ -208,7 +161,7 @@ const FilterList = ({
       <div
         className={cn(
           "overflow-hidden transition-all duration-500 ease-out",
-          isExpanded ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0 mt-0"
+          isExpanded ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0 mt-0",
         )}
       >
         <div
@@ -216,7 +169,7 @@ const FilterList = ({
             "transform transition-all duration-500 ease-out",
             isExpanded
               ? "translate-y-0 scale-y-100"
-              : "-translate-y-4 scale-y-0"
+              : "-translate-y-4 scale-y-0",
           )}
           style={{
             transformOrigin: "top center",
@@ -224,34 +177,42 @@ const FilterList = ({
         >
           <div className="space-y-4 mt-1">
             {/* Filter Grid - responsive layout that doesn't fill full width on large screens */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 max-w-6xl items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 max-w-6xl items-center">
               {/* Dynamically rendered filter options */}
               {filterConfigs.map((config) => (
                 <FilterOption
                   key={config.key}
                   title={config.title}
                   type={config.type}
-                  value={
-                    config.key === "keyword"
-                      ? keywordInput
-                      : filters[config.key]
-                  }
+                  value={filters[config.key]}
                   onChange={(value) => handleFilterChange(config.key, value)}
                   options={config.options}
                   placeholder={config.placeholder}
                   id={`filter-${config.key}`}
                 />
               ))}
-              {/* Clear Button */}
-              <div className="min-w-0">
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="flex pr-3 pl-1.5 py-1.5 border border-congress-blue-900 text-congress-blue-300 rounded-full font-semibold bg-congress-blue-900 hover:bg-congress-blue-500 hover:border-congress-blue-500 hover:text-congress-blue-100 transition-colors items-center justify-center text-sm cursor-pointer"
-                >
-                  <Add className="w-5 h-5 inline-block rotate-45" />
-                  Clear
-                </button>
+              {/* Apply Button */}
+              <div className="flex flex-row gap-2">
+                <div className="min-w-0">
+                  <button
+                    type="button"
+                    onClick={handleApplyFilters}
+                    className="flex px-3 py-1.5 border border-congress-blue-900 text-congress-blue-300 rounded-full font-semibold bg-congress-blue-900 hover:bg-congress-blue-500 hover:border-congress-blue-500 hover:text-congress-blue-100 transition-colors items-center justify-center text-sm cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {/* Clear Button */}
+                <div className="min-w-0">
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="flex pr-3 pl-1.5 py-1.5 border border-congress-blue-900 text-congress-blue-300 rounded-full font-semibold bg-congress-blue-900 hover:bg-congress-blue-500 hover:border-congress-blue-500 hover:text-congress-blue-100 transition-colors items-center justify-center text-sm cursor-pointer"
+                  >
+                    <Add className="w-5 h-5 inline-block rotate-45" />
+                    Clear
+                  </button>
+                </div>
               </div>
             </div>
           </div>

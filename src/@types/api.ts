@@ -512,6 +512,12 @@ export interface JobQueryParams {
   title?: string;
   location?: string;
   type?: string;
+  keyword?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  approvedByAI?: string;
+  postedBy?: string;
+  seen?: string;
 }
 
 // ===== NEW INTERFACES FROM API REFERENCE =====

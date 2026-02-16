@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { queryKeys, mutationKeys } from "@/lib/query-keys";
 import { jobApi } from "@/services/endpoints";
 import { requireStoredAccessToken } from "@/services/api";
@@ -17,6 +22,27 @@ export const useJobs = (params?: JobQueryParams) => {
   return useQuery({
     queryKey: queryKeys.jobs.list(params),
     queryFn: () => jobApi.getAllJobs(params),
+    enabled: !!token,
+  });
+};
+
+export const useInfiniteJobs = (params?: JobQueryParams) => {
+  const { data: token } = useAccessToken();
+
+  const { page: initialPage, ...baseParams } = params || {};
+
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.jobs.lists(), "infinite", baseParams],
+    initialPageParam: initialPage ?? 1,
+    queryFn: ({ pageParam }) =>
+      jobApi.getAllJobs({
+        ...baseParams,
+        page: Number(pageParam),
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.currentPage < lastPage.totalPages
+        ? lastPage.currentPage + 1
+        : undefined,
     enabled: !!token,
   });
 };
@@ -305,4 +331,3 @@ export const useIndeedAllKeywords = () => {
     },
   });
 };
-

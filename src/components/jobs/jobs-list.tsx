@@ -3,19 +3,10 @@
 import type { Job } from "@/@types/api";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import JobCard from "./job-card";
-import FilterList from "./filter-list";
+import FilterList, { type FilterState } from "./filter-list";
 import { cn } from "@/lib/utils";
 import { useMarkJobsSeen } from "@/hooks/use-jobs";
 import JobsListSkeleton from "@/components/ui/jobs-list-skeleton";
-
-interface FilterState {
-  keyword: string;
-  dateFrom: string;
-  dateTo: string;
-  approvedByAI: string;
-  postedBy: string;
-  seen: string;
-}
 
 interface JobsListProps {
   data?: {
@@ -29,6 +20,10 @@ interface JobsListProps {
   refetch: () => void;
   isFetching: boolean;
   onRefetch?: (refetchFn: () => void) => void;
+  onApplyFilters?: (filters: FilterState) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isFetchingMore?: boolean;
   className?: string;
 }
 
@@ -40,6 +35,10 @@ export default function JobsList({
   refetch,
   isFetching,
   onRefetch,
+  onApplyFilters,
+  onLoadMore,
+  hasMore = false,
+  isFetchingMore = false,
   className,
 }: JobsListProps) {
   const [jobDescriptionIndex, setJobDescriptionIndex] = useState<number>(0);
@@ -52,6 +51,8 @@ export default function JobsList({
     seen: "",
   });
   const descriptionPanelRef = useRef<HTMLDivElement | null>(null);
+  const listContainerRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
   const retryCountRef = useRef(0);
 
   // Auto-retry when data comes back empty (up to 3 times)
@@ -172,6 +173,8 @@ export default function JobsList({
     });
   }, [data?.jobs, filters]);
 
+  const jobs = filteredJobs;
+
   // Function to add a job ID to the seen list (using ref to avoid state-triggered re-renders)
   const markJobAsSeen = useCallback((jobId: string) => {
     if (!seenJobIdsRef.current.includes(jobId)) {
@@ -229,7 +232,37 @@ export default function JobsList({
 
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
+    setJobDescriptionIndex(0);
+    onApplyFilters?.(newFilters);
   };
+
+  // Trigger next page before the user reaches the very end of the list.
+  useEffect(() => {
+    if (!onLoadMore || !hasMore || isFetchingMore) return;
+
+    const root = listContainerRef.current;
+    const trigger = loadMoreTriggerRef.current;
+
+    if (!root || !trigger) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && hasMore && !isFetchingMore) {
+          onLoadMore();
+        }
+      },
+      {
+        root,
+        rootMargin: "200px 0px",
+      }
+    );
+
+    observer.observe(trigger);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [jobs.length, hasMore, isFetchingMore, onLoadMore]);
 
   // Utility function to highlight keywords
   const highlightKeywords = (
@@ -318,8 +351,6 @@ export default function JobsList({
     );
   }
 
-  const jobs = filteredJobs;
-
   const description =
     jobs[jobDescriptionIndex]?.JobDescription?.description || "";
 
@@ -359,7 +390,10 @@ export default function JobsList({
         <FilterList onFiltersChange={handleFiltersChange} totalJobs={data?.total || 0} filteredJobs={filteredJobs.length} />
         <div className={cn("flex lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full", className ? className : "max-h-screen")}>
           {/* LEFT: list - flex-1 so it fills remaining space */}
-          <div className="flex-1 min-w-0 overflow-y-auto pt-[2px] rounded-lg lg:mb-0 scrollbar-hide">
+          <div
+            ref={listContainerRef}
+            className="flex-1 min-w-0 overflow-y-auto pt-[2px] rounded-lg lg:mb-0 scrollbar-hide"
+          >
             <div className="grid gap-3 w-full">
               {jobs.map((job: Job, index: number) => (
                 <JobCard
@@ -377,6 +411,12 @@ export default function JobsList({
                   description={job.JobDescription?.description || ""}
                 />
               ))}
+              {onLoadMore && <div ref={loadMoreTriggerRef} className="h-1 w-full" />}
+              {isFetchingMore && (
+                <p className="text-center text-sm font-semibold text-congress-blue-900 py-3">
+                  Loading more jobs...
+                </p>
+              )}
             </div>
           </div>
 

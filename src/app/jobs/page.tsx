@@ -1,60 +1,169 @@
 "use client";
 
-import { Suspense, Activity, useCallback, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, Activity, useCallback, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { Job, JobQueryParams } from "@/@types/api";
 import JobsList from "@/components/jobs/jobs-list";
+import type { FilterState } from "@/components/jobs/filter-list";
 import SearchBar from "@/components/searchBar/search-bar";
-import { useJobs, useSavedForLaterJobs } from "@/hooks";
+import { useInfiniteJobs, useSavedForLaterJobs } from "@/hooks";
+
+const PAGE_LIMIT = 20;
 
 function JobsPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const refetchJobsRef = useRef<(() => void) | null>(null);
 
-  // Convert URLSearchParams to the format expected by useJobs with null safety
-  const queryParams = {
-    // post_date: searchParams?.get('post_date') || undefined,
-    post_date: "desc",
-    // easy_apply: (searchParams?.get('easy_apply') as 'yes' | 'no' | 'pending') || undefined,
-    easy_apply: "pending",
-    // approved_by_formula: (searchParams?.get('approved_by_formula') as 'yes' | 'no' | 'pending') || undefined,
-    approved_by_formula: "yes",
-    approved_by_gpt:
-      (searchParams?.get("approved_by_gpt") as "yes" | "no" | "pending") ||
-      undefined,
-    // approved_by_gpt: "yes",
-    // job_descriptions: searchParams?.get('job_descriptions') === 'true' ? true : undefined,
-    job_descriptions: true,
-    page: searchParams?.get("page")
-      ? parseInt(searchParams.get("page")!)
-      : undefined,
-    limit: searchParams?.get("limit")
-      ? parseInt(searchParams.get("limit")!)
-      : undefined,
-  };
+  // Keep the same default query behavior while honoring query params from filter apply.
+  const queryParams = useMemo<JobQueryParams>(() => {
+    const page = searchParams?.get("page");
+    const limit = searchParams?.get("limit");
+    const approvedByFormula = searchParams?.get("approved_by_formula");
+    const approvedByGpt = searchParams?.get("approved_by_gpt");
+    const title = searchParams?.get("title");
+    const company = searchParams?.get("company");
+    const location = searchParams?.get("location");
+    const type = searchParams?.get("type");
+    const keyword = searchParams?.get("keyword");
+    const dateFrom = searchParams?.get("dateFrom");
+    const dateTo = searchParams?.get("dateTo");
+    const approvedByAI = searchParams?.get("approvedByAI");
+    const postedBy = searchParams?.get("postedBy");
+    const seen = searchParams?.get("seen");
+    const parsedPage = page ? parseInt(page, 10) : 1;
+    const parsedLimit = limit ? parseInt(limit, 10) : PAGE_LIMIT;
 
-  // Remove undefined values
-  const cleanParams = Object.fromEntries(
-    Object.entries(queryParams).filter(([_, value]) => value !== undefined),
-  );
+    return {
+      post_date: "desc",
+      easy_apply: "pending",
+      approved_by_formula:
+        approvedByFormula === "yes" ||
+        approvedByFormula === "no" ||
+        approvedByFormula === "pending"
+          ? approvedByFormula
+          : "yes",
+      approved_by_gpt:
+        approvedByGpt === "yes" ||
+        approvedByGpt === "no" ||
+        approvedByGpt === "pending"
+          ? approvedByGpt
+          : undefined,
+      job_descriptions: true,
+      page: Number.isNaN(parsedPage) ? 1 : parsedPage,
+      limit: Number.isNaN(parsedLimit) ? PAGE_LIMIT : parsedLimit,
+      title: title || undefined,
+      company: company || undefined,
+      location: location || undefined,
+      type: type || undefined,
+      keyword: keyword || undefined,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      approvedByAI: approvedByAI || undefined,
+      postedBy: postedBy || undefined,
+      seen: seen || undefined,
+    };
+  }, [searchParams]);
 
-  const { data, isLoading, error, isError, refetch, isFetching } =
-    useJobs(cleanParams);
+  const {
+    data,
+    isLoading,
+    error,
+    isError,
+    refetch,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteJobs(queryParams);
+
+  const jobsData = useMemo(() => {
+    if (!data?.pages?.length) return undefined;
+
+    const uniqueJobs = new Map<string, Job>();
+
+    data.pages.forEach((page) => {
+      page.jobs.forEach((job) => {
+        uniqueJobs.set(job.id, job);
+      });
+    });
+
+    return {
+      jobs: Array.from(uniqueJobs.values()),
+      total: data.pages[0].total,
+      totalPages: data.pages[0].totalPages,
+    };
+  }, [data]);
 
   const handleRefetchCallback = useCallback((refetchFn: () => void) => {
     refetchJobsRef.current = refetchFn;
   }, []);
 
+  const handleApplyFilters = useCallback(
+    (filters: FilterState) => {
+      const params = new URLSearchParams(searchParams?.toString() || "");
+
+      const setOrDelete = (key: string, value: string) => {
+        if (value) {
+          params.set(key, value);
+          return;
+        }
+        params.delete(key);
+      };
+
+      setOrDelete("keyword", filters.keyword.trim());
+      setOrDelete("dateFrom", filters.dateFrom);
+      setOrDelete("dateTo", filters.dateTo);
+      setOrDelete("approvedByAI", filters.approvedByAI);
+      setOrDelete("postedBy", filters.postedBy);
+      setOrDelete("seen", filters.seen);
+
+      // Mappings used by the backend query.
+      setOrDelete("title", filters.keyword.trim());
+      setOrDelete("type", filters.postedBy);
+
+      const approvedByFormulaMap: Record<string, string> = {
+        approve: "yes",
+        reject: "no",
+        review: "pending",
+      };
+
+      setOrDelete(
+        "approved_by_formula",
+        approvedByFormulaMap[filters.approvedByAI] || ""
+      );
+
+      params.set("page", "1");
+      params.set("limit", String(PAGE_LIMIT));
+
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams]
+  );
+
   return (
     <div className="w-full flex flex-col px-8 py-8 bg-background">
       <SearchBar />
       <JobsList
-        data={data}
+        data={jobsData}
         isLoading={isLoading}
-        error={error}
+        error={error as Error | null}
         isError={isError}
         refetch={refetch}
-        isFetching={isFetching}
+        isFetching={isFetching && !isFetchingNextPage}
         onRefetch={handleRefetchCallback}
+        onApplyFilters={handleApplyFilters}
+        onLoadMore={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        hasMore={Boolean(hasNextPage)}
+        isFetchingMore={isFetchingNextPage}
       />
     </div>
   );

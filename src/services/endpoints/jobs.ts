@@ -6,7 +6,10 @@ export const jobApi = {
   getAllJobs: (
     params?: apiTypes.JobQueryParams
   ): Promise<apiTypes.PaginatedJobsResponse> => {
-    const queryString = params ? buildQueryString(params) : "";
+    const queryString = buildQueryString({
+      ...params,
+      limit: params?.limit ?? 20,
+    });
     return apiService.get(`/jobs/getAll${queryString}`);
   },
 

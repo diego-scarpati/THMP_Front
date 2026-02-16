@@ -1,6 +1,7 @@
 // Job-related hooks
 export {
   useJobs,
+  useInfiniteJobs,
   useJob,
   useSeekDescription,
   useJobsByCompany,
