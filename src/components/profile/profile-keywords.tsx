@@ -101,8 +101,8 @@ export function ProfileKeywords() {
         return {
           kind: "includes",
           title: x.title,
-          id: x.Users[0]?.UserInclusion.id,
-          active: x.Users[0]?.UserInclusion.active,
+          id: x.id,
+          active: x.active,
         };
       }),
     [inclusions]
@@ -124,8 +124,8 @@ export function ProfileKeywords() {
         return {
           kind: "excludes",
           title: x.title,
-          id: x.Users[0]?.UserExclusion.id,
-          active: x.Users[0]?.UserExclusion.active,
+          id: x.id,
+          active: x.active,
         };
       }),
     [exclusions]

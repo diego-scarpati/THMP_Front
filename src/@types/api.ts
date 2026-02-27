@@ -164,7 +164,7 @@ export interface UserJob extends BaseEntity {
   job_id: string;
   approved_by_formula: "yes" | "no" | "pending";
   approved_by_gpt: "yes" | "no" | "pending";
-  formula_decision?: "approve" | "reject" | "review"; // frontend-friendly status
+  formula_decision: "approve" | "reject" | "review"; // frontend-friendly status
   formula_score: number;
   formula_reason: any;
   seen: boolean;
@@ -550,8 +550,22 @@ export interface ApprovalResponse {
   jobsProcessed: number;
 }
 
+export interface BackfillFormulaScoresParams {
+  concurrency?: number;
+}
+
+export interface BackfillFormulaScoresResponse {
+  updatedRows?: number;
+  jobsProcessed?: number;
+  message?: string;
+}
+
 // Jobs: markSeen
 export interface MarkSeenJobsRequest {
+  jobIds: string[];
+}
+
+export interface BatchJobIdsRequest {
   jobIds: string[];
 }
 

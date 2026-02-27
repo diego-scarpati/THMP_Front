@@ -1,37 +1,80 @@
 "use client";
 
-import { Suspense, Activity, useCallback, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  Activity,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Job, JobQueryParams } from "@/@types/api";
 import JobsList from "@/components/jobs/jobs-list";
-import type { FilterState } from "@/components/jobs/filter-list";
+import {
+  EMPTY_FILTER_STATE,
+  type FilterState,
+} from "@/components/jobs/filter-list";
 import SearchBar from "@/components/searchBar/search-bar";
 import { useInfiniteJobs, useSavedForLaterJobs } from "@/hooks";
 
 const PAGE_LIMIT = 20;
+
+const VALID_FORMULA_DECISIONS = new Set(["approve", "review", "reject"]);
+const VALID_SEEN_VALUES = new Set(["seen", "unseen"]);
+
+const getAppliedFiltersFromParams = (
+  params: URLSearchParams
+): FilterState => {
+  const formulaDecision = params.get("formula_decision");
+  const seen = params.get("seen");
+
+  return {
+    ...EMPTY_FILTER_STATE,
+    keyword: params.get("title") || "",
+    dateFrom: params.get("date_from") || "",
+    dateTo: params.get("date_to") || "",
+    approvedByAI: VALID_FORMULA_DECISIONS.has(formulaDecision || "")
+      ? formulaDecision || ""
+      : "",
+    postedBy: params.get("posted_by") || "",
+    seen: VALID_SEEN_VALUES.has(seen || "") ? seen || "" : "",
+  };
+};
 
 function JobsPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const refetchJobsRef = useRef<(() => void) | null>(null);
+  const searchParamsString = searchParams?.toString() || "";
+  const parsedSearchParams = useMemo(
+    () => new URLSearchParams(searchParamsString),
+    [searchParamsString]
+  );
+  const urlFilters = useMemo(
+    () => getAppliedFiltersFromParams(parsedSearchParams),
+    [parsedSearchParams]
+  );
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>(urlFilters);
+
+  useEffect(() => {
+    setAppliedFilters(urlFilters);
+  }, [urlFilters]);
 
   // Keep the same default query behavior while honoring query params from filter apply.
   const queryParams = useMemo<JobQueryParams>(() => {
-    const page = searchParams?.get("page");
-    const limit = searchParams?.get("limit");
-    const approvedByFormula = searchParams?.get("approved_by_formula");
-    const approvedByGpt = searchParams?.get("approved_by_gpt");
-    const title = searchParams?.get("title");
-    const company = searchParams?.get("company");
-    const location = searchParams?.get("location");
-    const type = searchParams?.get("type");
-    const keyword = searchParams?.get("keyword");
-    const dateFrom = searchParams?.get("dateFrom");
-    const dateTo = searchParams?.get("dateTo");
-    const approvedByAI = searchParams?.get("approvedByAI");
-    const postedBy = searchParams?.get("postedBy");
-    const seen = searchParams?.get("seen");
+    const page = parsedSearchParams.get("page");
+    const limit = parsedSearchParams.get("limit");
+    const approvedByFormula = parsedSearchParams.get("approved_by_formula");
+    const approvedByGpt = parsedSearchParams.get("approved_by_gpt");
+    const formulaDecision = parsedSearchParams.get("formula_decision");
+    const title = parsedSearchParams.get("title");
+    const company = parsedSearchParams.get("company");
+    const location = parsedSearchParams.get("location");
+    const postedBy = parsedSearchParams.get("posted_by");
+    const seen = parsedSearchParams.get("seen");
     const parsedPage = page ? parseInt(page, 10) : 1;
     const parsedLimit = limit ? parseInt(limit, 10) : PAGE_LIMIT;
 
@@ -50,21 +93,22 @@ function JobsPageContent() {
         approvedByGpt === "pending"
           ? approvedByGpt
           : undefined,
+      formula_decision:
+        formulaDecision === "approve" ||
+        formulaDecision === "review" ||
+        formulaDecision === "reject"
+          ? formulaDecision
+          : undefined,
       job_descriptions: true,
       page: Number.isNaN(parsedPage) ? 1 : parsedPage,
       limit: Number.isNaN(parsedLimit) ? PAGE_LIMIT : parsedLimit,
       title: title || undefined,
       company: company || undefined,
       location: location || undefined,
-      type: type || undefined,
-      keyword: keyword || undefined,
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-      approvedByAI: approvedByAI || undefined,
-      postedBy: postedBy || undefined,
+      posted_by: postedBy || undefined,
       seen: seen || undefined,
     };
-  }, [searchParams]);
+  }, [parsedSearchParams]);
 
   const {
     data,
@@ -102,38 +146,26 @@ function JobsPageContent() {
 
   const handleApplyFilters = useCallback(
     (filters: FilterState) => {
-      const params = new URLSearchParams(searchParams?.toString() || "");
+      setAppliedFilters(filters);
+      const params = new URLSearchParams(searchParamsString);
 
       const setOrDelete = (key: string, value: string) => {
         if (value) {
           params.set(key, value);
-          return;
+        } else {
+          params.delete(key);
         }
-        params.delete(key);
       };
 
-      setOrDelete("keyword", filters.keyword.trim());
-      setOrDelete("dateFrom", filters.dateFrom);
-      setOrDelete("dateTo", filters.dateTo);
-      setOrDelete("approvedByAI", filters.approvedByAI);
-      setOrDelete("postedBy", filters.postedBy);
-      setOrDelete("seen", filters.seen);
-
-      // Mappings used by the backend query.
+      // Map frontend filter keys to backend query param keys
       setOrDelete("title", filters.keyword.trim());
-      setOrDelete("type", filters.postedBy);
+      setOrDelete("formula_decision", filters.approvedByAI); // approvedByAI maps to formula_decision
+      setOrDelete("seen", filters.seen);
+      setOrDelete("posted_by", filters.postedBy);
+      setOrDelete("date_from", filters.dateFrom);
+      setOrDelete("date_to", filters.dateTo);
 
-      const approvedByFormulaMap: Record<string, string> = {
-        approve: "yes",
-        reject: "no",
-        review: "pending",
-      };
-
-      setOrDelete(
-        "approved_by_formula",
-        approvedByFormulaMap[filters.approvedByAI] || ""
-      );
-
+      // Reset page when filters change
       params.set("page", "1");
       params.set("limit", String(PAGE_LIMIT));
 
@@ -142,7 +174,7 @@ function JobsPageContent() {
         scroll: false,
       });
     },
-    [pathname, router, searchParams]
+    [pathname, router, searchParamsString]
   );
 
   return (
@@ -156,6 +188,8 @@ function JobsPageContent() {
         refetch={refetch}
         isFetching={isFetching && !isFetchingNextPage}
         onRefetch={handleRefetchCallback}
+        filters={appliedFilters}
+        onFiltersStateChange={setAppliedFilters}
         onApplyFilters={handleApplyFilters}
         onLoadMore={() => {
           if (hasNextPage && !isFetchingNextPage) {

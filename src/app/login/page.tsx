@@ -102,6 +102,12 @@ export default function LoginPage() {
                 labelBackground="bg-white"
                 isVisible={showPassword}
                 onClick={() => setShowPassword((prev) => !prev)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
               />
             </div>
 

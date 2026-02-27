@@ -10,10 +10,12 @@ import { requireStoredAccessToken } from "@/services/api";
 import { useAccessToken } from "./use-auth";
 import type {
   MarkSeenJobsRequest,
+  BatchJobIdsRequest,
   SearchAndCreateJobsRequest,
   JobQueryParams,
   SearchAndCreateJobsMultipleKeywordsRequest,
   ToggleStateRequest,
+  BackfillFormulaScoresParams,
 } from "@/@types/api";
 
 // Query hooks for jobs
@@ -199,19 +201,19 @@ export const useUpdateApprovedByDate = () => {
 //   })
 // }
 
-export const useToggleSavedForLater = () => {
-  const queryClient = useQueryClient();
+// export const useToggleSavedForLater = () => {
+//   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationKey: mutationKeys.jobs.toggleSavedForLater,
-    mutationFn: (data: ToggleStateRequest) =>
-      (requireStoredAccessToken(), jobApi.toggleSavedForLater(data)),
-    onSuccess: () => {
-      // Invalidate all job lists to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
-    },
-  });
-};
+//   return useMutation({
+//     mutationKey: mutationKeys.jobs.toggleSavedForLater,
+//     mutationFn: (data: ToggleStateRequest) =>
+//       (requireStoredAccessToken(), jobApi.toggleSavedForLater(data)),
+//     onSuccess: () => {
+//       // Invalidate all job lists to refresh data
+//       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+//     },
+//   });
+// };
 
 export const useToggleApplied = () => {
   const queryClient = useQueryClient();
@@ -284,12 +286,42 @@ export const useApproveJobByLLM = () => {
   });
 };
 
-export const useMarkJobsSeen = () => {
+// export const useMarkJobsSeen = () => {
+//   const queryClient = useQueryClient();
+
+//   return useMutation({
+//     mutationKey: mutationKeys.jobs.markSeen,
+//     mutationFn: (data: MarkSeenJobsRequest) => (requireStoredAccessToken(), jobApi.markSeen(data)),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+//     },
+//   });
+// };
+
+export const useBatchMarkJobsSeen = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: mutationKeys.jobs.markSeen,
-    mutationFn: (data: MarkSeenJobsRequest) => (requireStoredAccessToken(), jobApi.markSeen(data)),
+    mutationKey: mutationKeys.jobs.batchMarkSeen,
+    mutationFn: (data: BatchJobIdsRequest) => {
+      console.log("🚀 ~ useBatchMarkJobsSeen ~ data:", data)
+      return requireStoredAccessToken(), jobApi.batchMarkSeen(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+    },
+  });
+};
+
+export const useBatchToggleSavedForLater = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.batchToggleSavedForLater,
+    mutationFn: (data: BatchJobIdsRequest) => {
+      console.log("🚀 ~ useBatchToggleSavedForLater ~ data:", data)
+      return requireStoredAccessToken(), jobApi.batchToggleSavedForLater(data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
     },
@@ -328,6 +360,19 @@ export const useIndeedAllKeywords = () => {
       (requireStoredAccessToken(), jobApi.indeedAllKeywords(data)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.lists() });
+    },
+  });
+};
+
+export const useBackfillMissingFormulaScores = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.jobs.backfillMissingFormulaScores,
+    mutationFn: (params?: BackfillFormulaScoresParams) =>
+      (requireStoredAccessToken(), jobApi.backfillMissingFormulaScores(params)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
     },
   });
 };

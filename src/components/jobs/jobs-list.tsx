@@ -3,9 +3,16 @@
 import type { Job } from "@/@types/api";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import JobCard from "./job-card";
-import FilterList, { type FilterState } from "./filter-list";
+import FilterList, {
+  EMPTY_FILTER_STATE,
+  type FilterState,
+} from "./filter-list";
 import { cn } from "@/lib/utils";
-import { useMarkJobsSeen } from "@/hooks/use-jobs";
+import {
+  useBatchMarkJobsSeen,
+  useBatchToggleSavedForLater,
+} from "@/hooks/use-jobs";
+import { registerApiBeforeRequestHandler } from "@/services/api";
 import JobsListSkeleton from "@/components/ui/jobs-list-skeleton";
 
 interface JobsListProps {
@@ -20,6 +27,8 @@ interface JobsListProps {
   refetch: () => void;
   isFetching: boolean;
   onRefetch?: (refetchFn: () => void) => void;
+  filters?: FilterState;
+  onFiltersStateChange?: (filters: FilterState) => void;
   onApplyFilters?: (filters: FilterState) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
@@ -35,6 +44,8 @@ export default function JobsList({
   refetch,
   isFetching,
   onRefetch,
+  filters: controlledFilters,
+  onFiltersStateChange,
   onApplyFilters,
   onLoadMore,
   hasMore = false,
@@ -42,18 +53,203 @@ export default function JobsList({
   className,
 }: JobsListProps) {
   const [jobDescriptionIndex, setJobDescriptionIndex] = useState<number>(0);
-  const [filters, setFilters] = useState<FilterState>({
-    keyword: "",
-    dateFrom: "",
-    dateTo: "",
-    approvedByAI: "",
-    postedBy: "",
-    seen: "",
-  });
+  const [localFilters, setLocalFilters] =
+    useState<FilterState>(EMPTY_FILTER_STATE);
+  const [localSeenByJobId, setLocalSeenByJobId] = useState<
+    Record<string, boolean>
+  >({});
+  const [localSavedForLaterByJobId, setLocalSavedForLaterByJobId] =
+    useState<Record<string, boolean>>({});
+
+  const isFiltersControlled = controlledFilters !== undefined;
+  const filters = controlledFilters ?? localFilters;
+
   const descriptionPanelRef = useRef<HTMLDivElement | null>(null);
   const listContainerRef = useRef<HTMLDivElement | null>(null);
   const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
   const retryCountRef = useRef(0);
+  const hasScrolledEnoughRef = useRef<boolean>(false);
+  const lastScrollTopRef = useRef<number>(0);
+  const isResettingScrollRef = useRef<boolean>(false);
+
+  const pendingSeenJobIdsRef = useRef<Set<string>>(new Set());
+  const pendingSavedForLaterJobIdsRef = useRef<Set<string>>(new Set());
+  const flushInFlightRef = useRef<Promise<void> | null>(null);
+
+  const batchMarkJobsSeenMutation = useBatchMarkJobsSeen();
+  const batchToggleSavedForLaterMutation = useBatchToggleSavedForLater();
+
+  const batchMarkJobsSeenMutationRef = useRef(
+    batchMarkJobsSeenMutation.mutateAsync,
+  );
+  const batchToggleSavedForLaterMutationRef = useRef(
+    batchToggleSavedForLaterMutation.mutateAsync,
+  );
+
+  batchMarkJobsSeenMutationRef.current = batchMarkJobsSeenMutation.mutateAsync;
+  batchToggleSavedForLaterMutationRef.current =
+    batchToggleSavedForLaterMutation.mutateAsync;
+
+  const getResolvedSeenValue = useCallback(
+    (job: Job): boolean | undefined => {
+      const localValue = localSeenByJobId[job.id];
+      if (localValue !== undefined) {
+        return localValue;
+      }
+
+      return job.Users?.[0]?.UserJob?.seen;
+    },
+    [localSeenByJobId],
+  );
+
+  const getResolvedSavedForLaterValue = useCallback(
+    (job: Job): boolean | undefined => {
+      const localValue = localSavedForLaterByJobId[job.id];
+      if (localValue !== undefined) {
+        return localValue;
+      }
+
+      return job.Users?.[0]?.UserJob?.saved_for_later;
+    },
+    [localSavedForLaterByJobId],
+  );
+
+  const flushPendingUserJobUpdates = useCallback(async () => {
+    while (flushInFlightRef.current) {
+      await flushInFlightRef.current;
+    }
+
+    const hasPendingSeen = pendingSeenJobIdsRef.current.size > 0;
+    const hasPendingSavedForLater =
+      pendingSavedForLaterJobIdsRef.current.size > 0;
+
+    if (!hasPendingSeen && !hasPendingSavedForLater) {
+      return;
+    }
+
+    const flushPromise = (async () => {
+      const seenJobIds = Array.from(pendingSeenJobIdsRef.current);
+      const savedForLaterJobIds = Array.from(
+        pendingSavedForLaterJobIdsRef.current,
+      );
+
+      pendingSeenJobIdsRef.current.clear();
+      pendingSavedForLaterJobIdsRef.current.clear();
+
+      if (seenJobIds.length > 0) {
+        console.log("🚀 ~ JobsList ~ seenJobIds:", seenJobIds)
+        try {
+          await batchMarkJobsSeenMutationRef.current({
+            jobIds: seenJobIds,
+          });
+        } catch (error) {
+          for (const jobId of seenJobIds) {
+            pendingSeenJobIdsRef.current.add(jobId);
+          }
+          console.error("Failed to batch mark jobs as seen", error);
+        }
+      }
+
+      if (savedForLaterJobIds.length > 0) {
+        console.log("🚀 ~ JobsList ~ savedForLaterJobIds:", savedForLaterJobIds)
+        try {
+          await batchToggleSavedForLaterMutationRef.current({
+            jobIds: savedForLaterJobIds,
+          });
+        } catch (error) {
+          for (const jobId of savedForLaterJobIds) {
+            pendingSavedForLaterJobIdsRef.current.add(jobId);
+          }
+          console.error("Failed to batch toggle saved-for-later jobs", error);
+        }
+      }
+    })().finally(() => {
+      flushInFlightRef.current = null;
+    });
+
+    flushInFlightRef.current = flushPromise;
+    await flushPromise;
+  }, []);
+
+  const queueJobAsSeen = useCallback(
+    (job: Job) => {
+      const alreadySeen = getResolvedSeenValue(job) ?? false;
+      if (alreadySeen) return;
+
+      const jobId = job.id;
+
+      setLocalSeenByJobId((previous) => {
+        if (previous[jobId] === true) {
+          return previous;
+        }
+
+        return {
+          ...previous,
+          [jobId]: true,
+        };
+      });
+
+      pendingSeenJobIdsRef.current.add(jobId);
+    },
+    [getResolvedSeenValue],
+  );
+
+  const queueToggleSavedForLater = useCallback(
+    (job: Job) => {
+      const jobId = job.id;
+      const currentSavedForLater = getResolvedSavedForLaterValue(job) ?? false;
+
+      setLocalSavedForLaterByJobId((previous) => ({
+        ...previous,
+        [jobId]: !currentSavedForLater,
+      }));
+
+      const pendingSavedForLaterJobIds =
+        pendingSavedForLaterJobIdsRef.current;
+
+      if (pendingSavedForLaterJobIds.has(jobId)) {
+        pendingSavedForLaterJobIds.delete(jobId);
+      } else {
+        pendingSavedForLaterJobIds.add(jobId);
+      }
+    },
+    [getResolvedSavedForLaterValue],
+  );
+
+  useEffect(() => {
+    const unregisterBeforeRequestHandler = registerApiBeforeRequestHandler(
+      async (method) => {
+        if (method === "GET" || method === "POST") {
+          await flushPendingUserJobUpdates();
+        }
+      },
+    );
+
+    return unregisterBeforeRequestHandler;
+  }, [flushPendingUserJobUpdates]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handlePageHide = () => {
+      void flushPendingUserJobUpdates();
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [flushPendingUserJobUpdates]);
+
+  // Flush remaining pending changes on unmount/navigation away.
+  useEffect(() => {
+    return () => {
+      void flushPendingUserJobUpdates();
+    };
+  }, [flushPendingUserJobUpdates]);
 
   // Auto-retry when data comes back empty (up to 3 times)
   useEffect(() => {
@@ -70,29 +266,16 @@ export default function JobsList({
       }, 1500);
       return () => clearTimeout(timer);
     }
-    // Reset retry count when we get data
+
     if (data?.jobs && data.jobs.length > 0) {
       retryCountRef.current = 0;
     }
   }, [isLoading, isFetching, isError, data, refetch]);
 
-  // Refs for seen jobs tracking - using refs to avoid re-render issues
-  const seenJobIdsRef = useRef<string[]>([]);
-  const mutationTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const hasScrolledEnoughRef = useRef<boolean>(false);
-
-  const markJobsSeenMutation = useMarkJobsSeen();
-  const markJobsSeenMutationRef = useRef(markJobsSeenMutation.mutate);
-  
-  // Keep mutation ref updated (only the mutate function, not the whole object)
-  markJobsSeenMutationRef.current = markJobsSeenMutation.mutate;
-
-  // Filter jobs based on current filter state - moved up so it's available for other hooks
   const filteredJobs = useMemo(() => {
     if (!data?.jobs) return [];
 
     return data.jobs.filter((job: Job) => {
-      // Keyword filter - search in title, company, and description
       if (filters.keyword) {
         const keyword = filters.keyword.toLowerCase();
         const searchableText = [
@@ -109,7 +292,6 @@ export default function JobsList({
         }
       }
 
-      // Date from filter
       if (filters.dateFrom && job.post_date) {
         const jobDate = new Date(job.post_date);
         const fromDate = new Date(filters.dateFrom);
@@ -118,7 +300,6 @@ export default function JobsList({
         }
       }
 
-      // Date to filter
       if (filters.dateTo && job.post_date) {
         const jobDate = new Date(job.post_date);
         const toDate = new Date(filters.dateTo);
@@ -127,28 +308,14 @@ export default function JobsList({
         }
       }
 
-      // AI Approved filter - check UserJob relation for approval status
       if (filters.approvedByAI) {
-        const userJob = job.Users?.[0]?.UserJob; // Assuming first userJob relation
-        if (!userJob) {
-          // If no userJob relation and filter is not empty, exclude
-          return false;
-        }
-
-        // Check both formula and GPT approval (prioritize GPT if available)
-        // const aiApproved =
-        //   userJob.approved_by_gpt || userJob.approved_by_formula;
-        // if (aiApproved !== filters.approvedByAI) {
-        //   return false;
-        // }
-        // New Check using formula_decision for frontend-friendly status
-        const aiApproved = userJob.formula_decision;
-        if (aiApproved !== filters.approvedByAI) {
+        const aiApproved =
+          job.Users?.[0]?.UserJob?.formula_decision || undefined;
+        if (!aiApproved || aiApproved !== filters.approvedByAI) {
           return false;
         }
       }
 
-      // Posted by filter - search only in posted_by field (not company)
       if (filters.postedBy) {
         const postedBy = filters.postedBy.toLowerCase();
         const jobPostedBy = (job.posted_by || "").toLowerCase();
@@ -158,9 +325,8 @@ export default function JobsList({
         }
       }
 
-      // Seen status filter
       if (filters.seen) {
-        const isSeen = job.Users?.[0]?.UserJob?.seen || false;
+        const isSeen = getResolvedSeenValue(job) ?? false;
         if (filters.seen === "seen" && !isSeen) {
           return false;
         }
@@ -171,72 +337,59 @@ export default function JobsList({
 
       return true;
     });
-  }, [data?.jobs, filters]);
+  }, [data?.jobs, filters, getResolvedSeenValue]);
 
   const jobs = filteredJobs;
 
-  // Function to add a job ID to the seen list (using ref to avoid state-triggered re-renders)
-  const markJobAsSeen = useCallback((jobId: string) => {
-    if (!seenJobIdsRef.current.includes(jobId)) {
-      seenJobIdsRef.current = [...seenJobIdsRef.current, jobId];
-      
-      // Reset the 10-second mutation timer whenever a new job is added
-      if (mutationTimerRef.current) {
-        clearTimeout(mutationTimerRef.current);
-      }
-      mutationTimerRef.current = setTimeout(() => {
-        const idsToMark = seenJobIdsRef.current;
-        if (idsToMark.length > 0) {
-          markJobsSeenMutationRef.current({ jobIds: idsToMark });
-          seenJobIdsRef.current = [];
-        }
-      }, 10000);
-    }
-  }, []);
-
-  // Trigger mutation on unmount (navigation away)
-  useEffect(() => {
-    return () => {
-      // Cleanup timer
-      if (mutationTimerRef.current) {
-        clearTimeout(mutationTimerRef.current);
-      }
-      // Trigger mutation with remaining seen jobs on unmount
-      if (seenJobIdsRef.current.length > 0) {
-        markJobsSeenMutationRef.current({ jobIds: seenJobIdsRef.current });
-      }
-    };
-  }, []);
-
-  // Reset scroll tracking when job description changes
   useEffect(() => {
     hasScrolledEnoughRef.current = false;
+    isResettingScrollRef.current = true;
   }, [jobDescriptionIndex]);
 
-  // Handle scroll tracking for 60% threshold
   const handleDescriptionScroll = useCallback(() => {
     const panel = descriptionPanelRef.current;
     if (!panel || hasScrolledEnoughRef.current) return;
 
-    const scrollPercentage = 
+    const currentScrollTop = panel.scrollTop;
+
+    // Wait until the scroll-to-top animation finishes before tracking
+    if (isResettingScrollRef.current) {
+      if (currentScrollTop <= 1) {
+        // Panel has reached the top — start tracking from here
+        isResettingScrollRef.current = false;
+        lastScrollTopRef.current = 0;
+      }
+      return;
+    }
+
+    const isScrollingDown = currentScrollTop > lastScrollTopRef.current;
+    lastScrollTopRef.current = currentScrollTop;
+
+    if (!isScrollingDown) return;
+
+    const scrollPercentage =
       (panel.scrollTop + panel.clientHeight) / panel.scrollHeight;
 
     if (scrollPercentage >= 0.6) {
       hasScrolledEnoughRef.current = true;
       const currentJob = filteredJobs[jobDescriptionIndex];
       if (currentJob) {
-        markJobAsSeen(currentJob.id);
+        queueJobAsSeen(currentJob);
       }
     }
-  }, [filteredJobs, jobDescriptionIndex, markJobAsSeen]);
+  }, [filteredJobs, jobDescriptionIndex, queueJobAsSeen]);
 
   const handleFiltersChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
+    if (isFiltersControlled) {
+      onFiltersStateChange?.(newFilters);
+    } else {
+      setLocalFilters(newFilters);
+    }
+
     setJobDescriptionIndex(0);
     onApplyFilters?.(newFilters);
   };
 
-  // Trigger next page before the user reaches the very end of the list.
   useEffect(() => {
     if (!onLoadMore || !hasMore || isFetchingMore) return;
 
@@ -254,7 +407,7 @@ export default function JobsList({
       {
         root,
         rootMargin: "200px 0px",
-      }
+      },
     );
 
     observer.observe(trigger);
@@ -264,10 +417,9 @@ export default function JobsList({
     };
   }, [jobs.length, hasMore, isFetchingMore, onLoadMore]);
 
-  // Utility function to highlight keywords
   const highlightKeywords = (
     text: string,
-    keyword: string
+    keyword: string,
   ): React.ReactNode => {
     if (!keyword || !text) return text;
 
@@ -279,28 +431,26 @@ export default function JobsList({
         <span
           key={index}
           className="bg-yellow-300 text-congress-blue-900 font-semibold px-0.5 rounded"
-          style={{ backgroundColor: "#fef08a" }} // neon yellow
+          style={{ backgroundColor: "#fef08a" }}
         >
           {part}
         </span>
       ) : (
         part
-      )
+      ),
     );
   };
 
   const handleDescriptionChange = (index: number) => {
     if (index === jobDescriptionIndex) return;
-    // Should set the index of the clicked job
+
     setJobDescriptionIndex(index);
 
-    // Scroll to top of the description panel
     if (descriptionPanelRef.current) {
       descriptionPanelRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
-  // Expose refetch function to parent component
   useEffect(() => {
     if (onRefetch) {
       onRefetch(() => refetch());
@@ -329,7 +479,6 @@ export default function JobsList({
   }
 
   if (!data?.jobs || data.jobs.length === 0) {
-    // If still retrying, show the skeleton
     if (retryCountRef.current < 3) {
       return <JobsListSkeleton />;
     }
@@ -357,61 +506,52 @@ export default function JobsList({
   return (
     <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
       <div className="space-y-4 w-full bg-background rounded-4xl px-6 py-4">
-        {/* Loading overlay when refetching */}
-        {/* {isFetching && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-            <div className="flex items-center">
-              <svg
-                className="animate-spin h-4 w-4 text-congress-blue-900 mr-2"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 008-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              <span className="text-sm text-congress-blue-900">Updating results...</span>
-            </div>
-          </div>
-        )} */}
-
-        {/* Jobs list - full width on mobile, two columns on desktop */}
-        <FilterList onFiltersChange={handleFiltersChange} totalJobs={data?.total || 0} filteredJobs={filteredJobs.length} />
-        <div className={cn("flex lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full", className ? className : "max-h-screen")}>
-          {/* LEFT: list - flex-1 so it fills remaining space */}
+        <FilterList
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          totalJobs={data?.total || 0}
+          filteredJobs={filteredJobs.length}
+        />
+        <div
+          className={cn(
+            "flex lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full",
+            className ? className : "max-h-screen",
+          )}
+        >
           <div
             ref={listContainerRef}
             className="flex-1 min-w-0 overflow-y-auto pt-[2px] rounded-lg lg:mb-0 scrollbar-hide"
           >
             <div className="grid gap-3 w-full">
-              {jobs.map((job: Job, index: number) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  index={index}
-                  jobDescriptionIndex={jobDescriptionIndex}
-                  handleDescriptionChange={handleDescriptionChange}
-                  highlightKeywords={
-                    filters.keyword
-                      ? (text: string) =>
-                          highlightKeywords(text, filters.keyword)
-                      : undefined
-                  }
-                  description={job.JobDescription?.description || ""}
-                />
-              ))}
-              {onLoadMore && <div ref={loadMoreTriggerRef} className="h-1 w-full" />}
+              {jobs.map((job: Job, index: number) => {
+                const isSeen = getResolvedSeenValue(job) ?? false;
+                const isSavedForLater =
+                  getResolvedSavedForLaterValue(job) ?? false;
+
+                return (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    index={index}
+                    jobDescriptionIndex={jobDescriptionIndex}
+                    handleDescriptionChange={handleDescriptionChange}
+                    highlightKeywords={
+                      filters.keyword
+                        ? (text: string) =>
+                            highlightKeywords(text, filters.keyword)
+                        : undefined
+                    }
+                    description={job.JobDescription?.description || ""}
+                    isSeen={isSeen}
+                    isSavedForLater={isSavedForLater}
+                    onToggleSavedForLater={() => queueToggleSavedForLater(job)}
+                    onMarkAsSeen={() => queueJobAsSeen(job)}
+                  />
+                );
+              })}
+              {onLoadMore && (
+                <div ref={loadMoreTriggerRef} className="h-1 w-full" />
+              )}
               {isFetchingMore && (
                 <p className="text-center text-sm font-semibold text-congress-blue-900 py-3">
                   Loading more jobs...
@@ -420,7 +560,6 @@ export default function JobsList({
             </div>
           </div>
 
-          {/* Description panel - hidden on mobile, 40% on desktop with min/max constraints */}
           <div
             ref={descriptionPanelRef}
             onScroll={handleDescriptionScroll}
@@ -439,7 +578,6 @@ export default function JobsList({
           </div>
         </div>
 
-        {/* Pagination Info */}
         {data && data.totalPages > 1 && (
           <div className="flex items-center justify-center mt-8 text-sm font-semibold text-congress-blue-900">
             <span>

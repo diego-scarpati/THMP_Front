@@ -4,7 +4,7 @@ import { buildQueryString } from "./utils";
 
 export const jobApi = {
   getAllJobs: (
-    params?: apiTypes.JobQueryParams
+    params?: apiTypes.JobQueryParams,
   ): Promise<apiTypes.PaginatedJobsResponse> => {
     const queryString = buildQueryString({
       ...params,
@@ -28,41 +28,54 @@ export const jobApi = {
   getAllSavedForLater: (): Promise<apiTypes.SavedForLaterJobsResponse> =>
     apiService.get("/jobs/savedForLater"),
 
-  markSeen: (
-    data: apiTypes.MarkSeenJobsRequest
-  ): Promise<apiTypes.MarkSeenJobsResponse> =>
-    apiService.post("/jobs/markSeen", data),
+  // markSeen: (
+  //   data: apiTypes.MarkSeenJobsRequest,
+  // ): Promise<apiTypes.MarkSeenJobsResponse> =>
+  //   apiService.post("/jobs/markSeen", data),
 
-  toggleSavedForLater: (
-    data: apiTypes.ToggleStateRequest
+  batchMarkSeen: (
+    data: apiTypes.BatchJobIdsRequest,
+  ): Promise<apiTypes.MarkSeenJobsResponse> =>
+    apiService.patch("/jobs/markSeen", {
+      jobIds: data.jobIds,
+    }),
+
+  // toggleSavedForLater: (
+  //   data: apiTypes.ToggleStateRequest,
+  // ): Promise<apiTypes.ToggleStateResponse> =>
+  //   apiService.patch("/jobs/toggleSavedForLater", data),
+
+  batchToggleSavedForLater: (
+    data: apiTypes.BatchJobIdsRequest,
   ): Promise<apiTypes.ToggleStateResponse> =>
-    apiService.patch("/jobs/toggleSavedForLater", data),
+    apiService.patch("/jobs/toggleSavedForLater", {
+      jobIds: data.jobIds,
+    }),
 
   toggleApplied: (
-    data: apiTypes.ToggleStateRequest
+    data: apiTypes.ToggleStateRequest,
   ): Promise<apiTypes.ToggleStateResponse> =>
     apiService.patch("/jobs/toggleApplied", data),
 
   searchAndCreateJobs: (
-    params: apiTypes.SearchAndCreateJobsRequest
+    params: apiTypes.SearchAndCreateJobsRequest,
   ): Promise<string> => {
     const queryString = buildQueryString(params);
     return apiService.post(`/jobs/searchAndCreate${queryString}`);
   },
 
   searchAndCreateWithAllKeywords: (
-    params: apiTypes.SearchAndCreateJobsMultipleKeywordsRequest
+    params: apiTypes.SearchAndCreateJobsMultipleKeywordsRequest,
   ): Promise<string> => {
     const { keywords, ...queryParams } = params;
     const queryString = buildQueryString(queryParams);
     return apiService.post(
       `/jobs/searchAndCreateWithAllKeywords${queryString}`,
-      keywords ? { keywords } : undefined
+      keywords ? { keywords } : undefined,
     );
   },
 
-  approveByGPT: (): Promise<string> =>
-    apiService.patch("/jobs/approveByGPT"),
+  approveByGPT: (): Promise<string> => apiService.patch("/jobs/approveByGPT"),
 
   approveByFormula: (): Promise<string> =>
     apiService.patch("/jobs/approveByFormula"),
@@ -78,19 +91,19 @@ export const jobApi = {
     const location = data.location || "sydney";
     return apiService.post(
       `/jobs/seek?location=${encodeURIComponent(location)}`,
-      { keywords: data.keywords }
+      { keywords: data.keywords },
     );
   },
 
   seekAllKeywords: (
-    data?: apiTypes.SeekAllKeywordsRequest
+    data?: apiTypes.SeekAllKeywordsRequest,
   ): Promise<string> => {
     const url = data?.location
       ? `/jobs/seekAllKeywords?location=${encodeURIComponent(data.location)}`
       : "/jobs/seekAllKeywords";
     return apiService.post(
       url,
-      data?.keywordArray ? { keywordArray: data.keywordArray } : undefined
+      data?.keywordArray ? { keywordArray: data.keywordArray } : undefined,
     );
   },
 
@@ -104,24 +117,33 @@ export const jobApi = {
     const location = data.location || "sydney";
     return apiService.post(
       `/jobs/indeed?location=${encodeURIComponent(location)}`,
-      { keywords: data.keywords }
+      { keywords: data.keywords },
     );
   },
 
   indeedAllKeywords: (
-    data?: apiTypes.IndeedAllKeywordsRequest
+    data?: apiTypes.IndeedAllKeywordsRequest,
   ): Promise<string> => {
     const url = data?.location
       ? `/jobs/indeedAllKeywords?location=${encodeURIComponent(data.location)}`
       : "/jobs/indeedAllKeywords";
     return apiService.post(
       url,
-      data?.keywordArray ? { keywordArray: data.keywordArray } : undefined
+      data?.keywordArray ? { keywordArray: data.keywordArray } : undefined,
     );
   },
 
   getIndeedDescription: (jobId: string): Promise<string> =>
     apiService.get(
-      `/jobs/getIndeedDescription?jobId=${encodeURIComponent(jobId)}`
+      `/jobs/getIndeedDescription?jobId=${encodeURIComponent(jobId)}`,
     ),
+
+  backfillMissingFormulaScores: (
+    params?: apiTypes.BackfillFormulaScoresParams,
+  ): Promise<apiTypes.BackfillFormulaScoresResponse> => {
+    const queryString = params?.concurrency
+      ? `?concurrency=${params.concurrency}`
+      : "";
+    return apiService.patch(`/jobs/backfillMissingFormulaScores${queryString}`);
+  },
 };

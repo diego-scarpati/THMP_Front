@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import Filter from "@/icons/filter.svg";
 import FilterOff from "@/icons/filter_off.svg";
@@ -23,26 +23,34 @@ export interface FilterState {
   seen: string;
 }
 
+export const EMPTY_FILTER_STATE: FilterState = {
+  keyword: "",
+  dateFrom: "",
+  dateTo: "",
+  approvedByAI: "",
+  postedBy: "",
+  seen: "",
+};
+
 interface FilterListProps {
   totalJobs?: number;
   filteredJobs?: number;
+  filters: FilterState;
   onFiltersChange?: (filters: FilterState) => void;
 }
 
 const FilterList = ({
   totalJobs,
   filteredJobs,
+  filters,
   onFiltersChange,
 }: FilterListProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    keyword: "",
-    dateFrom: "",
-    dateTo: "",
-    approvedByAI: "",
-    postedBy: "",
-    seen: "",
-  });
+  const [draftFilters, setDraftFilters] = useState<FilterState>(filters);
+
+  useEffect(() => {
+    setDraftFilters(filters);
+  }, [filters]);
 
   // Filter configurations array - single source of truth
   const filterConfigs: FilterConfig[] = [
@@ -79,8 +87,8 @@ const FilterList = ({
       type: "select",
       options: [
         { label: "All", value: "" },
-        { label: "LinkedIn", value: "linkedin" },
-        { label: "Seek", value: "seek" },
+        { label: "LinkedIn", value: "LinkedIn" },
+        { label: "Seek", value: "Seek" },
       ],
     },
     {
@@ -101,27 +109,20 @@ const FilterList = ({
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     const newFilters = {
-      ...filters,
+      ...draftFilters,
       [key]: value,
     };
-    setFilters(newFilters);
+    setDraftFilters(newFilters);
   };
 
   const handleApplyFilters = () => {
-    onFiltersChange?.(filters);
+    onFiltersChange?.(draftFilters);
   };
 
   const handleClearFilters = () => {
-    const clearedFilters: FilterState = {
-      keyword: "",
-      dateFrom: "",
-      dateTo: "",
-      approvedByAI: "",
-      postedBy: "",
-      seen: "",
-    };
+    const clearedFilters: FilterState = { ...EMPTY_FILTER_STATE };
 
-    setFilters(clearedFilters);
+    setDraftFilters(clearedFilters);
     onFiltersChange?.(clearedFilters);
   };
 
@@ -184,7 +185,7 @@ const FilterList = ({
                   key={config.key}
                   title={config.title}
                   type={config.type}
-                  value={filters[config.key]}
+                  value={draftFilters[config.key]}
                   onChange={(value) => handleFilterChange(config.key, value)}
                   options={config.options}
                   placeholder={config.placeholder}

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCreateUser } from "@/hooks/use-users";
 import FilterOption from "@/components/jobs/filter-option";
-import PasswordEye from "@/components/ui/password-eye";
 import { cn } from "@/lib/utils";
 import { useAccessToken, useTokenValidity } from "@/hooks";
 import { isAuthError, setStoredAccessToken } from "@/services/api";
@@ -177,6 +176,12 @@ export default function RegisterPage() {
                 labelBackground="bg-white"
                 isVisible={showConfirmPassword}
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
               />
             </div>
 

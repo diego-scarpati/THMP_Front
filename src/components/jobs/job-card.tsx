@@ -1,10 +1,9 @@
 import { Job } from "@/@types/api";
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { normalizeDates } from "@/utils/normalizeDates";
 // import AiApprovedPill from "./ai-approved-pill";
 import AiApprovedViewJob from "./ai-approved-view-job";
-import { useToggleSavedForLater } from "@/hooks";
 import SeenPill from "../ui/seen-pill";
 
 interface JobCardProps {
@@ -14,6 +13,10 @@ interface JobCardProps {
   handleDescriptionChange: (index: number) => void;
   highlightKeywords?: (text: string) => React.ReactNode;
   description?: string;
+  isSeen: boolean;
+  isSavedForLater: boolean;
+  onToggleSavedForLater: () => void;
+  onMarkAsSeen?: () => void;
 }
 
 const JobCard = ({
@@ -23,18 +26,58 @@ const JobCard = ({
   handleDescriptionChange,
   highlightKeywords,
   description,
+  isSeen,
+  isSavedForLater,
+  onToggleSavedForLater,
+  onMarkAsSeen,
 }: JobCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const toggleSaveForLater = useToggleSavedForLater();
+
+  const isFocused = index === jobDescriptionIndex;
+
+  // Auto-collapse when this card loses focus
+  useEffect(() => {
+    if (!isFocused) {
+      setIsExpanded(false);
+    }
+  }, [isFocused]);
+
+  const mobileDescriptionRef = useRef<HTMLDivElement | null>(null);
+  const mobileHasScrolledEnoughRef = useRef(false);
+  const mobileLastScrollTopRef = useRef(0);
+
+  // Reset scroll tracking when the card is collapsed/re-expanded
+  useEffect(() => {
+    if (isExpanded) {
+      mobileHasScrolledEnoughRef.current = false;
+      mobileLastScrollTopRef.current = 0;
+    }
+  }, [isExpanded]);
+
+  // When expanded, check if the mobile description is not scrollable (short content) — if so, no auto-seen
+  // Seen only triggers on downward scroll past 60%
+  const handleMobileDescriptionScroll = useCallback(() => {
+    const panel = mobileDescriptionRef.current;
+    if (!panel || mobileHasScrolledEnoughRef.current || isSeen) return;
+
+    const currentScrollTop = panel.scrollTop;
+    const isScrollingDown = currentScrollTop > mobileLastScrollTopRef.current;
+    mobileLastScrollTopRef.current = currentScrollTop;
+
+    if (!isScrollingDown) return;
+
+    const scrollPercentage =
+      (panel.scrollTop + panel.clientHeight) / panel.scrollHeight;
+
+    if (scrollPercentage >= 0.6) {
+      mobileHasScrolledEnoughRef.current = true;
+      onMarkAsSeen?.();
+    }
+  }, [isSeen, onMarkAsSeen]);
 
   const saveForLaterHandler = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!job.id || job?.Users?.[0]?.UserJob?.saved_for_later === undefined)
-      return;
-    toggleSaveForLater.mutate({
-      jobId: job.id,
-      currentState: job.Users[0].UserJob.saved_for_later,
-    });
+    onToggleSavedForLater();
   };
 
   return (
@@ -49,15 +92,21 @@ const JobCard = ({
         "sm:grid sm:grid-cols-[1fr_auto] lg:flex lg:flex-col",
         "relative min-w-0 w-auto",
         // "max-w-[80%]",
-        job?.Users?.[0]?.UserJob?.seen ? "border-congress-blue-900" : "",
+        isSeen ? "border-congress-blue-900" : "",
       )}
-      onClick={() => handleDescriptionChange(index)}
+      onClick={() => {
+        // On mobile, toggle the inline description
+        if (typeof window !== "undefined" && window.innerWidth < 1024) {
+          setIsExpanded((prev) => !prev);
+        }
+        handleDescriptionChange(index);
+      }}
     >
       {/* Bookmark icon - positioned absolute top right */}
       <div
         onClick={saveForLaterHandler}
         data-tooltip={
-          job?.Users?.[0]?.UserJob?.saved_for_later
+          isSavedForLater
             ? "Remove from saved jobs"
             : "Save for later"
         }
@@ -74,7 +123,7 @@ const JobCard = ({
           viewBox="0 0 24 24"
           className="w-6 h-6 cursor-pointer text-congress-blue-900 hover:text-congress-blue-700 transition-colors z-10 relative -top-[4px]"
           fill={
-            job?.Users?.[0]?.UserJob?.saved_for_later
+            isSavedForLater
               ? "currentColor"
               : index === jobDescriptionIndex
                 ? "#94bee5"
@@ -90,7 +139,7 @@ const JobCard = ({
       </div>
 
       {/* Seen icon */}
-      {job?.Users?.[0]?.UserJob?.seen && (
+      {isSeen && (
         <SeenPill
           className={cn(
             "absolute -bottom-[2.5px] right-5 text-base/[1rem] z-10 px-1",
@@ -146,7 +195,7 @@ const JobCard = ({
       {/* RIGHT: AiApprovedViewJob */}
       <div className={cn("flex w-full xl:w-auto items-center xl:justify-end xl:mr-4 justify-center")}>
         <AiApprovedViewJob
-          approvedByAI={job?.Users?.[0]?.UserJob?.formula_decision}
+          approvedByAI={job.Users?.[0]?.UserJob?.formula_decision ?? undefined}
           currentIndex={index === jobDescriptionIndex}
           url={job.url}
         />
@@ -182,7 +231,11 @@ const JobCard = ({
       {isExpanded && description && (
         <div className="lg:hidden col-span-full pt-3 border-t border-congress-blue-900/50 w-full">
           <h4 className="text-sm font-semibold mb-2">Job Description</h4>
-          <div className="whitespace-pre-line text-xs leading-relaxed max-h-[40vh] overflow-y-auto scrollbar-hide">
+          <div
+            ref={mobileDescriptionRef}
+            onScroll={handleMobileDescriptionScroll}
+            className="whitespace-pre-line text-xs leading-relaxed max-h-[40vh] overflow-y-auto scrollbar-hide"
+          >
             {highlightKeywords ? highlightKeywords(description) : description}
           </div>
         </div>

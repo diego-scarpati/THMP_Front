@@ -46,7 +46,7 @@ export default function Skill({
   return (
     <div
       onClick={disabled ? undefined : onClick}
-      data-tooltip={skill}
+      // data-tooltip={skill}
       className={cn(
         baseClasses,
         variants[variant],

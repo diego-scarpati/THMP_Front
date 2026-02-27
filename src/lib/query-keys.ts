@@ -111,8 +111,11 @@ export const mutationKeys = {
     indeedAllKeywords: ['jobs', 'indeedAllKeywords'] as const,
     approveByLLM: ['jobs', 'approveByLLM'] as const,
     markSeen: ['jobs', 'markSeen'] as const,
+    batchMarkSeen: ['jobs', 'batchMarkSeen'] as const,
     toggleSavedForLater: ['jobs', 'toggleSavedForLater'] as const,
+    batchToggleSavedForLater: ['jobs', 'batchToggleSavedForLater'] as const,
     toggleApplied: ['jobs', 'toggleApplied'] as const,
+    backfillMissingFormulaScores: ['jobs', 'backfillMissingFormulaScores'] as const,
   },
   jobDescriptions: {
     create: ['jobDescriptions', 'create'] as const,

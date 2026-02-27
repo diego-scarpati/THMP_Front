@@ -4,6 +4,22 @@ const ACCESS_TOKEN_STORAGE_KEY = 'thmp.accessToken'
 
 let inMemoryAccessToken: string | null = null
 
+type ApiMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+type ApiBeforeRequestHandler = (
+  method: ApiMethod,
+  endpoint: string
+) => Promise<void> | void
+
+const apiBeforeRequestHandlers = new Set<ApiBeforeRequestHandler>()
+
+export function registerApiBeforeRequestHandler(handler: ApiBeforeRequestHandler): () => void {
+  apiBeforeRequestHandlers.add(handler)
+
+  return () => {
+    apiBeforeRequestHandlers.delete(handler)
+  }
+}
+
 function readAccessTokenFromStorage(): string | null {
   if (typeof window === 'undefined') return null
   try {
@@ -80,6 +96,19 @@ class ApiService {
     this.baseURL = baseURL
   }
 
+  private async runBeforeRequestHandlers(method: ApiMethod, endpoint: string): Promise<void> {
+    if (apiBeforeRequestHandlers.size === 0) return
+
+    for (const handler of Array.from(apiBeforeRequestHandlers)) {
+      try {
+        await handler(method, endpoint)
+      } catch (error) {
+        // A failed hook should not prevent the original request from continuing.
+        console.error(`API before-request handler failed for ${method} ${endpoint}`, error)
+      }
+    }
+  }
+
   private async handleResponse<T>(response: Response): Promise<T> {
     const contentType = response.headers.get('content-type')
     
@@ -138,6 +167,8 @@ class ApiService {
   }
 
   async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    await this.runBeforeRequestHandlers('GET', endpoint)
+
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'GET',
       headers: this.buildHeaders(options, false),
@@ -148,6 +179,8 @@ class ApiService {
   }
 
   async post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    await this.runBeforeRequestHandlers('POST', endpoint)
+
     const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'POST',

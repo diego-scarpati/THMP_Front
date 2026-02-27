@@ -15,6 +15,7 @@ interface FilterOptionProps {
   labelBackground?: string; // For label background color
   disabled?: boolean;
   isVisible?: boolean; // For password visibility
+  onKeyDown?: (e: React.KeyboardEvent) => void; // For handling key events, e.g., on password visibility toggle
   onClick?: () => void;
 }
 
