@@ -84,15 +84,15 @@ const JobCard = ({
     <div
       key={job.id}
       className={cn(
+        "bg-white border border-neutral-200 rounded-xl p-3 sm:p-4 cursor-pointer transition-colors duration-150 hover:border-neutral-300 hover:shadow-sm relative min-w-0 w-full",
+        isSeen
+          ? "border-l-4 border-l-neutral-300"
+          : "border-l-4 border-l-primary-500",
         index === jobDescriptionIndex
-          ? "bg-congress-blue-300 border-congress-blue-300"
-          : "bg-congress-blue-200 border-congress-blue-200",
-        "border-2 rounded-2xl p-3 hover:shadow-md hover:transition-shadow text-congress-blue-900 transition-colors duration-300",
+          ? "ring-2 ring-primary-500 ring-offset-0 border-primary-200"
+          : "",
         "xl:grid xl:grid-cols-[1fr_auto] gap-3 xl:gap-4 items-start",
         "sm:grid sm:grid-cols-[1fr_auto] lg:flex lg:flex-col",
-        "relative min-w-0 w-auto",
-        // "max-w-[80%]",
-        isSeen ? "border-congress-blue-900" : "",
       )}
       onClick={() => {
         // On mobile, toggle the inline description
@@ -111,24 +111,18 @@ const JobCard = ({
             : "Save for later"
         }
         data-tooltip-position="left"
-        className={cn(
-          "cursor-pointer absolute -top-[2px] right-4 mx-1 overflow-y-visible",
-          index === jobDescriptionIndex
-            ? "bg-congress-blue-300"
-            : "bg-congress-blue-200",
-        )}
+        className="cursor-pointer absolute top-2 right-2 p-2 -m-2"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
-          className="w-6 h-6 cursor-pointer text-congress-blue-900 hover:text-congress-blue-700 transition-colors z-10 relative -top-[4px]"
-          fill={
+          className={cn(
+            "w-6 h-6 cursor-pointer transition-colors z-10 relative",
             isSavedForLater
-              ? "currentColor"
-              : index === jobDescriptionIndex
-                ? "#94bee5"
-                : "#c6dbf1"
-          }
+              ? "text-primary-600 hover:text-primary-700"
+              : "text-neutral-300 hover:text-primary-500",
+          )}
+          fill={isSavedForLater ? "currentColor" : "none"}
           stroke="currentColor"
           strokeWidth={2}
           strokeLinecap="round"
@@ -140,26 +134,19 @@ const JobCard = ({
 
       {/* Seen icon */}
       {isSeen && (
-        <SeenPill
-          className={cn(
-            "absolute -bottom-[2.5px] right-5 text-base/[1rem] z-10 px-1",
-            index === jobDescriptionIndex
-              ? "bg-congress-blue-300"
-              : "bg-congress-blue-200",
-          )}
-        />
+        <SeenPill />
       )}
 
       {/* LEFT: title (top) and meta (bottom) stacked vertically and allowed to shrink */}
       <div className="flex-1 min-w-0 overflow-hidden flex flex-col justify-between">
         <div id="job-title" className="mb-2">
-          <h3 className="text-lg font-semibold lg:text-xl lg:max-w-full xl:max-w-[500px] md:w-[clamp(200px,100%,550px)] sm:w-[clamp(150px,100%,400px)] truncate mt-1 sm:mt-0">
+          <h3 className="text-neutral-900 font-semibold text-sm sm:text-base lg:max-w-full xl:max-w-[500px] md:w-[clamp(200px,100%,550px)] sm:w-[clamp(150px,100%,400px)] truncate mt-1 sm:mt-0">
             {highlightKeywords ? highlightKeywords(job.title) : job.title}
           </h3>
         </div>
 
         <div id="job-meta">
-          <div className="flex items-center gap-2 text-xs lg:text-sm ">
+          <div className="flex items-center gap-2 text-neutral-500 text-xs sm:text-sm">
             <span className="font-semibold lg:max-w-[180px] xl:max-w-[300px] md:max-w-[clamp(100px,100%,300px)] sm:max-w-[clamp(80px,100%,250px)] truncate">
               {highlightKeywords ? highlightKeywords(job.company) : job.company}
             </span>
@@ -177,7 +164,7 @@ const JobCard = ({
 
           <div className="flex flex-row w-auto lg:max-w-[220px] xl:max-w-[300px]">
             {job.post_date && (
-              <div className="text-xs lg:text-sm">
+              <div className="text-neutral-400 text-xs">
                 <span className="lg:hidden xl:inline font-medium">Posted:</span>{" "}
                 {normalizeDates(new Date(job.post_date).toLocaleDateString())}{" "}
                 {new Date(job.post_date).toLocaleTimeString([], {
@@ -210,31 +197,33 @@ const JobCard = ({
         className={cn("lg:hidden col-span-full flex items-center justify-center w-full pt-1", isExpanded && "pb-2")}
         aria-label={isExpanded ? "Collapse description" : "Expand description"}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={cn(
-            "w-5 h-5 transition-transform duration-300",
-            isExpanded ? "rotate-180" : "rotate-0"
-          )}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        <div className="h-8 w-8 flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={cn(
+              "w-5 h-5 text-neutral-400 transition-transform duration-300",
+              isExpanded ? "rotate-180" : "rotate-0"
+            )}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
       </button>
 
       {/* Inline description - visible only below lg when expanded */}
       {isExpanded && description && (
-        <div className="lg:hidden col-span-full pt-3 border-t border-congress-blue-900/50 w-full">
+        <div className="lg:hidden col-span-full border-t border-neutral-200 mt-3 pt-3 w-full">
           <h4 className="text-sm font-semibold mb-2">Job Description</h4>
           <div
             ref={mobileDescriptionRef}
             onScroll={handleMobileDescriptionScroll}
-            className="whitespace-pre-line text-xs leading-relaxed max-h-[40vh] overflow-y-auto scrollbar-hide"
+            className="whitespace-pre-line text-neutral-700 text-xs leading-relaxed max-h-[40vh] overflow-y-auto scrollbar-hide"
           >
             {highlightKeywords ? highlightKeywords(description) : description}
           </div>
