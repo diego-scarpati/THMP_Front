@@ -23,11 +23,11 @@ export default function Skill({
 
   const variants = {
     inactive:
-      "bg-congress-blue-100 text-congress-blue-900 hover:bg-congress-blue-200 border border-congress-blue-200",
+      "bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-200",
     active:
-      "bg-congress-blue-600 text-white hover:bg-congress-blue-700 border border-congress-blue-600 shadow-sm",
+      "bg-primary-600 text-white hover:bg-primary-700 border border-primary-600",
     hovered:
-      "bg-congress-blue-600 text-white border border-congress-blue-600 shadow-sm",
+      "bg-primary-500 text-white border border-primary-500",
   };
 
   const sizes = {
@@ -39,7 +39,8 @@ export default function Skill({
   const cursorClass =
     onClick && !disabled && variant === "active"
       ? "cursor-pointer"
-      : "cursor-default";
+      : "cursor-pointer";
+      // : "cursor-default";
   const disabledClass = disabled ? "opacity-50 cursor-not-allowed" : "";
   // const disabledClass = disabled ? "opacity-50" : "";
 

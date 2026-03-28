@@ -1,15 +1,10 @@
-import { cn } from "@/lib/utils";
 import React from "react";
 
-interface SeenPillProps {
-  className?: string;
-}
-
-const SeenPill = ({ className }: SeenPillProps) => {
+const SeenPill = () => {
   return (
-    <div className={cn(`text-sm font-semibold`, className)}>
-      <p>Seen</p>
-    </div>
+    <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-neutral-600 text-white">
+      Seen
+    </span>
   );
 };
 
