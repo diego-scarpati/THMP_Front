@@ -22,7 +22,7 @@ const AiApprovedViewJob = ({ approvedByAI, url }: AiApprovedPillProps) => {
   return (
     <div
       className={cn(
-        "rounded-md gap-1.5 py-[10px] font-semibold text-congress-blue-900 text-sm leading-none",
+        "rounded-md gap-1.5 py-[10px] font-semibold text-neutral-800 text-sm leading-none",
         "flex xl:flex-col sm:flex-col lg:flex-row items-center",
         "w-full",
       )}
@@ -34,7 +34,7 @@ const AiApprovedViewJob = ({ approvedByAI, url }: AiApprovedPillProps) => {
           rel="noopener noreferrer"
           className={cn(
             "flex w-full items-center justify-between px-[10px] py-[5px] border rounded-md h-fit transition-colors",
-            "border-congress-blue-900 bg-congress-blue-900 text-congress-blue-300 hover:text-congress-blue-200 hover:bg-congress-blue-600 hover:border-congress-blue-600"
+            "border-cta-500 bg-cta-500 text-white hover:bg-cta-600 hover:border-cta-600"
           )}
         >
           <span className="">View Job</span>
@@ -44,20 +44,20 @@ const AiApprovedViewJob = ({ approvedByAI, url }: AiApprovedPillProps) => {
       </div>
       <div
         className={cn(
-          "group relative flex flex-row px-[10px] py-[5px] items-center border gap-1.5 rounded-md h-fit text-congress-blue-900",
-          "border-congress-blue-900 bg-transparent",
+          "group relative flex flex-row px-[10px] py-[5px] items-center border gap-1.5 rounded-md h-fit",
+          "border-neutral-200 bg-neutral-50",
           "justify-between xl:w-full w-1/2 sm:w-full lg:w-1/2"
         )}
         data-tooltip={"AI Approval Status: " + tooltipText}
       >
-        <p className="">AI Approved:</p>
+        <p className="text-neutral-500 text-xs">AI Approved:</p>
         <div className="flex items-center">
           {approvedByAI === "approve" ? (
-            <Done className="inline-block h-4 w-4 align-middle" />
+            <Done className="inline-block h-4 w-4 align-middle text-success-600" />
           ) : approvedByAI === "reject" ? (
-            <Cancel className="inline-block h-4 w-4 align-middle" />
+            <Cancel className="inline-block h-4 w-4 align-middle text-error-700" />
           ) : (
-            <Pending className="inline-block h-4 w-4 align-middle" />
+            <Pending className="inline-block h-4 w-4 align-middle text-warning-600" />
           )}
         </div>
       </div>

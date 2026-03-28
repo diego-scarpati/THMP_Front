@@ -10,8 +10,8 @@ interface AiApprovedPillProps {
 const AiApprovedPill = ({ approvedByAI, currentIndex }: AiApprovedPillProps) => {
   console.log("🚀 ~ AiApprovedPill ~ approvedByAI:", approvedByAI);
   return (
-    <div className={cn("inline-flex px-[10px] py-[5px] items-center border gap-1.5 rounded-md w-auto h-fit", currentIndex ? "border-congress-blue-400 bg-congress-blue-400" : "border-congress-blue-300 bg-congress-blue-300")}>
-      <p className="font-semibold text-congress-blue-900 text-sm leading-none">
+    <div className={cn("inline-flex px-[10px] py-[5px] items-center border gap-1.5 rounded-md w-auto h-fit border-neutral-200 bg-neutral-50")}>
+      <p className="font-semibold text-neutral-600 text-xs leading-none">
         AI Approved:
       </p>
 

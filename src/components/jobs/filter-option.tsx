@@ -42,11 +42,11 @@ const FilterOption = ({
         className
       )}
     >
-      <div className="relative border border-congress-blue-900 rounded-full px-3 py-1.5">
+      <div className="relative border border-neutral-300 focus-within:border-primary-500 rounded-full px-3 py-1.5">
         <label
           htmlFor={inputId}
           className={cn(
-            "absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 z-10",
+            "absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-neutral-500 z-10",
             labelBackground ? labelBackground : "bg-background"
           )}
         >
@@ -61,7 +61,7 @@ const FilterOption = ({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
-            className="w-full text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full text-sm outline-none bg-transparent text-neutral-800 placeholder:text-neutral-400 disabled:opacity-60 disabled:cursor-not-allowed"
           />
         )}
         {type === "password" && (
@@ -90,7 +90,7 @@ const FilterOption = ({
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
               disabled={disabled}
-              className="flex-1 text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex-1 text-sm outline-none bg-transparent text-neutral-800 placeholder:text-neutral-400 disabled:opacity-60 disabled:cursor-not-allowed"
             />
             <div onClick={(e) => e.stopPropagation()}>
               <PasswordEye
@@ -107,7 +107,7 @@ const FilterOption = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className="w-full text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full text-sm outline-none bg-transparent text-neutral-800 placeholder:text-neutral-400 disabled:opacity-60 disabled:cursor-not-allowed"
           />
         )}
         {type === "select" && options && (
