@@ -216,7 +216,7 @@ export function ProfileKeywords() {
   };
 
   const summary = (
-    <div className="grid grid-cols-3 gap-4 text-sm text-congress-blue-700 [&>*]:px-6 [&>*]:py-1 [&>*]:bg-white/60 [&>*]:rounded-md [&>*]:flex [&>*]:items-center [&>*]:gap-4">
+    <div className="grid grid-cols-3 gap-4 text-sm text-neutral-500 [&>*]:px-6 [&>*]:py-1 [&>*]:bg-neutral-100 [&>*]:rounded-md [&>*]:flex [&>*]:items-center [&>*]:gap-4">
       <div>
         <span className="">Skills: </span>
         <span className="tabular-nums">{counts.skills}</span>
@@ -280,18 +280,18 @@ export function ProfileKeywords() {
                 {isLoading ? (
                   <ChipsSkeleton />
                 ) : isError ? (
-                  <div className="text-sm text-congress-blue-900/70">
+                  <div className="text-sm text-neutral-500">
                     Keywords unavailable.
                   </div>
                 ) : allItems.length === 0 ? (
-                  <div className="text-sm text-congress-blue-900/70">
+                  <div className="text-sm text-neutral-500">
                     No keywords saved yet.
                   </div>
                 ) : (
-                  <div className="text-sm font-semibold text-congress-blue-700 gap-4 flex flex-col">
-                    <div className="rounded-2xl border border-congress-blue-900/20 flex flex-col justify-center py-4">
+                  <div className="text-sm font-semibold text-neutral-700 gap-4 flex flex-col">
+                    <div className="rounded-xl border border-neutral-200 flex flex-col justify-center py-4">
                       <div className="flex items-center mb-2">
-                        <span className="px-6 py-1 bg-white/60 rounded-md flex items-center">
+                        <span className="px-6 py-1 bg-neutral-100 rounded-md flex items-center text-xs text-neutral-500">
                           Skills:{" "}
                         </span>
                         <span className="tabular-nums">{counts.skills}</span>
@@ -310,9 +310,9 @@ export function ProfileKeywords() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-congress-blue-900/20 flex flex-col justify-center py-4">
+                    <div className="rounded-xl border border-neutral-200 flex flex-col justify-center py-4">
                       <div className="flex items-center mb-2">
-                        <span className="px-6 py-1 bg-white/60 rounded-md flex items-center">
+                        <span className="px-6 py-1 bg-neutral-100 rounded-md flex items-center text-xs text-neutral-500">
                           Includes:{" "}
                         </span>
                         <span className="tabular-nums">{counts.includes}</span>
@@ -332,9 +332,9 @@ export function ProfileKeywords() {
                     </div>
 
                     <div>
-                      <div className="rounded-2xl border border-congress-blue-900/20 flex flex-col justify-center py-4">
+                      <div className="rounded-xl border border-neutral-200 flex flex-col justify-center py-4">
                         <div className="flex items-center mb-2">
-                          <span className="px-6 py-1 bg-white/60 rounded-md flex items-center">
+                          <span className="px-6 py-1 bg-neutral-100 rounded-md flex items-center text-xs text-neutral-500">
                             Excludes:{" "}
                           </span>
                           <span className="tabular-nums">
@@ -360,7 +360,7 @@ export function ProfileKeywords() {
               </div>
             </>
           ) : (
-            <div className="text-sm text-congress-blue-900/70">
+            <div className="text-sm text-neutral-500">
               Expand to see keywords.
             </div>
           )}
@@ -376,12 +376,12 @@ function KeywordsSkeleton() {
       {[0, 1, 2].map((i) => (
         <div
           key={i}
-          className="relative border border-congress-blue-900/20 rounded-full px-3 py-2"
+          className="relative border border-neutral-200 rounded-full px-3 py-2"
         >
-          <div className="absolute -top-2 left-3 h-3 w-16 rounded bg-congress-blue-900/10 animate-pulse" />
+          <div className="absolute -top-2 left-3 h-3 w-16 rounded bg-neutral-200 animate-pulse" />
           <div className="flex items-center gap-2">
-            <div className="h-4 w-full rounded bg-congress-blue-900/10 animate-pulse" />
-            <div className="h-7 w-14 rounded-full bg-congress-blue-900/10 animate-pulse" />
+            <div className="h-4 w-full rounded bg-neutral-200 animate-pulse" />
+            <div className="h-7 w-14 rounded-full bg-neutral-200 animate-pulse" />
           </div>
         </div>
       ))}
@@ -395,7 +395,7 @@ function ChipsSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
-          className="h-8 w-28 rounded-full bg-congress-blue-900/10 animate-pulse"
+          className="h-8 w-28 rounded-full bg-neutral-200 animate-pulse"
         />
       ))}
     </div>
@@ -412,8 +412,8 @@ function KeywordAdder(props: {
 }) {
   return (
     <div className="min-w-0">
-      <div className="relative border border-congress-blue-900 rounded-full pl-3 p-2">
-        <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 bg-white z-10">
+      <div className="relative border border-neutral-300 focus-within:border-primary-500 rounded-full pl-3 p-2">
+        <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-neutral-500 bg-white z-10">
           {props.title}
         </label>
         <div className="flex items-center gap-2">
@@ -421,14 +421,14 @@ function KeywordAdder(props: {
             value={props.value}
             onChange={(e) => props.onChange(e.target.value)}
             placeholder={props.placeholder}
-            className="w-full text-sm outline-none bg-transparent text-congress-blue-900"
+            className="w-full text-sm outline-none bg-transparent text-neutral-800"
           />
           <button
             type="button"
             onClick={props.onSubmit}
             disabled={props.disabled}
             className={cn(
-              "shrink-0 rounded-full px-3 py-1 text-xs font-semibold border border-congress-blue-900 text-congress-blue-900 hover:bg-congress-blue-50",
+              "shrink-0 rounded-lg px-3 py-1 text-sm font-semibold border border-primary-600 text-primary-600 hover:bg-primary-50",
               props.disabled && "opacity-60 cursor-not-allowed"
             )}
           >
@@ -468,7 +468,7 @@ function KeywordChip({
           ? "border-red-700 text-red-700"
           : item.kind === "includes"
           ? "border-green-700 text-green-700"
-          : "border-congress-blue-900/30 text-congress-blue-900"
+          : "border-neutral-200 text-neutral-700"
       )}
     >
       {/* <span className="text-[0.625rem] font-semibold opacity-80">
@@ -484,7 +484,7 @@ function KeywordChip({
           className={cn(
             "ml-1 rounded-full border px-2 py-0.5 text-[0.6875rem] font-semibold cursor-pointer",
             item.active
-              ? "border-green-700 bg-congress-blue-50 text-green-700"
+              ? "border-green-700 bg-green-50 text-green-700"
               : "border-red-700 bg-white text-red-700",
             (disabled || disableToggle) && "opacity-50 cursor-not-allowed"
           )}
@@ -505,7 +505,7 @@ function KeywordChip({
           onClick={onRemove}
           disabled={disabled}
           className={cn(
-            "ml-1 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold text-congress-blue-900/70 hover:text-congress-blue-900",
+            "ml-1 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold text-neutral-400 hover:text-red-700",
             disabled && "opacity-50 cursor-not-allowed"
           )}
           title="Remove"

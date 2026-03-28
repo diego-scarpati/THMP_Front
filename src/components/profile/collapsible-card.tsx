@@ -24,20 +24,20 @@ export function CollapsibleCard({
   return (
     <section
       className={cn(
-        "w-full rounded-2xl border border-congress-blue-900/20 bg-white",
+        "w-full rounded-xl border border-neutral-200 bg-white shadow-sm",
         className
       )}
     >
       <button
         type="button"
-        className="w-full flex items-center justify-between px-4 py-3"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls={contentId}
       >
-        <div className="flex min-w-0 text-sm font-semibold flex-1 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           {title && (
-            <h2 className="shrink-0 text-congress-blue-900">
+            <h2 className="shrink-0 text-base font-semibold text-neutral-900">
               {title}
             </h2>
           )}
@@ -48,7 +48,7 @@ export function CollapsibleCard({
 
       <div
         id={contentId}
-        className={cn(open ? "block" : "hidden", "px-4 pb-4")}
+        className={cn(open ? "block" : "hidden", "px-5 pb-5")}
       >
         {typeof children === "function" ? children({ open }) : children}
       </div>
@@ -65,7 +65,7 @@ function Chevron({ open }: { open: boolean }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={cn(
-        "text-congress-blue-900 transition-transform",
+        "text-neutral-400 transition-transform",
         open ? "rotate-180" : "rotate-0"
       )}
       aria-hidden="true"

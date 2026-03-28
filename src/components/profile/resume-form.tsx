@@ -122,24 +122,24 @@ function ResumePreviewPortal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-congress-blue-900/30 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-800/30 p-4"
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-5xl rounded-3xl bg-white border border-congress-blue-900/15 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-congress-blue-900/15">
+      <div className="w-full max-w-5xl rounded-3xl bg-white border border-neutral-200 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200">
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-congress-blue-900/70">
+            <div className="text-xs font-semibold text-neutral-500">
               Preview
             </div>
-            <div className="truncate text-sm font-semibold text-congress-blue-900">
+            <div className="truncate text-sm font-semibold text-neutral-800">
               {file.name}
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-congress-blue-900/15 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+            className="rounded-full border border-neutral-200 px-4 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
           >
             Close
           </button>
@@ -149,13 +149,13 @@ function ResumePreviewPortal({
           {isPdf ? (
             <iframe
               src={url}
-              className="h-[70vh] w-full rounded-2xl border border-congress-blue-900/15"
+              className="h-[70vh] w-full rounded-2xl border border-neutral-200"
               title="Resume preview"
             />
           ) : isDocx ? (
-            <div className="h-[70vh] overflow-auto rounded-2xl border border-congress-blue-900/15 p-4">
+            <div className="h-[70vh] overflow-auto rounded-2xl border border-neutral-200 p-4">
               {docxBusy ? (
-                <div className="text-sm text-congress-blue-900/70">
+                <div className="text-sm text-neutral-500">
                   Rendering document…
                 </div>
               ) : null}
@@ -169,19 +169,19 @@ function ResumePreviewPortal({
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              <div className="text-sm text-congress-blue-900/70">
+              <div className="text-sm text-neutral-500">
                 In-browser preview for .doc files may be limited.
               </div>
               <iframe
                 src={url}
-                className="h-[70vh] w-full rounded-2xl border border-congress-blue-900/15"
+                className="h-[70vh] w-full rounded-2xl border border-neutral-200"
                 title="Resume preview"
               />
             </div>
           )}
 
           {isDoc ? (
-            <div className="mt-3 text-xs text-congress-blue-900/60">
+            <div className="mt-3 text-xs text-neutral-400">
               If the preview is blank, try uploading a .pdf or .docx.
             </div>
           ) : null}
@@ -209,13 +209,13 @@ function PresentToggle({
   disabled?: boolean;
 }) {
   return (
-    <label className="flex items-center gap-2 pl-1 text-xs font-semibold text-congress-blue-900/80 select-none">
+    <label className="flex items-center gap-2 pl-1 text-xs font-semibold text-neutral-600 select-none">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onCheckedChange(e.target.checked)}
         disabled={disabled}
-        className="h-4 w-4 accent-congress-blue-900"
+        className="h-4 w-4 accent-primary-600"
       />
       Present
     </label>
@@ -540,7 +540,7 @@ export function ResumeForm() {
       ) : null}
 
       <div className="flex items-center justify-between">
-        <p className="text-[14px]/[14px] text-congress-blue-900/70">
+        <p className="text-[14px]/[14px] text-neutral-500">
           {resumeQuery.isLoading
             ? "Loading resume…"
             : mode === "create"
@@ -555,7 +555,7 @@ export function ResumeForm() {
               onClick={onSave}
               disabled={busy}
               className={cn(
-                "rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
+                "rounded-full border border-primary-600 px-4 py-1.5 text-xs font-semibold text-primary-600 hover:bg-primary-50",
                 busy && "opacity-60 cursor-not-allowed"
               )}
             >
@@ -569,7 +569,7 @@ export function ResumeForm() {
                   onClick={onSave}
                   disabled={busy}
                   className={cn(
-                    "rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
+                    "rounded-full border border-primary-600 px-4 py-1.5 text-xs font-semibold text-primary-600 hover:bg-primary-50",
                     busy && "opacity-60 cursor-not-allowed"
                   )}
                 >
@@ -596,7 +596,7 @@ export function ResumeForm() {
                 onClick={toggleEdit}
                 disabled={busy}
                 className={cn(
-                  "rounded-full border border-congress-blue-900/15 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
+                  "rounded-full border border-neutral-200 px-4 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50",
                   busy && "opacity-60 cursor-not-allowed"
                 )}
               >
@@ -612,8 +612,8 @@ export function ResumeForm() {
           <div className="w-4/5">
             <div
               className={cn(
-                "rounded-2xl border border-congress-blue-900/15 bg-congress-blue-100 p-4 flex items-center flex-col gap-2 text-center",
-                dropActive && "bg-congress-blue-50"
+                "rounded-2xl border border-neutral-200 bg-neutral-100 p-4 flex items-center flex-col gap-2 text-center",
+                dropActive && "bg-neutral-50"
               )}
               onDragEnter={(e) => {
                 e.preventDefault();
@@ -639,10 +639,10 @@ export function ResumeForm() {
               }}
             >
               <div className="flex flex-col gap-1">
-                <div className="text-sm font-semibold text-congress-blue-900">
+                <div className="text-sm font-semibold text-neutral-800">
                   Drag and drop your resume here
                 </div>
-                <div className="text-xs text-congress-blue-900/70">
+                <div className="text-xs text-neutral-500">
                   Formats accepted: .pdf, .doc, .docx
                 </div>
               </div>
@@ -666,7 +666,7 @@ export function ResumeForm() {
                     disabled={busy}
                     onClick={() => fileInputRef.current?.click()}
                     className={cn(
-                      "rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50",
+                      "rounded-full border border-primary-600 px-4 py-1.5 text-xs font-semibold text-primary-600 hover:bg-primary-50",
                       busy && "opacity-60 cursor-not-allowed"
                     )}
                   >
@@ -675,10 +675,10 @@ export function ResumeForm() {
 
                   {resumeFile ? (
                     <div className="min-w-0 flex items-start justify-center gap-1">
-                      <div className="text-xs/[14px] font-semibold text-congress-blue-900/70">
+                      <div className="text-xs/[14px] font-semibold text-neutral-500">
                         Attached:
                       </div>
-                      <div className="truncate text-sm/[14px] text-congress-blue-900/70">
+                      <div className="truncate text-sm/[14px] text-neutral-500">
                         {resumeFile.name}
                       </div>
                     </div>
@@ -689,7 +689,7 @@ export function ResumeForm() {
                       <button
                         type="button"
                         onClick={() => setPreviewOpen(true)}
-                        className="rounded-full border border-congress-blue-900/15 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+                        className="rounded-full border border-neutral-200 px-4 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
                         title="Preview the attached file"
                       >
                         Preview
@@ -702,7 +702,7 @@ export function ResumeForm() {
                         disabled={busy}
                         onClick={analyseByAI}
                         className={cn(
-                          "rounded-full border border-congress-blue-900 bg-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500",
+                          "rounded-full border border-primary-600 bg-primary-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-primary-500 hover:border-primary-500",
                           busy && "opacity-60 cursor-not-allowed"
                         )}
                       >
@@ -714,7 +714,7 @@ export function ResumeForm() {
               </div>
 
               {parseResume.isPending ? (
-                <div className="mt-3 text-sm text-congress-blue-900/70">
+                <div className="mt-3 text-sm text-neutral-500">
                   Parsing resume…
                 </div>
               ) : null}
@@ -797,8 +797,8 @@ export function ResumeForm() {
       </Section>
 
       <Section title="Summary">
-        <div className="relative border border-congress-blue-900 rounded-2xl px-3 py-2">
-          <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 bg-white z-10">
+        <div className="relative border border-neutral-300 rounded-2xl px-3 py-2">
+          <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-neutral-500 bg-white z-10">
             Summary
           </label>
           <textarea
@@ -808,7 +808,7 @@ export function ResumeForm() {
               setDraft((d) => ({ ...d, summary: e.target.value }))
             }
             placeholder="A few lines that describe your experience and focus…"
-            className="min-h-[90px] w-full resize-y text-sm outline-none bg-transparent text-congress-blue-900"
+            className="min-h-[90px] w-full resize-y text-sm outline-none bg-transparent text-neutral-800"
           />
         </div>
       </Section>
@@ -1271,8 +1271,8 @@ export function ResumeForm() {
                   }
                 />
               </div>
-              <div className="relative border border-congress-blue-900 rounded-2xl px-3 py-2">
-                <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 bg-white z-10">
+              <div className="relative border border-neutral-300 rounded-2xl px-3 py-2">
+                <label className="absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-neutral-500 bg-white z-10">
                   Description
                 </label>
                 <textarea
@@ -1287,7 +1287,7 @@ export function ResumeForm() {
                     }))
                   }
                   placeholder="What did you build?"
-                  className="min-h-[70px] w-full resize-y text-sm outline-none bg-transparent text-congress-blue-900"
+                  className="min-h-[70px] w-full resize-y text-sm outline-none bg-transparent text-neutral-800"
                 />
               </div>
             </div>
@@ -1464,10 +1464,10 @@ function ResumeSkeleton() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <div className="h-3 w-56 rounded bg-congress-blue-900/10 animate-pulse" />
+        <div className="h-3 w-56 rounded bg-neutral-200 animate-pulse" />
         <div className="flex items-center gap-2">
-          <div className="h-8 w-20 rounded-full bg-congress-blue-900/10 animate-pulse" />
-          <div className="h-8 w-20 rounded-full bg-congress-blue-900/10 animate-pulse" />
+          <div className="h-8 w-20 rounded-full bg-neutral-200 animate-pulse" />
+          <div className="h-8 w-20 rounded-full bg-neutral-200 animate-pulse" />
         </div>
       </div>
 
@@ -1475,11 +1475,11 @@ function ResumeSkeleton() {
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
-            className="h-10 w-[16rem] rounded-full bg-congress-blue-900/10 animate-pulse"
+            className="h-10 w-[16rem] rounded-full bg-neutral-200 animate-pulse"
           />
         ))}
       </div>
-      <div className="h-24 w-full rounded-2xl bg-congress-blue-900/10 animate-pulse" />
+      <div className="h-24 w-full rounded-2xl bg-neutral-200 animate-pulse" />
     </div>
   );
 }
@@ -1492,8 +1492,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-[calc(1rem)] border border-congress-blue-900 bg-white p-3">
-      <div className="text-xs font-semibold text-congress-blue-900/80">
+    <div className="flex flex-col gap-3 rounded-[calc(1rem)] border border-neutral-300 bg-white p-3">
+      <div className="text-xs font-semibold text-neutral-600">
         {title}
       </div>
       {children}
@@ -1519,24 +1519,24 @@ function ListEditor<T>({
   return (
     <div className="flex flex-col gap-3">
       {items.length === 0 ? (
-        <div className="text-sm text-congress-blue-900/60">{emptyLabel}</div>
+        <div className="text-sm text-neutral-400">{emptyLabel}</div>
       ) : null}
 
       <div className="flex flex-col gap-4">
         {items.map((item, index) => (
           <div
             key={index}
-            className="rounded-2xl border border-congress-blue-900/15 bg-white p-3"
+            className="rounded-2xl border border-neutral-200 bg-white p-3"
           >
             <div className="mb-3 flex items-center justify-between">
-              <div className="text-xs font-semibold text-congress-blue-900/70">
+              <div className="text-xs font-semibold text-neutral-500">
                 Entry {index + 1}
               </div>
               {!readOnly ? (
                 <button
                   type="button"
                   onClick={() => onRemove(index)}
-                  className="rounded-full border border-congress-blue-900/15 px-3 py-1 text-[0.6875rem] font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+                  className="rounded-full border border-neutral-200 px-3 py-1 text-[0.6875rem] font-semibold text-neutral-800 hover:bg-neutral-50"
                 >
                   Remove
                 </button>
@@ -1552,7 +1552,7 @@ function ListEditor<T>({
           <button
             type="button"
             onClick={onAdd}
-            className="rounded-full border border-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-congress-blue-900 hover:bg-congress-blue-50"
+            className="rounded-full border border-primary-600 px-4 py-1.5 text-xs font-semibold text-primary-600 hover:bg-primary-50"
           >
             Add {items.length === 0 ? "first" : "another"}
           </button>
@@ -1597,11 +1597,11 @@ function TagListEditor({
     <div className="flex flex-col gap-3">
       {!readOnly ? (
         <div className="min-w-0">
-          <div className="relative border border-congress-blue-900 rounded-full px-3 py-2">
+          <div className="relative border border-neutral-300 rounded-full px-3 py-2">
             <label
               className={cn(
-                "absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-congress-blue-900 z-10",
-                bgColor ? bgColor : "bg-background"
+                "absolute -top-2 left-3 px-1 text-[0.625rem] font-semibold text-neutral-500 z-10",
+                bgColor ? bgColor : "bg-white"
               )}
             >
               {title}
@@ -1613,12 +1613,12 @@ function TagListEditor({
                 placeholder={placeholder}
                 readOnly={readOnly}
                 disabled={readOnly}
-                className="w-full text-sm outline-none bg-transparent text-congress-blue-900 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full text-sm outline-none bg-transparent text-neutral-800 disabled:opacity-60 disabled:cursor-not-allowed"
               />
               <button
                 type="button"
                 onClick={add}
-                className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold border border-congress-blue-900 text-congress-blue-900 hover:bg-congress-blue-50"
+                className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold border border-primary-600 text-primary-600 hover:bg-primary-50"
               >
                 Add
               </button>
@@ -1629,19 +1629,19 @@ function TagListEditor({
 
       <div className="flex flex-wrap gap-2">
         {items.length === 0 ? (
-          <div className="text-sm text-congress-blue-900/60">None yet.</div>
+          <div className="text-sm text-neutral-400">None yet.</div>
         ) : null}
         {items.map((value) => (
           <span
             key={value}
-            className="flex items-center gap-2 rounded-full border border-congress-blue-900 px-3 py-1.5 text-sm text-congress-blue-900"
+            className="flex items-center gap-2 rounded-full border border-neutral-300 px-3 py-1.5 text-sm text-neutral-800"
           >
             <span className="font-medium">{value}</span>
             {!readOnly ? (
               <button
                 type="button"
                 onClick={() => remove(value)}
-                className="rounded-full px-2 py-0.5 text-[0.75rem] font-semibold text-congress-blue-900/70 hover:text-congress-blue-900"
+                className="rounded-full px-2 py-0.5 text-[0.75rem] font-semibold text-neutral-400 hover:text-red-700"
                 title="Remove"
               >
                 ✕
