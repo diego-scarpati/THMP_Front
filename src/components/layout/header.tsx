@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-users";
 import { useLogoutUser } from "@/hooks";
+import { useAccessToken, useTokenValidity } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 // import Logo from "@/icons/logo.svg";
 import Brand from "@/icons/brand.svg";
@@ -12,44 +13,52 @@ import Brand from "@/icons/brand.svg";
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: user, isLoading } = useCurrentUser();
+  const { data: user, isLoading: isUserLoading } = useCurrentUser();
+  const { data: accessToken } = useAccessToken();
+  const tokenValidity = useTokenValidity();
   const logoutMutation = useLogoutUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const hasToken = !!accessToken;
+  const isTokenValidationLoading = hasToken && tokenValidity.isLoading;
+  const isAuthenticated =
+    hasToken && tokenValidity.isSuccess && tokenValidity.data?.valid === true;
+  const shouldShowAuthenticatedActions = isAuthenticated && !!user;
+  const shouldShowLoadingState =
+    isTokenValidationLoading || (isAuthenticated && isUserLoading);
 
   return (
-    <header className="w-full flex items-center justify-between p-4 pt-2 bg-congress-blue-900 rounded-b-[calc(1rem+0.75rem)]">
-      <div className="flex h-[4rem] items-center justify-between bg-background w-full rounded-b-xl rounded-t-md px-6">
-        {/* Left Section: Home Button */}
-        <div className="flex items-center w-auto">
+    <header className="w-full bg-white border-b border-neutral-200 sticky top-0 z-40">
+      <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14 sm:h-16">
+        {/* Left: Brand/Logo */}
+        <div className="flex items-center">
           <Link href="/jobs">
-            <Brand className="sm:h-10 md:h-10 lg:h-12 xl:h-12 min-h-10 bg-background" />
+            <Brand className="sm:h-10 md:h-10 lg:h-12 xl:h-12 min-h-10" />
           </Link>
         </div>
 
-        {/* Middle Section: Navigation Bar - Hidden on mobile */}
-        <nav className="hidden sm:flex items-center justify-center gap-8 flex-1">
-          {user && (
+        {/* Center: Navigation Links - Hidden on mobile */}
+        <nav className="hidden sm:flex items-center gap-6">
+          {shouldShowAuthenticatedActions && (
             <Link
               href="/jobs"
-              className="text-congress-blue-900 hover:text-congress-blue-600 font-semibold sm:text-base md:text-lg text-xl transition-colors"
+              className="text-neutral-700 font-medium hover:text-primary-600 transition-colors duration-150"
             >
-              JOBS
+              Jobs
             </Link>
           )}
-          {/* Add more navigation links here as needed */}
         </nav>
 
-        {/* Right Section: Login/Register or Profile - Hidden on mobile */}
-        <div className="hidden sm:flex items-center justify-end gap-4">
-          {isLoading ? (
-            // Loading state placeholder
-            <div className="h-10 w-20 bg-gray-200 animate-pulse rounded-md" />
-          ) : user ? (
-            <div className="flex items-center gap-2">
+        {/* Right: Auth buttons - Hidden on mobile */}
+        <div className="hidden sm:flex items-center gap-2">
+          {shouldShowLoadingState ? (
+            <div className="h-10 w-20 bg-neutral-200 animate-pulse rounded-md" />
+          ) : shouldShowAuthenticatedActions ? (
+            <>
               <Button
                 type="button"
+                variant="ghost"
                 onClick={() => router.push("/profile")}
-                className="w-auto px-4 py-2"
+                className="inline-flex w-auto items-center justify-center px-4 py-2 text-center"
               >
                 Profile
               </Button>
@@ -65,99 +74,95 @@ export function Header() {
                   }
                 }}
                 disabled={logoutMutation.isPending}
-                className="px-4 py-2"
+                className="inline-flex w-auto items-center justify-center px-4 py-2 text-center"
               >
                 {logoutMutation.isPending ? "Logging out..." : "Logout"}
               </Button>
-            </div>
+            </>
           ) : (
-            <div className="flex items-center justify-end gap-2">
+            <>
               {pathname === "/login" && (
                 <Button
-                  variant="secondary"
+                  variant="primary"
                   type="button"
                   onClick={() => router.push("/register")}
-                  className="px-4 py-2"
+                  className="inline-flex w-auto items-center justify-center px-4 py-2 text-center"
                 >
                   Register
                 </Button>
-              )}{" "}
-              {
-                pathname === "/register" && (
-                  <Button
-                    variant="primary"
-                    type="button"
-                    onClick={() => router.push("/login")}
-                    className="px-4 py-2"
-                  >
-                    Login
-                  </Button>
-                )
-              }
-            </div>
+              )}
+              {pathname === "/register" && (
+                <Button
+                  variant="primary"
+                  type="button"
+                  onClick={() => router.push("/login")}
+                  className="inline-flex w-auto items-center justify-center px-4 py-2 text-center"
+                >
+                  Login
+                </Button>
+              )}
+            </>
           )}
         </div>
 
-        {/* Mobile Menu Button - Visible only on mobile */}
-        <div className="sm:hidden flex items-center justify-end">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-md text-congress-blue-900 hover:bg-gray-100 transition-colors"
-            aria-label="Toggle menu"
+        {/* Hamburger button - Mobile only */}
+        <button
+          className="sm:hidden p-2 -mr-2 text-neutral-600 hover:text-primary-600 rounded-lg hover:bg-neutral-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
-        </div>
+            {mobileMenuOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            )}
+          </svg>
+        </button>
       </div>
 
-      {/* Mobile Menu Portal - Visible only on mobile when open */}
+      {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
-        <div className="sm:hidden fixed w-[33%] top-[calc(3rem+0.5rem)] right-3 bg-congress-blue-900 rounded-[calc(1rem+1.75rem)] z-50 border-2 border-background">
-          <div className="flex flex-col gap-0 bg-background rounded-[calc(1rem+0.75rem)] m-4 p-4">
-            {/* Navigation Links */}
-            {user && (
+        <div className="sm:hidden fixed top-[3.6rem] right-3 z-50 bg-white border border-neutral-200 rounded-xl shadow-md w-48">
+          <div className="py-2 px-1">
+            {/* Nav links */}
+            {shouldShowAuthenticatedActions && (
               <Link
                 href="/jobs"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-congress-blue-900 hover:text-congress-blue-600 font-semibold text-lg py-3 px-4 transition-colors"
+                className="px-3 py-2.5 text-sm font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-lg flex items-center min-h-[44px]"
               >
                 Jobs
               </Link>
             )}
 
-            {/* Buttons */}
-            {isLoading ? (
-              <div className="h-10 bg-gray-200 animate-pulse rounded-md mx-4" />
-            ) : user ? (
-              <div className="flex flex-col gap-0 px-4">
+            {/* Auth actions */}
+            {shouldShowLoadingState ? (
+              <div className="h-10 w-full bg-neutral-200 animate-pulse rounded-md mx-1 my-1" />
+            ) : shouldShowAuthenticatedActions ? (
+              <>
                 <button
                   type="button"
                   onClick={() => {
                     router.push("/profile");
                     setMobileMenuOpen(false);
                   }}
-                  className="text-congress-blue-900 hover:text-congress-blue-600 font-semibold text-lg py-3 text-left transition-colors"
+                  className="w-full px-3 py-2.5 text-sm font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-lg flex items-center min-h-[44px]"
                 >
                   Profile
                 </button>
@@ -173,13 +178,13 @@ export function Header() {
                     }
                   }}
                   disabled={logoutMutation.isPending}
-                  className="text-congress-blue-900 hover:text-congress-blue-600 font-semibold text-lg py-3 text-left transition-colors disabled:opacity-50"
+                  className="w-full px-3 py-2.5 text-sm font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-lg flex items-center min-h-[44px] disabled:opacity-50"
                 >
                   {logoutMutation.isPending ? "Logging out..." : "Logout"}
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="flex flex-col gap-0 px-4">
+              <>
                 {pathname === "/login" && (
                   <button
                     type="button"
@@ -187,11 +192,11 @@ export function Header() {
                       router.push("/register");
                       setMobileMenuOpen(false);
                     }}
-                    className="text-congress-blue-900 hover:text-congress-blue-600 font-semibold text-lg py-3 text-left transition-colors"
+                    className="w-full px-3 py-2.5 text-sm font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-lg flex items-center min-h-[44px]"
                   >
                     Register
                   </button>
-                )}{" "}
+                )}
                 {pathname === "/register" && (
                   <button
                     type="button"
@@ -199,12 +204,12 @@ export function Header() {
                       router.push("/login");
                       setMobileMenuOpen(false);
                     }}
-                    className="text-congress-blue-900 hover:text-congress-blue-600 font-semibold text-lg py-3 text-left transition-colors"
+                    className="w-full px-3 py-2.5 text-sm font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-lg flex items-center min-h-[44px]"
                   >
                     Login
                   </button>
                 )}
-              </div>
+              </>
             )}
           </div>
         </div>
