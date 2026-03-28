@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Job, JobQueryParams } from "@/@types/api";
 import JobsList from "@/components/jobs/jobs-list";
@@ -178,7 +179,7 @@ function JobsPageContent() {
   );
 
   return (
-    <div className="w-full flex flex-col px-8 py-8 bg-background">
+    <div className="w-full flex flex-col px-3 py-3 sm:px-6 sm:py-6 lg:px-8 lg:py-8 bg-background">
       <SearchBar />
       <JobsList
         data={jobsData}
@@ -231,7 +232,7 @@ function SavedJobsPageContent() {
     : undefined;
 
   return (
-    <div className="w-full flex flex-col px-8 py-8 bg-background">
+    <div className="w-full flex flex-col px-3 py-3 sm:px-6 sm:py-6 lg:px-8 lg:py-8 bg-background">
       {/* <SearchBar /> */}
       <JobsList
         data={
@@ -261,29 +262,26 @@ function JobsPageMain() {
   const [activeTab, setActiveTab] = useState<ActivityTab>("all");
 
   return (
-    <div className="w-full flex flex-col px-8 py-8 bg-background">
-      <div className="relative flex justify-center items-center gap-4 w-[80%] mx-auto">
-        <div
-          className={`absolute w-[9rem] h-[2.5rem] bg-congress-blue-900 rounded-full transition-all duration-300 ${
-            activeTab === "all" ? "left-[calc(50%-9.5rem)]" : "left-[calc(50%+0.5rem)]"
-          }`}
-        />
-        <h3
+    <div className="w-full flex flex-col px-3 py-3 sm:px-6 sm:py-6 lg:px-8 lg:py-8 bg-background">
+      <div className="flex items-center gap-1 border border-neutral-200 bg-white rounded-xl p-1 w-full sm:w-fit mx-auto mb-3 sm:mb-4">
+        <button
           onClick={() => setActiveTab("all")}
-          className={`relative z-10 w-[9rem] h-[2.5rem] flex items-center justify-center text-base/[1rem] font-semibold cursor-pointer transition-colors duration-300 ${
-            activeTab === "all" ? "text-background" : ""
-          }`}
+          className={cn(
+            "flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-lg transition-colors text-center",
+            activeTab === "all" ? "bg-primary-600 text-white" : "text-neutral-600 hover:text-neutral-800"
+          )}
         >
           Search Jobs
-        </h3>
-        <h3
+        </button>
+        <button
           onClick={() => setActiveTab("saved")}
-          className={`relative z-10 w-[9rem] h-[2.5rem] flex items-center justify-center text-base/[1rem] font-semibold cursor-pointer transition-colors duration-300 ${
-            activeTab === "saved" ? "text-background" : ""
-          }`}
+          className={cn(
+            "flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-lg transition-colors text-center",
+            activeTab === "saved" ? "bg-primary-600 text-white" : "text-neutral-600 hover:text-neutral-800"
+          )}
         >
           Saved Jobs
-        </h3>
+        </button>
       </div>
       <Activity mode={activeTab === "all" ? "visible" : "hidden"}>
         {activeTab === "all" && <JobsPageContent />}

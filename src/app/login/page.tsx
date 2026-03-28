@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLoginUser } from "@/hooks/use-users";
-import FilterOption from "@/components/jobs/filter-option";
 import { cn } from "@/lib/utils";
 import { useAccessToken, useTokenValidity } from "@/hooks";
 import { isAuthError, setStoredAccessToken } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { Input } from "@/components/ui/input";
+import PasswordEye from "@/components/ui/password-eye";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,7 +25,6 @@ export default function LoginPage() {
   });
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  console.log("🚀 ~ LoginPage ~ showPassword:", showPassword)
 
   const hasStoredToken = !!accessToken.data;
   const isTokenInvalid = useMemo(() => {
@@ -57,99 +58,84 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="mx-auto xs:max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl max-w-xl mt-10 px-4 py-6">
-      <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
-        <div className="flex flex-col items-center justify-center space-y-4 w-full rounded-4xl px-10 py-10 bg-white">
-          <div className="flex flex-col items-center justify-center">
-            <h1 className="text-xl font-semibold text-congress-blue-900">
-              Welcome back
-            </h1>
-            <p className="mt-1 text-sm text-congress-blue-900/70">
-              Sign in to your account to continue
-            </p>
+    <main className="min-h-[calc(100dvh-3.5rem)] sm:min-h-[calc(100dvh-4rem)] flex items-center justify-center px-4 py-6 sm:py-8">
+      <div className="w-full max-w-md bg-white rounded-2xl border border-neutral-200 shadow-sm px-6 py-8 sm:px-8 sm:py-10">
+        <h1 className="text-2xl font-bold text-neutral-900 text-center mb-1">
+          Welcome back
+        </h1>
+        <p className="text-sm text-neutral-500 text-center mb-5 sm:mb-6">
+          Sign in to your account to continue
+        </p>
+
+        {error ? (
+          <div className="rounded-lg border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 mb-4">
+            <span className="font-semibold">Login failed</span>
+            <span className="opacity-80"> — {error}</span>
           </div>
+        ) : null}
 
-          {error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-              <span className="font-semibold">Login failed</span>
-              <span className="opacity-80"> — {error}</span>
-            </div>
-          ) : null}
-
-          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-            <div className="space-y-3 flex flex-col mt-4">
-              <FilterOption
-                title="Email"
-                type="text"
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-neutral-700">Email</label>
+              <Input
+                type="email"
                 value={formData.email}
-                onChange={(v) => {
-                  setFormData((prev) => ({ ...prev, email: v.trim() }));
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, email: e.target.value.trim() }));
                   setError("");
                 }}
                 placeholder="you@example.com"
-                labelBackground="bg-white"
-              />
-
-              <FilterOption
-                title="Password"
-                type={"password"}
-                value={formData.password}
-                onChange={(v) => {
-                  setFormData((prev) => ({ ...prev, password: v }));
-                  setError("");
-                }}
-                placeholder="••••••••"
-                labelBackground="bg-white"
-                isVisible={showPassword}
-                onClick={() => setShowPassword((prev) => !prev)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
               />
             </div>
-
-            <div className="flex flex-col items-center justify-between gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={loginMutation.isPending}
-                className={cn(
-                  "rounded-full w-[80%] border border-congress-blue-900 bg-congress-blue-900 px-5 py-2 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500",
-                  loginMutation.isPending && "opacity-60 cursor-not-allowed"
-                )}
-              >
-                {loginMutation.isPending ? "Signing in..." : "Sign in"}
-              </button>
-
-              <div className="text-sm text-congress-blue-900/70">
-                Don't have an account?{" "}
-                <Link
-                  href="/register"
-                  onClick={(e) => {
-                    if (!isTokenInvalid) return;
-                    // If the stored token is known to be invalid and the user goes to Register,
-                    // clear it to avoid bouncing/loops.
-                    e.preventDefault();
-                    setStoredAccessToken(null);
-                    queryClient.setQueryData<string | null>(
-                      queryKeys.auth.token(),
-                      null
-                    );
-                    queryClient.removeQueries({
-                      queryKey: queryKeys.auth.validity(accessToken.data ?? ""),
-                    });
-                    router.push("/register");
+            <div className="space-y-1 relative">
+              <label className="block text-sm font-medium text-neutral-700">Password</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, password: e.target.value }));
+                    setError("");
                   }}
-                  className="font-semibold text-congress-blue-900 hover:text-congress-blue-500"
-                >
-                  Register
-                </Link>
+                  className="pr-10"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <PasswordEye isVisible={showPassword} onClick={() => setShowPassword(!showPassword)} />
+                </div>
               </div>
             </div>
-          </form>
-        </div>
+          </div>
+
+          <Button type="submit" className="w-full mt-5 sm:mt-6" disabled={loginMutation.isPending} variant="primary">
+            {loginMutation.isPending ? "Signing in..." : "Sign in"}
+          </Button>
+
+          <div className="text-sm text-neutral-500 text-center mt-4">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/register"
+              onClick={(e) => {
+                if (!isTokenInvalid) return;
+                // If the stored token is known to be invalid and the user goes to Register,
+                // clear it to avoid bouncing/loops.
+                e.preventDefault();
+                setStoredAccessToken(null);
+                queryClient.setQueryData<string | null>(
+                  queryKeys.auth.token(),
+                  null
+                );
+                queryClient.removeQueries({
+                  queryKey: queryKeys.auth.validity(accessToken.data ?? ""),
+                });
+                router.push("/register");
+              }}
+              className="text-primary-600 font-semibold hover:text-primary-700"
+            >
+              Register
+            </Link>
+          </div>
+        </form>
       </div>
     </main>
   );

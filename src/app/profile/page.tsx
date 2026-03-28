@@ -3,19 +3,19 @@
 import { CollapsibleCard } from "@/components/profile/collapsible-card";
 import { ProfileKeywords } from "@/components/profile/profile-keywords";
 import { ResumeForm } from "../../components/profile/resume-form";
-import { useCurrentUser, useParseResume } from "@/hooks";
+import { useCurrentUser } from "@/hooks";
 import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const currentUser = useCurrentUser();
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
-        <div className="space-y-4 w-full bg-background rounded-4xl px-6 py-4">
+    <main className="w-full">
+      <div className="max-w-5xl mx-auto px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <div className="space-y-4 sm:space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-xl font-semibold text-congress-blue-900">
+              <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">
                 Profile
               </h1>
               <div className="mt-1">
@@ -28,7 +28,7 @@ export default function ProfilePage() {
                     detail="Please try again."
                   />
                 ) : currentUser.data ? (
-                  <p className="text-sm text-congress-blue-900/70">
+                  <p className="text-neutral-500 text-sm">
                     {currentUser.data.name} {currentUser.data.last_name}
                   </p>
                 ) : (
@@ -42,7 +42,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="mt-2 flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <CollapsibleCard title="Keywords" defaultOpen>
               <ProfileKeywords />
             </CollapsibleCard>
@@ -60,8 +60,8 @@ export default function ProfilePage() {
 function ProfileNameSkeleton() {
   return (
     <div className="flex items-center gap-2">
-      <div className="h-4 w-40 rounded-full bg-congress-blue-900/10 animate-pulse" />
-      <div className="h-4 w-24 rounded-full bg-congress-blue-900/10 animate-pulse" />
+      <div className="h-4 w-40 rounded-full bg-neutral-200 animate-pulse" />
+      <div className="h-4 w-24 rounded-full bg-neutral-200 animate-pulse" />
     </div>
   );
 }
@@ -80,8 +80,8 @@ function InlineBanner({
       className={cn(
         "rounded-lg border px-3 py-2 text-sm",
         tone === "error"
-          ? "border-red-200 bg-red-50 text-red-800"
-          : "border-congress-blue-200 bg-congress-blue-50 text-congress-blue-900"
+          ? "border-error-200 bg-error-50 text-error-700"
+          : "border-primary-100 bg-primary-50 text-primary-800"
       )}
     >
       <span className="font-semibold">{title}</span>
