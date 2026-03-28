@@ -130,32 +130,31 @@ const FilterList = ({
     <div className="w-full px-4">
       <div className="flex items-center justify-between">
         <div className="min-w-0">
-          <h3 className="text-md font-semibold text-congress-blue-900  w-[clamp(150px,100%,300px)]">
+          <h3 className="text-md font-semibold text-neutral-800  w-[clamp(150px,100%,300px)]">
             Showing {filteredJobs} Jobs out of {totalJobs}
           </h3>
         </div>
         {/* Filter Header */}
-        <div
-          className="flex items-center justify-end gap-2 cursor-pointer min-w-[100px]"
+        <button
+          type="button"
+          className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-primary-600 transition-colors min-h-[44px] cursor-pointer"
           onClick={handleToggleExpanded}
         >
-          <h3 className="text-md font-semibold text-congress-blue-900">
-            Filter List
-          </h3>
+          Filter List
           {!isExpanded ? (
             <Filter
               className={cn(
-                "w-6 h-6 text-congress-blue-900 transition-transform duration-200",
+                "w-6 h-6 text-neutral-600 transition-transform duration-200",
               )}
             />
           ) : (
             <FilterOff
               className={cn(
-                "w-6 h-6 text-congress-blue-900 transition-transform duration-500",
+                "w-6 h-6 text-neutral-600 transition-transform duration-500",
               )}
             />
           )}
-        </div>
+        </button>
       </div>
 
       {/* Expandable Filter Options */}
@@ -177,44 +176,39 @@ const FilterList = ({
           }}
         >
           <div className="space-y-4 mt-1">
-            {/* Filter Grid - responsive layout that doesn't fill full width on large screens */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 max-w-6xl items-center">
+            {/* Filter Row - horizontally scrollable on all screen sizes */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 pt-2 -mx-1 px-1">
               {/* Dynamically rendered filter options */}
               {filterConfigs.map((config) => (
-                <FilterOption
-                  key={config.key}
-                  title={config.title}
-                  type={config.type}
-                  value={draftFilters[config.key]}
-                  onChange={(value) => handleFilterChange(config.key, value)}
-                  options={config.options}
-                  placeholder={config.placeholder}
-                  id={`filter-${config.key}`}
-                />
+                <div key={config.key} className="shrink-0">
+                  <FilterOption
+                    title={config.title}
+                    type={config.type}
+                    value={draftFilters[config.key]}
+                    onChange={(value) => handleFilterChange(config.key, value)}
+                    options={config.options}
+                    placeholder={config.placeholder}
+                    id={`filter-${config.key}`}
+                  />
+                </div>
               ))}
               {/* Apply Button */}
-              <div className="flex flex-row gap-2">
-                <div className="min-w-0">
-                  <button
-                    type="button"
-                    onClick={handleApplyFilters}
-                    className="flex px-3 py-1.5 border border-congress-blue-900 text-congress-blue-300 rounded-full font-semibold bg-congress-blue-900 hover:bg-congress-blue-500 hover:border-congress-blue-500 hover:text-congress-blue-100 transition-colors items-center justify-center text-sm cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </div>
-                {/* Clear Button */}
-                <div className="min-w-0">
-                  <button
-                    type="button"
-                    onClick={handleClearFilters}
-                    className="flex pr-3 pl-1.5 py-1.5 border border-congress-blue-900 text-congress-blue-300 rounded-full font-semibold bg-congress-blue-900 hover:bg-congress-blue-500 hover:border-congress-blue-500 hover:text-congress-blue-100 transition-colors items-center justify-center text-sm cursor-pointer"
-                  >
-                    <Add className="w-5 h-5 inline-block rotate-45" />
-                    Clear
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={handleApplyFilters}
+                className="shrink-0 px-3 py-1.5 text-sm font-semibold rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors min-h-[36px] cursor-pointer"
+              >
+                Apply
+              </button>
+              {/* Clear Button */}
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="shrink-0 px-3 py-1.5 text-sm font-medium rounded-lg text-neutral-600 hover:bg-neutral-100 transition-colors min-h-[36px] flex items-center gap-1 cursor-pointer"
+              >
+                <Add className="w-4 h-4 inline-block rotate-45" />
+                Clear
+              </button>
             </div>
           </div>
         </div>
