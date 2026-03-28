@@ -18,7 +18,7 @@ export function AuthCard({ title, description, children, className, ...props }: 
         {...props}
       >
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-congress-blue-900">
+          <h2 className="text-3xl font-bold tracking-tight text-neutral-900">
             {title}
           </h2>
           {description && (

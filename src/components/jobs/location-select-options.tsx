@@ -74,7 +74,7 @@ export default function LocationSelectOptions({
 
   return (
     <div ref={containerRef} className={cn("relative w-[8.5rem] sm:max-w-[5.75rem] md:max-w-[7.5rem] lg:max-w-[8.5rem]", className)}>
-      <div className="relative border border-congress-blue-900 rounded-full px-3 py-1.5">
+      <div className="relative border border-neutral-300 focus-within:border-primary-500 rounded-full px-3 py-1.5">
         <button
           id={id}
           type="button"
@@ -84,12 +84,12 @@ export default function LocationSelectOptions({
           onKeyDown={handleKeyDown}
           ref={buttonRef}
           className={cn(
-            "w-full text-sm font-semibold outline-none bg-transparent text-congress-blue-900",
+            "w-full text-sm font-semibold outline-none bg-transparent text-neutral-800",
             "flex items-center justify-between pr-8"
           )}
         >
           <span className="truncate capitalize">{selected}</span>
-          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-congress-blue-900">
+          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400">
             <svg
               width="16"
               height="16"
@@ -125,7 +125,7 @@ export default function LocationSelectOptions({
             ref={menuRef}
             className={cn(
               "z-[1000]",
-              "bg-background border border-congress-blue-900 rounded-[1.1rem] overflow-hidden max-w-[8.5rem] sm:max-w-[5.75rem] md:max-w-[7.5rem] lg:max-w-[8.5rem]"
+              "bg-white border border-neutral-200 rounded-xl shadow-md overflow-hidden max-w-[8.5rem] sm:max-w-[5.75rem] md:max-w-[7.5rem] lg:max-w-[8.5rem]"
             )}
           >
             {locations.map((loc) => {
@@ -139,8 +139,8 @@ export default function LocationSelectOptions({
                   className={cn(
                     "px-3 py-2 text-sm cursor-pointer rounded-[1.05rem] capitalize font-semibold",
                     isSelected
-                      ? "bg-congress-blue-600 text-white"
-                      : "text-congress-blue-900 hover:bg-congress-blue-200"
+                      ? "bg-primary-600 text-white"
+                      : "text-neutral-800 hover:bg-neutral-100"
                   )}
                   onClick={() => {
                     onChange(loc);
