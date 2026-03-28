@@ -430,7 +430,7 @@ export default function JobsList({
       regex.test(part) ? (
         <span
           key={index}
-          className="bg-yellow-300 text-congress-blue-900 font-semibold px-0.5 rounded"
+          className="bg-yellow-300 text-neutral-900 font-semibold px-0.5 rounded"
           style={{ backgroundColor: "#fef08a" }}
         >
           {part}
@@ -484,7 +484,7 @@ export default function JobsList({
     }
 
     return (
-      <div className="text-center p-8 text-congress-blue-900">
+      <div className="text-center p-8 text-neutral-700">
         <h3 className="text-lg font-medium">No jobs found</h3>
         <p className="mt-1">Try adjusting your search criteria.</p>
         <button
@@ -492,7 +492,7 @@ export default function JobsList({
             retryCountRef.current = 0;
             refetch();
           }}
-          className="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-congress-blue-900 bg-background hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-neutral-700 bg-background hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           Refresh
         </button>
@@ -504,89 +504,87 @@ export default function JobsList({
     jobs[jobDescriptionIndex]?.JobDescription?.description || "";
 
   return (
-    <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
-      <div className="space-y-4 w-full bg-background rounded-4xl px-6 py-4">
-        <FilterList
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          totalJobs={data?.total || 0}
-          filteredJobs={filteredJobs.length}
-        />
+    <div className="space-y-3 w-full">
+      <FilterList
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        totalJobs={data?.total || 0}
+        filteredJobs={filteredJobs.length}
+      />
+      <div
+        className={cn(
+          "flex lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full",
+          className ? className : "max-h-screen",
+        )}
+      >
         <div
-          className={cn(
-            "flex lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full",
-            className ? className : "max-h-screen",
-          )}
+          ref={listContainerRef}
+          className="flex-1 min-w-0 overflow-y-auto pt-[2px] rounded-lg scrollbar-hide"
         >
-          <div
-            ref={listContainerRef}
-            className="flex-1 min-w-0 overflow-y-auto pt-[2px] rounded-lg lg:mb-0 scrollbar-hide"
-          >
-            <div className="grid gap-3 w-full">
-              {jobs.map((job: Job, index: number) => {
-                const isSeen = getResolvedSeenValue(job) ?? false;
-                const isSavedForLater =
-                  getResolvedSavedForLaterValue(job) ?? false;
+          <div className="grid gap-3 w-full">
+            {jobs.map((job: Job, index: number) => {
+              const isSeen = getResolvedSeenValue(job) ?? false;
+              const isSavedForLater =
+                getResolvedSavedForLaterValue(job) ?? false;
 
-                return (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    index={index}
-                    jobDescriptionIndex={jobDescriptionIndex}
-                    handleDescriptionChange={handleDescriptionChange}
-                    highlightKeywords={
-                      filters.keyword
-                        ? (text: string) =>
-                            highlightKeywords(text, filters.keyword)
-                        : undefined
-                    }
-                    description={job.JobDescription?.description || ""}
-                    isSeen={isSeen}
-                    isSavedForLater={isSavedForLater}
-                    onToggleSavedForLater={() => queueToggleSavedForLater(job)}
-                    onMarkAsSeen={() => queueJobAsSeen(job)}
-                  />
-                );
-              })}
-              {onLoadMore && (
-                <div ref={loadMoreTriggerRef} className="h-1 w-full" />
-              )}
-              {isFetchingMore && (
-                <p className="text-center text-sm font-semibold text-congress-blue-900 py-3">
-                  Loading more jobs...
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div
-            ref={descriptionPanelRef}
-            onScroll={handleDescriptionScroll}
-            className="hidden lg:block p-4 border border-congress-blue-300 bg-congress-blue-300 rounded-2xl lg:w-[40%] lg:min-w-[430px] lg:max-w-[640px] lg:max-h-[80dvh] overflow-y-auto scrollbar-hide"
-          >
-            <div className="mb-4">
-              <h3 className="text-lg text-congress-blue-900 text-center font-semibold">
-                Job Description
-              </h3>
-            </div>
-            <div className="whitespace-pre-line text-sm leading-relaxed text-congress-blue-900">
-              {filters.keyword
-                ? highlightKeywords(description, filters.keyword)
-                : description}
-            </div>
+              return (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  index={index}
+                  jobDescriptionIndex={jobDescriptionIndex}
+                  handleDescriptionChange={handleDescriptionChange}
+                  highlightKeywords={
+                    filters.keyword
+                      ? (text: string) =>
+                          highlightKeywords(text, filters.keyword)
+                      : undefined
+                  }
+                  description={job.JobDescription?.description || ""}
+                  isSeen={isSeen}
+                  isSavedForLater={isSavedForLater}
+                  onToggleSavedForLater={() => queueToggleSavedForLater(job)}
+                  onMarkAsSeen={() => queueJobAsSeen(job)}
+                />
+              );
+            })}
+            {onLoadMore && (
+              <div ref={loadMoreTriggerRef} className="h-1 w-full" />
+            )}
+            {isFetchingMore && (
+              <p className="text-neutral-500 text-sm text-center py-3">
+                Loading more jobs...
+              </p>
+            )}
           </div>
         </div>
 
-        {data && data.totalPages > 1 && (
-          <div className="flex items-center justify-center mt-8 text-sm font-semibold text-congress-blue-900">
-            <span>
-              Showing {filteredJobs.length} of {data.total} jobs
-              {filteredJobs.length !== data.total && " (filtered)"}
-            </span>
+        <div
+          ref={descriptionPanelRef}
+          onScroll={handleDescriptionScroll}
+          className="hidden lg:block border border-neutral-200 bg-white rounded-xl p-4 lg:w-[40%] lg:min-w-[430px] lg:max-w-[640px] lg:max-h-[80dvh] overflow-y-auto scrollbar-hide"
+        >
+          <div className="mb-4">
+            <h3 className="text-neutral-900 font-semibold text-sm uppercase tracking-wide text-center">
+              Job Description
+            </h3>
           </div>
-        )}
+          <div className="whitespace-pre-line text-neutral-700 text-sm leading-relaxed">
+            {filters.keyword
+              ? highlightKeywords(description, filters.keyword)
+              : description}
+          </div>
+        </div>
       </div>
+
+      {data && data.totalPages > 1 && (
+        <div className="flex items-center justify-center text-neutral-500 text-sm text-center py-3">
+          <span>
+            Showing {filteredJobs.length} of {data.total} jobs
+            {filteredJobs.length !== data.total && " (filtered)"}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
