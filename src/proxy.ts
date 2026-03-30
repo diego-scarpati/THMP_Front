@@ -1,10 +1,10 @@
-// src/middleware.ts
+// src/proxy.ts
 // Redirects /login and /register to /jobs when APP_ENV=preview.
 // Runs at the edge before any page renders.
 
 import { NextRequest, NextResponse } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const appEnv = process.env.NEXT_PUBLIC_APP_ENV
 
   if (appEnv !== 'preview') {
