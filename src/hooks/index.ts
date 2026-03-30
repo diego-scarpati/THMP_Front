@@ -18,14 +18,12 @@ export {
   useUpdateUserJobsApprovalByFormula,
   useSeekSearch,
   useApproveJobByLLM,
-  useMarkJobsSeen,
   useBatchMarkJobsSeen,
   useBatchToggleSavedForLater,
   useIndeedDescription,
   useIndeedAllKeywords,
   useIndeedSearch,
   useToggleApplied,
-  useToggleSavedForLater,
   useBackfillMissingFormulaScores,
 } from "./use-jobs";
 

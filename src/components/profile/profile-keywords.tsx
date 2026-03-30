@@ -11,9 +11,6 @@ import {
   useExclusions,
   useCreateExclusion,
   useDeleteExclusion,
-  useToggleFilterActive,
-  useSetInclusionsActive,
-  useSetExclusionsActive,
   useSetUserInclusionActive,
   useSetUserExclusionActive
 } from "@/hooks";
@@ -49,9 +46,6 @@ export function ProfileKeywords() {
   const createExclusion = useCreateExclusion();
   const deleteExclusion = useDeleteExclusion();
 
-  const toggleActive = useToggleFilterActive();
-  const setInclusionsActive = useSetInclusionsActive();
-  const setExclusionsActive = useSetExclusionsActive();
   const setUserInclusionActive = useSetUserInclusionActive();
   const setUserExclusionActive = useSetUserExclusionActive();
 
@@ -72,8 +66,6 @@ export function ProfileKeywords() {
     [exclusionsQuery.data]
   );
 
-  const kinds = ["skills", "includes", "excludes"] as const;
-
   const skillItems: KeywordItem[] = useMemo(
     () =>
       skills.map((x) => ({
@@ -88,21 +80,15 @@ export function ProfileKeywords() {
   const inclusionItems: KeywordItem[] = useMemo(
     () =>
       inclusions.map((x) => {
-        // const record = x as unknown as Record<string, unknown>;
-        // const users = Array.isArray(record.Users)
-        //   ? (record.Users as Array<Record<string, unknown>>)
-        //   : [];
-
-        // const relActive = getActiveFromRelation(users[0]?.UserInclusion);
-        // const directActive =
-        //   typeof record.active === "boolean" ? record.active : undefined;
-        // const active = directActive ?? relActive ?? false;
+        const directActive = (x as Inclusion & { active?: boolean }).active;
+        const relActive = getActiveFromRelation(x.Users?.[0]?.UserInclusion);
+        const active = directActive ?? relActive ?? false;
 
         return {
           kind: "includes",
           title: x.title,
           id: x.id,
-          active: x.active,
+          active,
         };
       }),
     [inclusions]
@@ -111,21 +97,15 @@ export function ProfileKeywords() {
   const exclusionItems: KeywordItem[] = useMemo(
     () =>
       exclusions.map((x) => {
-        // const record = x as unknown as Record<string, unknown>;
-        // const users = Array.isArray(record.Users)
-        //   ? (record.Users as Array<Record<string, unknown>>)
-        //   : [];
-
-        // const relActive = getActiveFromRelation(users[0]?.UserExclusion);
-        // const directActive =
-        //   typeof record.active === "boolean" ? record.active : undefined;
-        // const active = directActive ?? relActive ?? false;
+        const directActive = (x as Exclusion & { active?: boolean }).active;
+        const relActive = getActiveFromRelation(x.Users?.[0]?.UserExclusion);
+        const active = directActive ?? relActive ?? false;
 
         return {
           kind: "excludes",
           title: x.title,
           id: x.id,
-          active: x.active,
+          active,
         };
       }),
     [exclusions]
@@ -161,10 +141,7 @@ export function ProfileKeywords() {
     createInclusion.isPending ||
     deleteInclusion.isPending ||
     createExclusion.isPending ||
-    deleteExclusion.isPending ||
-    toggleActive.isPending ||
-    setInclusionsActive.isPending ||
-    setExclusionsActive.isPending;
+    deleteExclusion.isPending;
 
   const addMany = async (kind: KeywordKind, raw: string) => {
     const titles = raw
@@ -194,13 +171,11 @@ export function ProfileKeywords() {
     if (item.kind === "skills") return;
 
     if (item.kind === "includes") {
-      // await toggleActive.mutateAsync({ includes: [item.title] });
-      await setUserInclusionActive.mutateAsync({ id: item.id, active: item.active });
+      await setUserInclusionActive.mutateAsync({ id: item.id, active: !item.active });
       return;
     }
 
-    // await toggleActive.mutateAsync({ excludes: [item.title] });
-    await setUserExclusionActive.mutateAsync({ id: item.id, active: item.active });
+    await setUserExclusionActive.mutateAsync({ id: item.id, active: !item.active });
   };
 
   const removeOne = async (item: KeywordItem) => {
@@ -453,13 +428,6 @@ function KeywordChip({
   disabled?: boolean;
   disableToggle?: boolean;
 }) {
-  const kindLabel =
-    item.kind === "skills"
-      ? "Skill"
-      : item.kind === "includes"
-      ? "Include"
-      : "Exclude";
-
   return (
     <div
       className={cn(
