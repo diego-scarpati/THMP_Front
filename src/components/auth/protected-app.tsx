@@ -46,8 +46,11 @@ export function ProtectedApp({ children }: { children: React.ReactNode }) {
       return
     }
     if (bootstrapAttemptedRef.current) return
-    if (!previewCredentials) return
 
+    if (!previewCredentials) {
+      setBootstrapError('Preview credentials not configured (NEXT_PUBLIC_PREVIEW_EMAIL / NEXT_PUBLIC_PREVIEW_PASSWORD missing)')
+      return
+    }
     bootstrapAttemptedRef.current = true
     loginMutation.mutateAsync(previewCredentials).catch((err: unknown) => {
       const message = err instanceof Error ? err.message : 'Preview bootstrap failed'

@@ -61,6 +61,7 @@ const SearchBar = () => {
   const handleSearchNewJobs = async (overrideKeywords?: string[]) => {
     const keywords = overrideKeywords ?? typedKeywords;
     if (keywords.length === 0) return;
+    if (!canRunLiveScraping) return;
 
     // Handle different search options based on selected radio button
     if (selectedRadioOption === "LinkedIn") {

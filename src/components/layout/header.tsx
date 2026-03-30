@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-users";
 import { useLogoutUser } from "@/hooks";
+import { isPreview } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 // import Logo from "@/icons/logo.svg";
 import Brand from "@/icons/brand.svg";
@@ -61,7 +62,7 @@ export function Header() {
                   try {
                     await logoutMutation.mutateAsync();
                   } finally {
-                    router.replace("/login");
+                    router.replace(isPreview ? "/jobs" : "/login");
                   }
                 }}
                 disabled={logoutMutation.isPending}
@@ -168,7 +169,7 @@ export function Header() {
                     try {
                       await logoutMutation.mutateAsync();
                     } finally {
-                      router.replace("/login");
+                      router.replace(isPreview ? "/jobs" : "/login");
                       setMobileMenuOpen(false);
                     }
                   }}
