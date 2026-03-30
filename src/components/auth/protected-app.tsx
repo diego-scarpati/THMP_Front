@@ -1,40 +1,72 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { useAccessToken, useTokenValidity } from '@/hooks'
+import { useAccessToken, useTokenValidity, useLoginUser } from '@/hooks'
 import { isAuthError, setStoredAccessToken } from '@/services/api'
 import { queryKeys } from '@/lib/query-keys'
+import { isPreview, previewCredentials } from '@/lib/env'
 
-const PUBLIC_ROUTES = ['/login', '/register']
+const PUBLIC_ROUTES = isPreview ? [] : ['/login', '/register']
+
+function PreviewBootstrapError({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center p-8">
+      <div className="rounded-lg border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-800 max-w-md text-center">
+        <p className="font-semibold">Preview bootstrap failed</p>
+        <p className="mt-1 opacity-80">{message}</p>
+      </div>
+    </div>
+  )
+}
 
 export function ProtectedApp({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const loginMutation = useLoginUser()
 
   const accessToken = useAccessToken()
   const tokenValidity = useTokenValidity()
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null)
+  const bootstrapAttemptedRef = useRef(false)
 
   const isPublicRoute = useMemo(() => PUBLIC_ROUTES.includes(pathname), [pathname])
   const hasToken = !!accessToken.data
 
+  // Preview: silently authenticate as the shared preview user.
+  // Runs once when there is no token. If the token is later cleared
+  // (e.g. expired), resets the attempt flag so it re-bootstraps.
+  useEffect(() => {
+    if (!isPreview) return
+    if (hasToken) {
+      bootstrapAttemptedRef.current = false
+      return
+    }
+    if (bootstrapAttemptedRef.current) return
+    if (!previewCredentials) return
+
+    bootstrapAttemptedRef.current = true
+    loginMutation.mutateAsync(previewCredentials).catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : 'Preview bootstrap failed'
+      setBootstrapError(message)
+    })
+    // loginMutation.mutateAsync is a stable React Query reference.
+    // bootstrapAttemptedRef prevents re-runs; hasToken is the only trigger we need.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasToken])
+
   const shouldRedirectToLogin = useMemo(() => {
+    if (isPreview) return false
     if (isPublicRoute) return false
     if (!hasToken) return true
 
-    // While checking validity, don't redirect yet.
     if (tokenValidity.isLoading) return false
-
-    // If token is known-valid, allow.
     if (tokenValidity.isSuccess && tokenValidity.data?.valid) return false
-
-    // Token exists but isn't confirmed valid (auth error or other error) => treat as not valid.
     if (tokenValidity.isError) return true
 
-    // Token exists but validity hasn't run (edge) => be conservative and redirect.
     return true
   }, [isPublicRoute, hasToken, tokenValidity.isLoading, tokenValidity.isSuccess, tokenValidity.data, tokenValidity.isError])
 
@@ -62,15 +94,20 @@ export function ProtectedApp({ children }: { children: React.ReactNode }) {
     accessToken.data,
   ])
 
-  // Render normally on public routes
+  // Public routes pass through directly (empty in preview).
   if (isPublicRoute) return <>{children}</>
 
-  // For protected routes, avoid rendering content while redirecting or validating.
+  // Preview bootstrap: show error or wait silently while authenticating.
+  if (isPreview && !hasToken) {
+    if (bootstrapError) return <PreviewBootstrapError message={bootstrapError} />
+    return null
+  }
+
+  // Normal auth gate
   if (!hasToken) return null
   if (tokenValidity.isLoading) return null
   if (tokenValidity.isError) return null
   if (tokenValidity.isSuccess && tokenValidity.data?.valid) return <>{children}</>
 
   return null
-
 }
