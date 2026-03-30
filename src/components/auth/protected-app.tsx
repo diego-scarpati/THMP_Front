@@ -63,10 +63,14 @@ export function ProtectedApp({ children }: { children: React.ReactNode }) {
     if (isPublicRoute) return false
     if (!hasToken) return true
 
+    // While checking validity, don't redirect yet.
     if (tokenValidity.isLoading) return false
+    // If token is known-valid, allow.
     if (tokenValidity.isSuccess && tokenValidity.data?.valid) return false
+    // Token exists but isn't confirmed valid (auth error or other error) => treat as not valid.
     if (tokenValidity.isError) return true
 
+    // Token exists but validity hasn't run (edge) => be conservative and redirect.
     return true
   }, [isPublicRoute, hasToken, tokenValidity.isLoading, tokenValidity.isSuccess, tokenValidity.data, tokenValidity.isError])
 

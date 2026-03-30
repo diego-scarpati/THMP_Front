@@ -11,9 +11,10 @@ export const isDevelopment = appEnv === 'development'
 
 // Only populated in preview. NEXT_PUBLIC_ vars are visible in the browser bundle,
 // which is intentional — preview credentials are shared by design.
-export const previewCredentials = isPreview
-  ? {
-      email: process.env.NEXT_PUBLIC_PREVIEW_EMAIL ?? '',
-      password: process.env.NEXT_PUBLIC_PREVIEW_PASSWORD ?? '',
-    }
-  : null
+const previewEmail = process.env.NEXT_PUBLIC_PREVIEW_EMAIL
+const previewPassword = process.env.NEXT_PUBLIC_PREVIEW_PASSWORD
+
+export const previewCredentials =
+  isPreview && previewEmail && previewPassword
+    ? { email: previewEmail, password: previewPassword }
+    : null
