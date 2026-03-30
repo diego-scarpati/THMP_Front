@@ -97,3 +97,6 @@ export {
   useDeleteExclusion,
   useUserExclusions,
 } from "./use-exclusions";
+
+// Capability hooks
+export { useCapabilities } from "./use-capabilities";
