@@ -10,6 +10,7 @@ import {
   useResume,
   useUpdateResume,
   useParseResume,
+  useCapabilities,
 } from "@/hooks";
 import type {
   CreateResumeRequest,
@@ -228,6 +229,7 @@ export function ResumeForm() {
   const updateResume = useUpdateResume();
   const deleteResume = useDeleteResume();
   const parseResume = useParseResume();
+  const { canRunAiResumeParsing } = useCapabilities();
 
   const [draft, setDraft] = useState<CreateResumeRequest>(emptyResumeDraft);
   const [isEditing, setIsEditing] = useState(false);
@@ -699,11 +701,12 @@ export function ResumeForm() {
                     {resumeFile ? (
                       <button
                         type="button"
-                        disabled={busy}
+                        disabled={busy || !canRunAiResumeParsing}
                         onClick={analyseByAI}
+                        title={!canRunAiResumeParsing ? 'Not available in preview' : undefined}
                         className={cn(
                           "rounded-full border border-congress-blue-900 bg-congress-blue-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-congress-blue-500 hover:border-congress-blue-500",
-                          busy && "opacity-60 cursor-not-allowed"
+                          (busy || !canRunAiResumeParsing) && "opacity-60 cursor-not-allowed"
                         )}
                       >
                         Autocomplete with AI
