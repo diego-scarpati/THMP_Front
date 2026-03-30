@@ -184,9 +184,10 @@ const SearchBar = () => {
                     title={!canRunLiveScraping ? 'Not available in preview' : undefined}
                     className={cn(
                       "group flex cursor-pointer border border-transparent hover:border-congress-blue-900 p-1.5 rounded-full transition-colors duration-200 overflow-hidden",
-                      searchAndCreateJobs.isPending ||
-                        (seekAllKeywords.isPending &&
-                          "opacity-80 cursor-not-allowed")
+                      (!canRunLiveScraping ||
+                        searchAndCreateJobs.isPending ||
+                        seekAllKeywords.isPending) &&
+                        "opacity-60 cursor-not-allowed"
                     )}
                   >
                     {searchAndCreateJobs.isPending ||
