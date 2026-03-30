@@ -2,6 +2,7 @@ import {
   useSearchAndCreateWithAllKeywords,
   useSeekAllKeywords,
   useIndeedAllKeywords,
+  useCapabilities,
 } from "@/hooks";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ const SearchBar = () => {
   const searchAndCreateJobs = useSearchAndCreateWithAllKeywords();
   const seekAllKeywords = useSeekAllKeywords();
   const indeedAllKeywords = useIndeedAllKeywords();
+  const { canRunLiveScraping } = useCapabilities();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const radioOptions = ["LinkedIn", "Seek", "All"];
@@ -128,7 +130,8 @@ const SearchBar = () => {
                   onKeyDown={(e) => {
                     if (
                       e.key === "Enter" &&
-                      searchBarKeyword.trim().length > 1
+                      searchBarKeyword.trim().length > 1 &&
+                      canRunLiveScraping
                     ) {
                       e.preventDefault();
                       const next = [...typedKeywords, searchBarKeyword.trim()];
@@ -171,11 +174,14 @@ const SearchBar = () => {
                     type="button"
                     onClick={() => handleSearchNewJobs()}
                     disabled={
-                      searchAndCreateJobs.isPending || seekAllKeywords.isPending
+                      !canRunLiveScraping ||
+                      searchAndCreateJobs.isPending ||
+                      seekAllKeywords.isPending
                     }
                     aria-busy={
                       searchAndCreateJobs.isPending || seekAllKeywords.isPending
                     }
+                    title={!canRunLiveScraping ? 'Not available in preview' : undefined}
                     className={cn(
                       "group flex cursor-pointer border border-transparent hover:border-congress-blue-900 p-1.5 rounded-full transition-colors duration-200 overflow-hidden",
                       searchAndCreateJobs.isPending ||
