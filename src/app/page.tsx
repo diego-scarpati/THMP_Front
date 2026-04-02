@@ -1,14 +1,9 @@
-import { useEffect } from "react";
 import { redirect } from "next/navigation";
-
-
 
 export default function Home() {
   
   // Redirect to the jobs page on initial load
-  useEffect(() => {
-    redirect("/jobs");
-  }, []);
+  redirect("/jobs")
 
   return (
     <div>
