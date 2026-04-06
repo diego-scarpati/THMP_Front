@@ -178,7 +178,7 @@ function JobsPageContent() {
   );
 
   return (
-    <div className="w-full flex flex-col px-8 py-8 bg-background">
+    <div className="w-full flex flex-col px-4 py-4 sm:px-8 sm:py-8 bg-background">
       <SearchBar />
       <JobsList
         data={jobsData}
@@ -207,39 +207,21 @@ function SavedJobsPageContent() {
   const refetchJobsRef = useRef<(() => void) | null>(null);
   const { data: savedJobs, refetch, isLoading, error, isError, isFetching } = useSavedForLaterJobs();
 
-  const handleSearch = useCallback(() => {
-    // Trigger refetch of saved jobs
-    if (refetchJobsRef.current) {
-      refetchJobsRef.current();
-    }
-  }, []);
-
   const handleRefetchCallback = useCallback((refetchFn: () => void) => {
     refetchJobsRef.current = refetchFn;
   }, []);
 
-  // Convert the saved jobs data to match the expected format for JobsList
-  const jobsData = savedJobs
-    ? {
-        data: savedJobs,
-        pagination: {
-          page: 1,
-          limit: savedJobs.length,
-          total: savedJobs.length,
-        },
-      }
-    : undefined;
-
   return (
-    <div className="w-full flex flex-col px-8 py-8 bg-background">
+    <div className="w-full flex flex-col px-4 py-4 sm:px-8 sm:py-8 bg-background">
       {/* <SearchBar /> */}
       <JobsList
         data={
-          jobsData?.data
+
+          savedJobs
             ? {
-                jobs: jobsData.data,
-                total: jobsData.pagination.total,
-                totalPages: 1,
+                jobs: savedJobs.jobs,
+                total: savedJobs.total,
+                totalPages: savedJobs.totalPages,
               }
             : undefined
         }
@@ -261,7 +243,7 @@ function JobsPageMain() {
   const [activeTab, setActiveTab] = useState<ActivityTab>("all");
 
   return (
-    <div className="w-full flex flex-col px-8 py-8 bg-background">
+    <div className="w-full flex flex-col px-4 py-4 sm:px-8 sm:py-8 bg-background">
       <div className="relative flex justify-center items-center gap-4 w-[80%] mx-auto">
         <div
           className={`absolute w-[9rem] h-[2.5rem] bg-congress-blue-900 rounded-full transition-all duration-300 ${

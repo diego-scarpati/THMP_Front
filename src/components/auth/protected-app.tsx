@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { useAccessToken, useTokenValidity, useLoginUser } from '@/hooks'
-import { isAuthError, setStoredAccessToken } from '@/services/api'
+import { isAuthError, setStoredAccessToken, registerAuthErrorHandler } from '@/services/api'
 import { queryKeys } from '@/lib/query-keys'
 import { isPreview, previewCredentials } from '@/lib/env'
 
@@ -35,6 +35,17 @@ export function ProtectedApp({ children }: { children: React.ReactNode }) {
 
   const isPublicRoute = useMemo(() => PUBLIC_ROUTES.includes(pathname), [pathname])
   const hasToken = !!accessToken.data
+
+  // Global 401 handler: any API call that returns an auth error triggers logout.
+  useEffect(() => {
+    if (isPreview) return
+    return registerAuthErrorHandler(() => {
+      setStoredAccessToken(null)
+      queryClient.setQueryData<string | null>(queryKeys.auth.token(), null)
+      queryClient.clear()
+      router.replace('/login')
+    })
+  }, [queryClient, router])
 
   // Preview: silently authenticate as the shared preview user.
   // Runs once when there is no token. If the token is later cleared

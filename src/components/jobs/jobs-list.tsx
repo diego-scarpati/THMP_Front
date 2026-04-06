@@ -504,8 +504,8 @@ export default function JobsList({
     jobs[jobDescriptionIndex]?.JobDescription?.description || "";
 
   return (
-    <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-4">
-      <div className="space-y-4 w-full bg-background rounded-4xl px-6 py-4">
+    <div className="bg-congress-blue-900 rounded-[calc(2rem+1rem)] p-3 sm:p-4">
+      <div className="space-y-4 w-full bg-background rounded-4xl px-3 py-3 sm:px-6 sm:py-4">
         <FilterList
           filters={filters}
           onFiltersChange={handleFiltersChange}
@@ -514,7 +514,7 @@ export default function JobsList({
         />
         <div
           className={cn(
-            "flex lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full",
+            "flex flex-col lg:flex-row lg:space-x-3 lg:max-h-[80dvh] w-full",
             className ? className : "max-h-screen",
           )}
         >

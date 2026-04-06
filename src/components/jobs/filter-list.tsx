@@ -127,7 +127,7 @@ const FilterList = ({
   };
 
   return (
-    <div className="w-full px-4">
+    <div className="w-full px-1 sm:px-4">
       <div className="flex items-center justify-between">
         <div className="min-w-0">
           <h3 className="text-md font-semibold text-congress-blue-900  w-[clamp(150px,100%,300px)]">
@@ -162,7 +162,7 @@ const FilterList = ({
       <div
         className={cn(
           "overflow-hidden transition-all duration-500 ease-out",
-          isExpanded ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0 mt-0",
+          isExpanded ? "max-h-[32rem] sm:max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0 mt-0",
         )}
       >
         <div

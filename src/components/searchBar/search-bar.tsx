@@ -15,12 +15,12 @@ import LocationSelectOptions from "../jobs/location-select-options";
 const SearchBar = () => {
   const [searchBarKeyword, setSearchBarKeyword] = useState<string>("");
   const [typedKeywords, setTypedKeywords] = useState<string[]>([]);
-  const [selectedRadioOption, setSelectedRadioOption] = useState<
-    "LinkedIn" | "Seek" | "All"
-  >("LinkedIn");
   // const [selectedRadioOption, setSelectedRadioOption] = useState<
-  //   "LinkedIn" | "Seek" | "Indeed" | "All"
+  //   "LinkedIn" | "Seek" | "All"
   // >("LinkedIn");
+  const [selectedRadioOption, setSelectedRadioOption] = useState<
+    "LinkedIn" | "Seek" | "Indeed" | "All"
+  >("LinkedIn");
   const [selectedLocation, setSelectedLocation] = useState<
     "sydney" | "melbourne" | "oceania" | "APAC"
   >("sydney");
@@ -30,8 +30,8 @@ const SearchBar = () => {
   const { canRunLiveScraping } = useCapabilities();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const radioOptions = ["LinkedIn", "Seek", "All"];
-  // const radioOptions = ["LinkedIn", "Seek", "Indeed", "All"];
+  // const radioOptions = ["LinkedIn", "Seek", "All"];
+  const radioOptions = ["LinkedIn", "Seek", "Indeed", "All"];
 
   const locationOptions = ["sydney", "melbourne", "oceania", "APAC"];
 
@@ -50,12 +50,10 @@ const SearchBar = () => {
     setSearchBarKeyword("");
   };
 
-  const handleAddingUserKeywords = (target: string) => {
-    if (typedKeywords.includes(target)) {
-      return;
-    } else {
-      setTypedKeywords((prev) => [...prev, target]);
-    }
+  const handleToggleKeyword = (target: string) => {
+    setTypedKeywords((prev) =>
+      prev.includes(target) ? prev.filter((k) => k !== target) : [...prev, target]
+    );
   };
 
   const handleSearchNewJobs = async (overrideKeywords?: string[]) => {
@@ -65,20 +63,20 @@ const SearchBar = () => {
 
     // Handle different search options based on selected radio button
     if (selectedRadioOption === "LinkedIn") {
-      const newJobs = await searchAndCreateJobs.mutateAsync({
+      await searchAndCreateJobs.mutateAsync({
         keywords,
       });
     } else if (selectedRadioOption === "Seek") {
-      const seekJobs = await seekAllKeywords.mutateAsync({
+      await seekAllKeywords.mutateAsync({
         keywordArray: keywords,
       });
-      // } else if (selectedRadioOption === "Indeed") {
-      //   const indeedJobs = await indeedAllKeywords.mutateAsync({
-      //     keywordArray: keywords,
-      //   });
+      } else if (selectedRadioOption === "Indeed") {
+        const indeedJobs = await indeedAllKeywords.mutateAsync({
+          keywordArray: keywords,
+        });
     } else if (selectedRadioOption === "All") {
       try {
-        const [linkedInJobs, seekJobs] = await Promise.all([
+        await Promise.all([
           searchAndCreateJobs.mutateAsync({ keywords }),
           seekAllKeywords.mutateAsync({ keywordArray: keywords }),
           // indeedAllKeywords.mutateAsync({
@@ -88,134 +86,136 @@ const SearchBar = () => {
       } catch (error) {
         console.error(
           "❌ ~ handleSearchNewJobs ~ Error searching both:",
-          error
+          error,
         );
       }
     }
   };
 
-  const handleDeletingTypedKeywords = (target: string) => {
-    setTypedKeywords((prev) => prev.filter((keyword) => keyword !== target));
-  };
-
   const handleSelectedLocation = (location: string) => {
     setSelectedLocation(
-      location as "sydney" | "melbourne" | "oceania" | "APAC"
+      location as "sydney" | "melbourne" | "oceania" | "APAC",
     );
   };
 
   // show add button only when more than 1 character has been typed
   const showAdd = searchBarKeyword.trim().length > 1;
+  const isSearching =
+    searchAndCreateJobs.isPending ||
+    seekAllKeywords.isPending ||
+    indeedAllKeywords.isPending;
+  const isSearchDisabled = !canRunLiveScraping || isSearching;
 
   return (
     <div className="w-full flex flex-col mb-4">
       <div className="flex flex-col justify-center">
-        <div className="flex flex-col items-center w-full mx-auto">
-          <div className="flex flex-col items-end p-4">
+        <div className="flex w-full flex-col items-center">
+          <div className="flex w-full max-w-[1000px] flex-col items-center justify-center md:items-end px-0 pt-4 sm:px-4">
             {/* Search Bar */}
             <div
-              className="flex justify-between w-full max-w-full sm:w-[600px] md:w-[700px] lg:w-[800px] xl:w-[900px] 2xl:w-[1000px] p-4 bg-congress-blue-900 rounded-[calc(2rem+1rem)] rounded-br-none"
+              className="flex w-full justify-between rounded-[calc(2rem+1rem)] md:rounded-br-none bg-congress-blue-900 p-3 sm:p-4"
               id="search_bar"
               onClick={() => inputRef.current?.focus()}
             >
-              <div className="flex justify-between w-full bg-background px-4 py-2 rounded-4xl">
-                <label htmlFor="search" className="sr-only">
-                  Search jobs
-                </label>
-                <input
-                  type="text"
-                  id="search"
-                  ref={inputRef}
-                  value={searchBarKeyword}
-                  onChange={(e) => setSearchBarKeyword(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === "Enter" &&
-                      searchBarKeyword.trim().length > 1 &&
-                      canRunLiveScraping
-                    ) {
-                      e.preventDefault();
-                      const next = [...typedKeywords, searchBarKeyword.trim()];
-                      setTypedKeywords(next);
-                      setSearchBarKeyword("");
-                      handleSearchNewJobs(next);
-                    }
-                  }}
-                  placeholder="Type keywords to search jobs..."
-                  className="w-[57%] text-base/[1rem] outline-none"
-                />
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={handleAddingKeywordsInput}
-                    aria-hidden={!showAdd}
-                    className={cn(
-                      "flex items-center rounded-full text-sm/[1rem] font-semibold py-1.5 px-3 mr-2 transform transition-all duration-300 ease-out",
-                      showAdd
-                        ? "bg-congress-blue-900 text-congress-blue-200 opacity-100 translate-x-0 pointer-events-auto"
-                        : "bg-transparent text-congress-blue-900 opacity-0 translate-x-4 pointer-events-none"
-                    )}
-                  >
-                    <span className="">Add</span>
-                    <Add className="h-5 w-5" />
-                    {/* <img src="/icons/add.svg" alt="Add" className="h-5 w-5" /> */}
-                  </button>
-                  <div className="flex items-center justify-center mr-2 rounded-full bg-congress-blue-300 border border-congress-blue-300 py-1.5 px-2 min-w-[3.25rem] max-w-[4.25rem] h-8">
-                    <p className="text-congress-blue-900 text-sm/[1rem] font-semibold h-5 leading-[20px]">
-                      #: <span>{typedKeywords.length}</span>
-                    </p>
-                  </div>
-                  <LocationSelectOptions
-                    value={selectedLocation}
-                    locations={locationOptions}
-                    onChange={handleSelectedLocation}
-                    className="mr-2 "
+              <div className="flex w-full flex-col gap-3 rounded-[2rem] bg-background px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4 sm:py-2 sm:rounded-4xl">
+                <div className="flex min-w-0 items-center gap-2 sm:flex-1">
+                  <label htmlFor="search" className="sr-only">
+                    Search jobs
+                  </label>
+                  <input
+                    type="text"
+                    id="search"
+                    ref={inputRef}
+                    value={searchBarKeyword}
+                    onChange={(e) => setSearchBarKeyword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        searchBarKeyword.trim().length > 1 &&
+                        canRunLiveScraping
+                      ) {
+                        e.preventDefault();
+                        const next = [
+                          ...typedKeywords,
+                          searchBarKeyword.trim(),
+                        ];
+                        setTypedKeywords(next);
+                        setSearchBarKeyword("");
+                        handleSearchNewJobs(next);
+                      }
+                    }}
+                    placeholder="Type keywords to search jobs..."
+                    className="min-w-0 flex-1 bg-transparent text-base/[1rem] outline-none"
                   />
                   <button
                     type="button"
-                    onClick={() => handleSearchNewJobs()}
-                    disabled={
-                      !canRunLiveScraping ||
-                      searchAndCreateJobs.isPending ||
-                      seekAllKeywords.isPending
-                    }
-                    aria-busy={
-                      searchAndCreateJobs.isPending || seekAllKeywords.isPending
-                    }
-                    title={!canRunLiveScraping ? 'Not available in preview' : undefined}
+                    onClick={handleAddingKeywordsInput}
+                    disabled={!showAdd}
+                    aria-hidden={!showAdd}
                     className={cn(
-                      "group flex cursor-pointer border border-transparent hover:border-congress-blue-900 p-1.5 rounded-full transition-colors duration-200 overflow-hidden",
-                      (!canRunLiveScraping ||
-                        searchAndCreateJobs.isPending ||
-                        seekAllKeywords.isPending) &&
-                        "opacity-60 cursor-not-allowed"
+                      "flex shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full text-sm/[1rem] font-semibold transition-all duration-300 ease-out",
+                      showAdd
+                        ? "max-w-24 bg-congress-blue-900 px-3 py-1.5 text-congress-blue-200 opacity-100"
+                        : "max-w-0 px-0 py-1.5 text-congress-blue-900 opacity-0 pointer-events-none",
                     )}
                   >
-                    {searchAndCreateJobs.isPending ||
-                    seekAllKeywords.isPending ||
-                    indeedAllKeywords.isPending ? (
-                      <ProgressActivity className="h-5 w-5 text-congress-blue-900 animate-spin" />
-                    ) : (
-                      <MagnifyingGlass className="h-5 w-5 text-congress-blue-900 group-hover:text-congress-blue-700 transition-colors duration-200" />
-                    )}
-                    <div
-                      className="relative ml-1 h-5 w-0 overflow-hidden transition-[width] duration-300 ease-out group-hover:w-[48px]"
-                      aria-hidden="true"
-                    >
-                      <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full opacity-0 text-congress-blue-900 text-sm/[1rem] font-semibold leading-[20px] whitespace-nowrap transition-all duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-100">
-                        Search
-                      </span>
+                    <span>Add</span>
+                    <Add className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 sm:flex sm:items-center">
+                    <div className="flex h-8 min-w-[3.25rem] items-center justify-center rounded-full border border-congress-blue-300 bg-congress-blue-300 px-2 py-1.5">
+                      <p className="h-5 text-sm/[1rem] font-semibold leading-[20px] text-congress-blue-900">
+                        #: <span>{typedKeywords.length}</span>
+                      </p>
                     </div>
+                    <LocationSelectOptions
+                      value={selectedLocation}
+                      locations={locationOptions}
+                      onChange={handleSelectedLocation}
+                      className="w-full sm:mr-2 md:mr-0 sm:w-auto h-8"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSearchNewJobs()}
+                    disabled={isSearchDisabled}
+                    aria-busy={isSearching}
+                    title={
+                      !canRunLiveScraping
+                        ? "Not available in preview"
+                        : undefined
+                    }
+                    className={cn(
+                      "group flex h-8 w-full items-center justify-center gap-2 rounded-full border border-congress-blue-900 px-3 transition-colors duration-200 sm:w-auto sm:justify-start sm:border-transparent sm:px-1.5",
+                      isSearchDisabled
+                        ? "cursor-not-allowed opacity-60"
+                        : "cursor-pointer hover:border-congress-blue-900",
+                    )}
+                  >
+                    {isSearching ? (
+                      <ProgressActivity className="h-5 w-5 animate-spin text-congress-blue-900" />
+                    ) : (
+                      <MagnifyingGlass className="h-5 w-5 text-congress-blue-900 transition-colors duration-200 group-hover:text-congress-blue-700" />
+                    )}
+                    <span
+                      className={cn(
+                        "whitespace-nowrap text-sm/[1rem] font-semibold leading-[20px] text-congress-blue-900 sm:max-w-0 sm:overflow-hidden sm:opacity-0 sm:transition-all sm:duration-300 sm:ease-out sm:group-hover:ml-1 sm:group-hover:max-w-[48px] sm:group-hover:opacity-100",
+                      )}
+                    >
+                      Search
+                    </span>
                   </button>
                 </div>
               </div>
             </div>
             {/* Radio Buttons */}
-            <div className="flex justify-center">
-              <div className="w-4 h-4 bg-congress-blue-900">
-                <div className="w-4 h-4 bg-background rounded-tr-4xl " />
+            <div className="flex sm:relative sm:top-[-5.6px] md:inherit md:top-0">
+              <div className="w-4 h-4 bg-congress-blue-900 border-0">
+                <div className="w-4 h-4 bg-background border-0 rounded-tr-4xl " />
               </div>
-              <div className="flex gap-4 px-6 pt-2 pb-3 bg-congress-blue-900 rounded-3xl rounded-t-none text-congress-blue-300">
+              <div className="md:flex md:flex-wrap justify-center gap-3 rounded-3xl rounded-t-none bg-congress-blue-900 px-4 pt-2 pb-3 text-congress-blue-300 md:gap-4 md:px-6">
                 {/* LinkedIn Radio */}
                 {radioOptions.map((option) => (
                   <label
@@ -227,16 +227,16 @@ const SearchBar = () => {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedRadioOption(
-                          option as "LinkedIn" | "Seek" | "All"
-                        );
                         // setSelectedRadioOption(
-                        //   option as "LinkedIn" | "Seek" | "Indeed" | "All"
+                        //   option as "LinkedIn" | "Seek" | "All",
                         // );
+                        setSelectedRadioOption(
+                          option as "LinkedIn" | "Seek" | "Indeed" | "All"
+                        );
                       }}
                       className={cn(
                         "h-5 w-5 rounded-full border transition-transform duration-200 cursor-pointer bg-congress-blue-300 rotate-45 justify-center items-center flex",
-                        selectedRadioOption === option ? "" : "bg-background"
+                        selectedRadioOption === option ? "" : "bg-background",
                       )}
                     >
                       {selectedRadioOption === option && (
@@ -246,13 +246,15 @@ const SearchBar = () => {
                   </label>
                 ))}
               </div>
+              <div className={cn("w-4 h-4 bg-congress-blue-900", "md:hidden")}>
+                <div className="w-4 h-4 bg-background rounded-tl-4xl " />
+              </div>
             </div>
           </div>
         </div>
       </div>
       <KeywordsList
-        onClickFunction={handleDeletingTypedKeywords}
-        onAddFunction={handleAddingUserKeywords}
+        onToggle={handleToggleKeyword}
         keywords={typedKeywords}
       />
     </div>

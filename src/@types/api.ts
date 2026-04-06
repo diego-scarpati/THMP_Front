@@ -79,7 +79,7 @@ export type UpdateJobRequest = Partial<CreateJobRequest>;
 
 export type JobResponse = ApiResponse<Job>;
 export type JobsResponse = ApiResponse<Job[]>;
-export type SavedForLaterJobsResponse = Job[];
+export type SavedForLaterJobsResponse = PaginatedJobsResponse;
 export interface PaginatedJobsResponse {
   total: number;
   totalPages: number;

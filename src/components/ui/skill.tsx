@@ -36,10 +36,7 @@ export default function Skill({
     lg: "px-6 py-3 text-base min-h-[44px]",
   };
 
-  const cursorClass =
-    onClick && !disabled && variant === "active"
-      ? "cursor-pointer"
-      : "cursor-default";
+  const cursorClass = onClick && !disabled ? "cursor-pointer" : "cursor-default";
   const disabledClass = disabled ? "opacity-50 cursor-not-allowed" : "";
   // const disabledClass = disabled ? "opacity-50" : "";
 

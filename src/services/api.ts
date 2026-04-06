@@ -20,6 +20,19 @@ export function registerApiBeforeRequestHandler(handler: ApiBeforeRequestHandler
   }
 }
 
+type AuthErrorHandler = () => void
+
+let globalAuthErrorHandler: AuthErrorHandler | null = null
+
+export function registerAuthErrorHandler(handler: AuthErrorHandler): () => void {
+  globalAuthErrorHandler = handler
+  return () => {
+    if (globalAuthErrorHandler === handler) {
+      globalAuthErrorHandler = null
+    }
+  }
+}
+
 function readAccessTokenFromStorage(): string | null {
   if (typeof window === 'undefined') return null
   try {
@@ -127,6 +140,7 @@ class ApiService {
       }
 
       if (response.status === 401) {
+        globalAuthErrorHandler?.()
         throw new AuthError(errorMessage)
       }
       

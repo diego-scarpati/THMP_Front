@@ -134,7 +134,7 @@ export function Header() {
 
       {/* Mobile Menu Portal - Visible only on mobile when open */}
       {mobileMenuOpen && (
-        <div className="sm:hidden fixed w-[33%] top-[calc(3rem+0.5rem)] right-3 bg-congress-blue-900 rounded-[calc(1rem+1.75rem)] z-50 border-2 border-background">
+        <div className="sm:hidden fixed w-[55%] min-w-[180px] top-[calc(3rem+0.5rem)] right-3 bg-congress-blue-900 rounded-[calc(1rem+1.75rem)] z-50 border-2 border-background">
           <div className="flex flex-col gap-0 bg-background rounded-[calc(1rem+0.75rem)] m-4 p-4">
             {/* Navigation Links */}
             {user && (
