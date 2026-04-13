@@ -1,6 +1,40 @@
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8888/api'
 
 const ACCESS_TOKEN_STORAGE_KEY = 'thmp.accessToken'
+const PREVIEW_TOKEN_TIMESTAMP_KEY = 'thmp.previewTokenTimestamp'
+const PREVIEW_TOKEN_TTL_MS = 15 * 60 * 1000 // 15 minutes
+
+export function writePreviewTokenTimestamp(): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(PREVIEW_TOKEN_TIMESTAMP_KEY, Date.now().toString())
+  } catch {
+    // ignore storage failures
+  }
+}
+
+export function clearPreviewTokenTimestamp(): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(PREVIEW_TOKEN_TIMESTAMP_KEY)
+  } catch {
+    // ignore storage failures
+  }
+}
+
+/** Returns true when a preview timestamp exists and is older than 15 minutes. */
+export function isPreviewTokenExpired(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const raw = window.localStorage.getItem(PREVIEW_TOKEN_TIMESTAMP_KEY)
+    if (!raw) return false
+    const ts = parseInt(raw, 10)
+    if (isNaN(ts)) return true
+    return Date.now() - ts > PREVIEW_TOKEN_TTL_MS
+  } catch {
+    return false
+  }
+}
 
 let inMemoryAccessToken: string | null = null
 

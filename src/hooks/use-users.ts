@@ -18,6 +18,15 @@ function readStoredUser(): User | null {
   }
 }
 
+export function clearStoredCurrentUser(): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
+  } catch {
+    // ignore storage failures
+  }
+}
+
 function writeStoredUser(user: User | null) {
   if (typeof window === 'undefined') return
   try {

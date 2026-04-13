@@ -5,7 +5,15 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { useAccessToken, useTokenValidity, useLoginUser } from '@/hooks'
-import { isAuthError, setStoredAccessToken, registerAuthErrorHandler } from '@/services/api'
+import {
+  isAuthError,
+  setStoredAccessToken,
+  registerAuthErrorHandler,
+  writePreviewTokenTimestamp,
+  clearPreviewTokenTimestamp,
+  isPreviewTokenExpired,
+} from '@/services/api'
+import { clearStoredCurrentUser } from '@/hooks/use-users'
 import { queryKeys } from '@/lib/query-keys'
 import { isPreview, previewCredentials } from '@/lib/env'
 
@@ -47,6 +55,34 @@ export function ProtectedApp({ children }: { children: React.ReactNode }) {
     })
   }, [queryClient, router])
 
+  // Preview: clear all three tokens (access, currentUser, timestamp) when the
+  // preview session is older than 15 minutes. Checked on mount and whenever the
+  // tab becomes visible again (covers long-idle tab resumes).
+  useEffect(() => {
+    if (!isPreview) return
+
+    function checkPreviewExpiry() {
+      if (!isPreviewTokenExpired()) return
+      setStoredAccessToken(null)
+      clearStoredCurrentUser()
+      clearPreviewTokenTimestamp()
+      queryClient.setQueryData<string | null>(queryKeys.auth.token(), null)
+      queryClient.clear()
+      // Allow bootstrap to re-run
+      bootstrapAttemptedRef.current = false
+    }
+
+    checkPreviewExpiry()
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') checkPreviewExpiry()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+    // queryClient is stable; bootstrapAttemptedRef is a ref — no deps needed beyond those.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Preview: silently authenticate as the shared preview user.
   // Runs once when there is no token. If the token is later cleared
   // (e.g. expired), resets the attempt flag so it re-bootstraps.
@@ -63,10 +99,12 @@ export function ProtectedApp({ children }: { children: React.ReactNode }) {
       return
     }
     bootstrapAttemptedRef.current = true
-    loginMutation.mutateAsync(previewCredentials).catch((err: unknown) => {
-      const message = err instanceof Error ? err.message : 'Preview bootstrap failed'
-      setBootstrapError(message)
-    })
+    loginMutation.mutateAsync(previewCredentials)
+      .then(() => { writePreviewTokenTimestamp() })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Preview bootstrap failed'
+        setBootstrapError(message)
+      })
     // loginMutation.mutateAsync is a stable React Query reference.
     // bootstrapAttemptedRef prevents re-runs; hasToken is the only trigger we need.
     // eslint-disable-next-line react-hooks/exhaustive-deps
